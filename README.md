@@ -8,7 +8,7 @@ Oppresseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.d
 
 ## Screenshots
 
-*Shown in the Despair theme. The download in these shots is a real Radarr download, paused at 2%.*
+*Shown in the Despair theme. The download in these shots is a simulated Radarr download, paused at 2%.*
 
 ### Admin panel: Sonarr & Radarr
 
