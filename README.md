@@ -50,6 +50,18 @@ Bring your watchlists along. Pick **Trakt**, **Letterboxd**, **TMDB** or **TheTV
 
 Each service connects the way it allows. **Trakt** and **TMDB** sign in with a code or QR link you approve on your phone, so your password never touches the TV. **TheTVDB** takes your own API key and PIN and imports your favorites, which is its version of a watchlist. **Letterboxd** reads your public watchlist page from just your username. Every screen explains where to find what it asks for, and keys you enter stay in the Keychain on your Apple TV.
 
+### Top Shelf
+
+![The Apple TV Home Screen with Mindseerr in the top row and a row of trending posters above the apps](docs/screenshots/top-shelf.png)
+
+Put Mindseerr in the top row of your Home Screen and the **Top Shelf**, the area above your apps, fills with what's trending on Seerr. Highlight Mindseerr to see the posters, then select one to open that title's page in the app. The titles are the ones Mindseerr last loaded on Discover, so open the app now and then to keep the row fresh. Until it has loaded Discover once, tvOS shows the Mindseerr banner instead.
+
+### Turning Top Shelf on or off
+
+![Settings with the Look and Feel section: Appearance set to Gloam and Top Shelf set to On](docs/screenshots/settings-top-shelf.png)
+
+Top Shelf is on by default. To change it, open **Settings** and select **Top Shelf** under **Look and Feel**: the row works like a switch and flips between **On** and **Off** each time you select it. With it off, the Home Screen shows the Mindseerr banner instead of trending posters, and the change applies right away. The same section holds **Appearance**, where you pick the app's theme.
+
 ## Features
 
 - **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
