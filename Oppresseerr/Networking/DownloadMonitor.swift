@@ -6,7 +6,7 @@ import Observation
 @MainActor
 @Observable
 final class DownloadMonitor {
-    private(set) var services: [ArrService] = ArrServiceStore.load()
+    private(set) var services: [ArrService] = DownloadMonitor.initialServices()
     private(set) var downloads: [ArrDownload] = []
     /// Why a service couldn't be read on the last refresh.
     private(set) var errors: [UUID: String] = [:]
@@ -17,14 +17,28 @@ final class DownloadMonitor {
 
     // MARK: Services
 
+    private static func initialServices() -> [ArrService] {
+        #if DEBUG
+        if let demo = DemoMode.arrServices { return demo }
+        #endif
+        return ArrServiceStore.load()
+    }
+
     func add(_ service: ArrService) {
         services.append(service)
-        ArrServiceStore.save(services)
+        save()
     }
 
     func remove(_ service: ArrService) {
         services.removeAll { $0.id == service.id }
         errors[service.id] = nil
+        save()
+    }
+
+    private func save() {
+        #if DEBUG
+        if DemoMode.arrServices != nil { return } // demo services are never written to the Keychain
+        #endif
         ArrServiceStore.save(services)
     }
 

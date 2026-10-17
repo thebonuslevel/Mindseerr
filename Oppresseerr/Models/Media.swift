@@ -65,6 +65,9 @@ enum TMDBImage {
 
     static func url(_ path: String?, size: Size) -> URL? {
         guard let path, !path.isEmpty else { return nil }
+        #if DEBUG
+        if let base = DemoMode.imageBase { return URL(string: base + path) }
+        #endif
         return URL(string: "https://image.tmdb.org/t/p/\(size.rawValue)\(path)")
     }
 }

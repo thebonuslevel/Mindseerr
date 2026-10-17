@@ -31,6 +31,16 @@ final class AppState {
     }
 
     init() {
+        #if DEBUG
+        // Demo mode for README screenshots: talk to a local stand-in server (see `DemoMode`) and touch
+        // nothing that's saved, so the real sign-in and server stay exactly as they were.
+        if let url = DemoMode.seerrURL {
+            serverURL = url
+            client = SeerrClient(baseURL: url, sessionCookie: nil, credentials: .apiKey("demo"))
+            signInMethod = "API key (demo)"
+            return
+        }
+        #endif
         if let saved = UserDefaults.standard.string(forKey: Keys.server), let url = URL(string: saved) {
             serverURL = url
             client = Self.makeClient(url)
@@ -56,6 +66,9 @@ final class AppState {
     }
 
     func connect(to input: String) async throws {
+        #if DEBUG
+        if DemoMode.seerrURL != nil { return } // never touch the real saved server or sign-in in demo mode
+        #endif
         guard let url = Self.normalize(input) else {
             throw APIError(status: 0, message: "That doesn't look like a valid address.")
         }
@@ -83,6 +96,9 @@ final class AppState {
     }
 
     func signIn(with credentials: Credentials) async throws {
+        #if DEBUG
+        if DemoMode.seerrURL != nil { return } // never touch the real saved server or sign-in in demo mode
+        #endif
         guard let serverURL else { phase = .serverSetup; return }
         let probe = SeerrClient(baseURL: serverURL, sessionCookie: nil, credentials: nil,
                                 onSessionChange: { cookie in Keychain.set(cookie, for: Keys.cookie) })
@@ -98,6 +114,9 @@ final class AppState {
     }
 
     func signOut() async {
+        #if DEBUG
+        if DemoMode.seerrURL != nil { return } // never touch the real saved server or sign-in in demo mode
+        #endif
         await client?.logout()
         Keychain.set(nil, for: Keys.cookie)
         Credentials.save(nil)
@@ -108,6 +127,9 @@ final class AppState {
     }
 
     func changeServer() async {
+        #if DEBUG
+        if DemoMode.seerrURL != nil { return } // never touch the real saved server or sign-in in demo mode
+        #endif
         await signOut()
         UserDefaults.standard.removeObject(forKey: Keys.server)
         serverURL = nil
