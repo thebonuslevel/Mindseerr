@@ -30,6 +30,22 @@ The request list knows what's downloading too. Any request whose title is in a S
 
 Open a title that's downloading and its progress sits right under the title on a frosted panel that stays readable over any backdrop: status, percent, time left and which server has it. For a series with several episodes downloading, each gets its own line labeled with its season and episode.
 
+### Detail page: trailer and 4K requests
+
+![Series detail page with Request Series, Request Series in 4K and Trailer buttons under the title, tagline and overview](docs/screenshots/detail-trailer-4k.png)
+
+Every title opens to a page with its poster, tagline, year, runtime or season count, genres, rating and overview. Right under it are the actions. **Request** (or **Request Series**) sends it to your standard Radarr or Sonarr, and when your Seerr server has a 4K server and your account may use it, **Request in 4K** appears beside it. The two copies are tracked separately, so you can have a title available in HD and still request it in 4K, and each shows its own status: **Requested**, **Available**, **4K Requested** or **4K Available**. For a series you pick which seasons to request. **Trailer** opens the official trailer in the YouTube app, so install YouTube from the App Store on your Apple TV if you haven't.
+
+### Detail page: cast, crew and suggestions
+
+![Detail page scrolled to the Cast row, with round avatars and each actor's name and character](docs/screenshots/detail-cast.png)
+
+Scroll down for the **Cast**, shown as round avatars with each actor's name and the character they play, followed by the key **Crew**: director, writers, producers and composer, each with their role.
+
+![Recommended row of posters with Requested, Available and Pending badges and a download progress bar](docs/screenshots/detail-recommended.png)
+
+Below that, **Recommended** and **Similar** rows suggest more to watch. They're ordinary poster cards, so each one carries its availability badge and any download progress bar, and selecting one opens its own detail page. It's an easy way to find the next thing to request without going back to search.
+
 ### Discover: progress on posters
 
 ![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
