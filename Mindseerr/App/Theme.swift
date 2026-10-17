@@ -119,9 +119,11 @@ struct ThemedButtonStyle: ButtonStyle {
     var idleFill = true
     /// Quieter look for rows that only show information: a fainter fill and dimmed text until focused.
     var subdued = false
+    /// Off for rows that are only there to be scrolled to: they still highlight when focused, but don't react to a press.
+    var pressable = true
 
     func makeBody(configuration: Configuration) -> some View {
-        ThemedButtonBody(configuration: configuration, idleFill: idleFill, subdued: subdued)
+        ThemedButtonBody(configuration: configuration, idleFill: idleFill, subdued: subdued, pressable: pressable)
     }
 }
 
@@ -129,6 +131,7 @@ private struct ThemedButtonBody: View {
     let configuration: ButtonStyleConfiguration
     let idleFill: Bool
     let subdued: Bool
+    let pressable: Bool
 
     @Environment(\.isFocused) private var focused
     @Environment(\.isEnabled) private var enabled
@@ -147,7 +150,7 @@ private struct ThemedButtonBody: View {
             )
             // Text-only buttons keep their text aligned with the content around them.
             .padding(.leading, idleFill ? 0 : -horizontalPadding)
-            .scaleEffect(configuration.isPressed ? 0.97 : focused ? 1.06 : 1)
+            .scaleEffect(configuration.isPressed && pressable ? 0.97 : focused ? 1.06 : 1)
             .shadow(color: .black.opacity(focused ? 0.35 : 0), radius: 18, y: 10)
             .opacity(enabled ? 1 : 0.45)
             .animation(.easeOut(duration: 0.15), value: focused)

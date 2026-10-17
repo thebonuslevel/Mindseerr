@@ -13,33 +13,36 @@ struct AboutView: View {
 
     var body: some View {
         List {
+            // Every row is a do-nothing button so it can take focus (it just can't be "pressed"); that lets the remote step back up
+            // to the top of the page after scrolling down, and rows get the themed cursor.
             Section {
-                VStack(spacing: 20) {
-                    Image("CthulhuMark")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 240)
-                        .accessibilityHidden(true)
-                    Text("Mindseerr")
-                        .font(.largeTitle).bold()
+                // Same focus look as the logo on the Settings page: a contour outline and a 6% grow.
+                Button {} label: {
+                    LogoLinkLabel(height: 240)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .focusable(false)
+                .buttonStyle(BareButtonStyle(pressable: false))
+                .listRowBackground(Color.clear)
+
+                Text("Mindseerr")
+                    .font(.largeTitle).bold()
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
             }
 
             Section {
-                LabeledContent("Version", value: version)
-                HStack(spacing: 40) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("GitHub")
-                        Text(Self.githubURL.replacingOccurrences(of: "https://", with: ""))
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                infoButton { LabeledContent("Version", value: version) }
+                infoButton {
+                    HStack(spacing: 40) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("GitHub")
+                            Text(Self.githubURL.replacingOccurrences(of: "https://", with: ""))
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        QRCodeView(text: Self.githubURL)
+                            .frame(width: 160, height: 160)
                     }
-                    Spacer()
-                    QRCodeView(text: Self.githubURL)
-                        .frame(width: 160, height: 160)
                 }
             }
 
@@ -55,14 +58,20 @@ struct AboutView: View {
     }
 
     private func credit(_ name: String, _ text: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(name).font(.headline)
-            Text(text)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+        infoButton {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(name).font(.headline)
+                Text(text)
+                    .font(.callout)
+                    .multilineTextAlignment(.leading)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 6)
         }
-        .padding(.vertical, 6)
-        // Read-only rows still need to be reachable so the list can scroll with the remote.
-        .focusable()
+    }
+
+    private func infoButton<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        Button {} label: { content() }
+            .buttonStyle(ThemedButtonStyle(subdued: true, pressable: false))
     }
 }

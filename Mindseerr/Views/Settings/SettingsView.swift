@@ -115,11 +115,12 @@ struct AppearanceView: View {
 
 /// The logo at the bottom of Settings. While focused it grows 6% and gets an outline in the theme's
 /// highlight color that follows the logo's own contour.
-private struct LogoLinkLabel: View {
+struct LogoLinkLabel: View {
+    var height: CGFloat = 320
+
     @Environment(\.isFocused) private var focused
     @Environment(\.appTheme) private var theme
 
-    private let height: CGFloat = 320
     private let outlineWidth: CGFloat = 10
 
     var body: some View {
@@ -152,9 +153,12 @@ private struct LogoLinkLabel: View {
 }
 
 /// Draws only the label, with no cursor, so a view can show its own focus look.
-private struct BareButtonStyle: ButtonStyle {
+struct BareButtonStyle: ButtonStyle {
+    /// Off for views that only need focus, not a press.
+    var pressable = true
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .opacity(configuration.isPressed ? 0.85 : 1)
+            .opacity(configuration.isPressed && pressable ? 0.85 : 1)
     }
 }
