@@ -18,6 +18,21 @@ enum DemoMode {
     /// Poster/backdrop paths are appended to this, replacing image.tmdb.org.
     static var imageBase: String? { base.map { $0 + "/img" } }
 
+    /// A made-up Trakt watchlist of titles from the demo server, for the Watchlists screenshots.
+    static var watchlist: [WatchlistEntry]? {
+        guard base != nil else { return nil }
+        let titles: [(Int, MediaType, String, Int)] = [
+            (9101, .tv, "Deep Station", 2025), (9008, .movie, "Paper Moons", 2024), (9006, .movie, "Night of the Long Tide", 2023),
+            (9010, .movie, "The Quiet Fathoms", 2025), (9002, .movie, "Saltwater Saints", 2024), (9105, .tv, "Lantern Street", 2025),
+            (9103, .tv, "Orbital Gardens", 2022), (9011, .movie, "Cinder Bloom", 2024), (9104, .tv, "Brine & Bone", 2025),
+            (9012, .movie, "Echoes Beneath", 2023), (9007, .movie, "Glass Harbor", 2021), (9106, .tv, "Signal Fires", 2025),
+        ]
+        return titles.map { id, kind, title, year in
+            WatchlistEntry(id: "trakt:\(kind.rawValue):\(id)", source: .trakt, title: title, year: year,
+                           kind: kind, tmdbId: id, imdbId: nil)
+        }
+    }
+
     static var arrServices: [ArrService]? {
         guard let base else { return nil }
         return [ArrKind.sonarr, .radarr].compactMap { kind in

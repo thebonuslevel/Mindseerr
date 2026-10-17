@@ -8,7 +8,7 @@ Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev
 
 ## Screenshots
 
-*Simulated examples: the titles, poster art, people and downloads are invented and served by the demo server in `Tools/demo-server`. Shown in the Despair theme.*
+*Simulated examples: the titles, poster art, people and downloads are invented and served by the demo server in `Tools/demo-server`. Shown in the Gloam theme.*
 
 ### Admin panel: Sonarr & Radarr
 
@@ -35,6 +35,20 @@ Open a title that's downloading and its progress sits right under the title on a
 ![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
 
 While browsing, posters of titles that are downloading get a thin progress bar along their bottom edge, drawn in the current theme's highlight color, on Discover, in expanded sections and in Search. No need to open anything to see what's on its way.
+
+### Watchlists
+
+![Watchlists tab showing a Trakt watchlist as a poster grid, with Partial, Available and Requested badges and buttons to request everything that's missing](docs/screenshots/watchlists.png)
+
+Bring your watchlists along. Pick **Trakt**, **Letterboxd**, **TMDB** or **TheTVDB** along the top and Mindseerr imports it and matches every title to your Seerr server. Each poster gets a badge: **Available** (green), **Requested** (indigo) or **Partial** (teal, when some seasons are still missing), and titles that aren't on your server carry no badge. A summary line counts what's available, requested and missing.
+
+**Request All Missing** sends a request for everything that isn't on your server yet (series for every season that isn't already available or requested), **Not on Server Only** filters the grid down to just those titles, and **Refresh** imports the list again. Select any poster to open its detail page and request it from there. Titles that can't be matched to a movie or series stay visible and are marked **No Match**.
+
+### Connecting a watchlist
+
+![Connect TheTVDB screen with an API key field, a PIN field and a short explanation of where to find both](docs/screenshots/watchlists-connect.png)
+
+Each service connects the way it allows. **Trakt** and **TMDB** sign in with a code or QR link you approve on your phone, so your password never touches the TV. **TheTVDB** takes your own API key and PIN and imports your favorites, which is its version of a watchlist. **Letterboxd** reads your public watchlist page from just your username. Every screen explains where to find what it asks for, and keys you enter stay in the Keychain on your Apple TV.
 
 ## Features
 

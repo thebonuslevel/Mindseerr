@@ -103,6 +103,16 @@ final class WatchlistStore {
     // MARK: - Connecting
 
     func load(api: SeerrClient) async {
+        #if DEBUG
+        // Demo mode shows a made-up Trakt watchlist and never touches the real accounts.
+        if let demo = DemoMode.watchlist {
+            traktSignedIn = true
+            traktName = "Demo"
+            entries[.trakt] = demo
+            await resolve(.trakt, api: api)
+            return
+        }
+        #endif
         traktSignedIn = await trakt.isSignedIn
         if traktSignedIn, traktName == nil { traktName = try? await trakt.displayName() }
         tmdbSignedIn = await tmdb.isSignedIn
