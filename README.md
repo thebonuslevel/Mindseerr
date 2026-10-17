@@ -28,7 +28,7 @@ The request list knows what's downloading too. Any request whose title is in a S
 
 ### Admin panel: pause, resume and cancel downloads
 
-Next to **Details** on any request that's downloading are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, and shows once qBittorrent is connected and is holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
+On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, and shows once qBittorrent is connected and is holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
 
 ### Detail page
 
@@ -89,7 +89,7 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
-- **Download controls**: connect qBittorrent to pause, resume or cancel a request's download right from the Admin tab.
+- **Download controls**: connect qBittorrent to pause, resume or cancel a download right from Active Downloads on the Admin tab.
 - **Admin tab** for admins and users with the Manage Requests permission: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
