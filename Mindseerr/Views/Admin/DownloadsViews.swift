@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Adding a service
 
-/// Asks for a Sonarr or Radarr address and API key, checks them, then hands back the service.
+/// Asks for a Sonarr, Radarr or qBittorrent address and sign-in, checks them, then hands back the service.
 struct AddArrServiceView: View {
     @Environment(\.dismiss) private var dismiss
     let onSave: (ArrService) -> Void
@@ -11,14 +11,16 @@ struct AddArrServiceView: View {
     @State private var name = ""
     @State private var address = ""
     @State private var apiKey = ""
+    @State private var username = ""
+    @State private var password = ""
     @State private var checking = false
     @State private var error: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 30) {
-            Text("Add Sonarr or Radarr")
+            Text("Add a Download Service")
                 .font(.largeTitle).bold()
-            Text("Connect the servers that download your requests to see what's downloading for each Seerr request.")
+            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. Add qBittorrent too and you can pause, resume and cancel those downloads.")
                 .foregroundStyle(.secondary)
 
             Picker("Service", selection: $kind) {
@@ -34,14 +36,22 @@ struct AddArrServiceView: View {
                 TextField("Address, like http://192.168.1.10:\(kind.defaultPortText)", text: $address)
                     .keyboardType(.URL)
                     .textContentType(.URL)
-                TextField("API key", text: $apiKey)
-                    .textContentType(.password)
+                if kind == .qbittorrent {
+                    TextField("Web UI username", text: $username)
+                        .textContentType(.username)
+                    SecureField("Web UI password", text: $password)
+                } else {
+                    TextField("API key", text: $apiKey)
+                        .textContentType(.password)
+                }
             }
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .frame(maxWidth: 1000)
 
-            Text("The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue)).")
+            Text(kind == .qbittorrent
+                 ? "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). Mindseerr matches its torrents to the downloads Sonarr and Radarr report, so add the same qBittorrent they use."
+                 : "The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue)).")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: 1400, alignment: .leading)
@@ -56,7 +66,7 @@ struct AddArrServiceView: View {
                 Button(action: save) {
                     Label("Test & Save", systemImage: "checkmark.circle")
                 }
-                .disabled(checking || address.trimmed.isEmpty || apiKey.trimmed.isEmpty)
+                .disabled(checking || address.trimmed.isEmpty || (kind == .qbittorrent ? false : apiKey.trimmed.isEmpty))
 
                 Button("Cancel", role: .cancel) { dismiss() }
 
@@ -79,13 +89,19 @@ struct AddArrServiceView: View {
         let service = ArrService(kind: kind,
                                  name: name.trimmed.isEmpty ? kind.name : name.trimmed,
                                  baseURL: url,
-                                 apiKey: apiKey.trimmed)
+                                 apiKey: kind == .qbittorrent ? "" : apiKey.trimmed,
+                                 username: kind == .qbittorrent ? username.trimmed : nil,
+                                 password: kind == .qbittorrent ? password : nil)
         Task {
             checking = true
             error = nil
             defer { checking = false }
             do {
-                _ = try await ArrClient.checkConnection(service)
+                if kind == .qbittorrent {
+                    _ = try await QBittorrentClient(service: service).checkConnection()
+                } else {
+                    _ = try await ArrClient.checkConnection(service)
+                }
                 onSave(service)
                 dismiss()
             } catch {

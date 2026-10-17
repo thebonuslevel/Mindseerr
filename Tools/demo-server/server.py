@@ -3,8 +3,10 @@
 
     python3 server.py [port] [art dir]     (defaults: 8765, /tmp/oppdemo/img)
 
-Then launch a Debug build with MINDSEERR_DEMO=http://127.0.0.1:<port>. Read-only: anything that
-would change data (approve, request, delete...) is refused.
+Then launch a Debug build with MINDSEERR_DEMO=http://127.0.0.1:<port>. Almost read-only: anything that
+would change data (approve, request, delete...) is refused. The exceptions are the download controls,
+which only change in-memory state: pausing/resuming a torrent on the fake qBittorrent and removing a
+download from the Sonarr/Radarr queue. Restart the server to reset them.
 """
 import json, os, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -108,12 +110,21 @@ def request_filter(req, name):
     if name == "available": return req["media"]["status"] == 5
     return True
 
+# Download controls (in memory): torrents that are paused, and titles taken out of the queues.
+PAUSED = {f"dl{t['id']}" for t in CATALOG["titles"] if (t.get("download") or {}).get("status") == "paused"}
+CANCELLED = set()
+
 def queue(service):
     records, rid = [], 1
     for t in CATALOG["titles"]:
         d = t.get("download")
-        if not d or d["service"] != service:
+        if not d or d["service"] != service or t["id"] in CANCELLED:
             continue
+        d = {**d}
+        if f"dl{t['id']}" in PAUSED:
+            d["status"] = "paused"
+        elif d["status"] == "paused":
+            d["status"] = "downloading"
         size = 4.2e9 if service == "radarr" else 1.1e9
         base = {"title": f"{t['title']}.{t['year']}.2160p.WEB-DL", "size": size, "sizeleft": size * (1 - d["progress"]),
                 "timeleft": d["timeleft"], "status": d["status"], "trackedDownloadStatus": "ok",
@@ -139,7 +150,41 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def send_text(self, text, status=200):
+        data = text.encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_POST(self):
+        url = urlparse(self.path)
+        p = url.path.rstrip("/")
+        length = int(self.headers.get("Content-Length") or 0)
+        body = self.rfile.read(length).decode() if length else ""
+
+        # A fake qBittorrent: sign-in, version and the torrents behind the queues' downloadIds.
+        if p.startswith("/qbittorrent/api/v2/"):
+            action = p[len("/qbittorrent/api/v2/"):]
+            if action == "auth/login":
+                return self.send_text("Ok.")
+            if action in ("torrents/pause", "torrents/stop", "torrents/resume", "torrents/start"):
+                hashes = {h for h in parse_qs(body).get("hashes", [""])[0].split("|") if h}
+                if action in ("torrents/pause", "torrents/stop"):
+                    PAUSED.update(hashes)
+                else:
+                    PAUSED.difference_update(hashes)
+                return self.send_text("")
+        # Taking a download out of a Sonarr/Radarr queue (what Cancel does).
+        for service in ("sonarr", "radarr"):
+            if p == f"/{service}/api/v3/queue/bulk" and self.command == "DELETE":
+                ids = set(json.loads(body or "{}").get("ids", []))
+                for record in queue(service)["records"]:
+                    if record["id"] in ids:
+                        tid = (record.get("movie") or record.get("series"))["tmdbId"]
+                        CANCELLED.add(tid)
+                return self.send_json({})
         self.send_json({"message": "This is a read-only demo server."}, 403)
     do_DELETE = do_PUT = do_POST
 
@@ -147,6 +192,12 @@ class Handler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         p = url.path.rstrip("/")
+
+        if p == "/qbittorrent/api/v2/app/version":
+            return self.send_text("v5.0.1")
+        if p == "/qbittorrent/api/v2/torrents/info":
+            return self.send_json([{"hash": f"dl{t['id']}", "name": t["title"], "state": "downloading"}
+                                   for t in CATALOG["titles"] if t.get("download") and t["id"] not in CANCELLED])
 
         if p.startswith("/img/"):
             name = os.path.basename(p)

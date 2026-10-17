@@ -35,9 +35,10 @@ enum DemoMode {
 
     static var arrServices: [ArrService]? {
         guard let base else { return nil }
-        return [ArrKind.sonarr, .radarr].compactMap { kind in
+        return [ArrKind.sonarr, .radarr, .qbittorrent].compactMap { kind in
             URL(string: "\(base)/\(kind.rawValue)").map {
-                ArrService(kind: kind, name: kind.name, baseURL: $0, apiKey: "demo")
+                ArrService(kind: kind, name: kind.name, baseURL: $0, apiKey: "demo",
+                           username: kind == .qbittorrent ? "demo" : nil, password: kind == .qbittorrent ? "demo" : nil)
             }
         }
     }

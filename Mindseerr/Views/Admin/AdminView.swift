@@ -23,6 +23,7 @@ struct AdminView: View {
     @State private var showAddService = false
     @State private var serviceToRemove: ArrService?
     @State private var pendingDelete: MediaRequest?
+    @State private var downloadToCancel: ArrDownload?
     @State private var path = NavigationPath()
 
     private let pageSize = 20
@@ -38,7 +39,7 @@ struct AdminView: View {
                 VStack(alignment: .leading, spacing: 36) {
                     countsRow
                     servicesSection
-                    if !services.isEmpty { downloadsSection }
+                    if services.contains(where: { $0.kind != .qbittorrent }) { downloadsSection }
 
                     HStack(spacing: 30) {
                         Picker("Show", selection: $filter) {
@@ -105,6 +106,16 @@ struct AdminView: View {
         } message: { _ in
             Text("This removes the request from Seerr. Anything already downloaded stays on your server.")
         }
+        .confirmationDialog("Cancel this download?",
+                            isPresented: Binding(get: { downloadToCancel != nil },
+                                                 set: { if !$0 { downloadToCancel = nil } }),
+                            titleVisibility: .visible,
+                            presenting: downloadToCancel) { download in
+            Button("Cancel Download", role: .destructive) { cancel(download) }
+            Button("Keep Downloading", role: .cancel) {}
+        } message: { download in
+            Text("This removes \(download.title) from \(download.serviceName)'s queue and deletes the partial download from your download client. The request stays in Seerr.")
+        }
         .confirmationDialog(approveAllTitle, isPresented: $confirmApproveAll, titleVisibility: .visible) {
             Button("Approve All") { approveAll() }
             Button("Cancel", role: .cancel) {}
@@ -114,6 +125,21 @@ struct AdminView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(notice ?? "")
+        }
+    }
+
+    private func togglePause(_ download: ArrDownload, for request: MediaRequest) {
+        guard !busyIDs.contains(request.id) else { return }
+        busyIDs.insert(request.id)
+        Task {
+            defer { busyIDs.remove(request.id) }
+            do { try await monitor.togglePause(download) } catch { notice = AppState.friendly(error) }
+        }
+    }
+
+    private func cancel(_ download: ArrDownload) {
+        Task {
+            do { try await monitor.cancel(download) } catch { notice = AppState.friendly(error) }
         }
     }
 
@@ -157,7 +183,7 @@ struct AdminView: View {
                     }
                 }
                 Button { showAddService = true } label: {
-                    Label("Add Sonarr or Radarr", systemImage: "plus")
+                    Label("Add Download Service", systemImage: "plus")
                 }
             }
             ForEach(services.filter { serviceErrors[$0.id] != nil }) { service in
@@ -229,6 +255,9 @@ struct AdminView: View {
                         request: request,
                         busy: busyIDs.contains(request.id),
                         download: downloads.first { $0.matches(request.media) },
+                        canPause: downloads.first { $0.matches(request.media) }.map(monitor.canPause) ?? false,
+                        onTogglePause: { if let d = downloads.first(where: { $0.matches(request.media) }) { togglePause(d, for: request) } },
+                        onCancelDownload: { downloadToCancel = downloads.first { $0.matches(request.media) } },
                         onApprove: {
                             act(on: request, removeWhenDone: filter == .pending) { _ = try await $0.approve(requestID: request.id) }
                         },
@@ -367,6 +396,10 @@ struct AdminRequestRow: View {
     let busy: Bool
     /// The Sonarr/Radarr download for this request's title, if one is in a queue (shows a Downloading tag).
     var download: ArrDownload?
+    /// Whether the download can be paused and resumed (its torrent is on a connected qBittorrent server).
+    var canPause = false
+    var onTogglePause: () -> Void = {}
+    var onCancelDownload: () -> Void = {}
     let onApprove: () -> Void
     let onDecline: () -> Void
     let onRetry: () -> Void
@@ -412,6 +445,19 @@ struct AdminRequestRow: View {
                     }
                     if let route = request.route {
                         NavigationLink(value: route) { Label("Details", systemImage: "info.circle") }
+                    }
+                    // Controls for the download itself, only while the title is in a Sonarr/Radarr queue.
+                    if let download {
+                        if canPause {
+                            Button(action: onTogglePause) {
+                                Image(systemName: download.phase == .paused ? "play.fill" : "pause.fill")
+                            }
+                            .accessibilityLabel(download.phase == .paused ? "Resume download" : "Pause download")
+                        }
+                        Button(action: onCancelDownload) {
+                            Image(systemName: "slash.circle")
+                        }
+                        .accessibilityLabel("Cancel download")
                     }
                     Button(role: .destructive, action: onDelete) {
                         Label("Delete", systemImage: "trash")

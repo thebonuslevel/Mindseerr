@@ -4,6 +4,8 @@ import Foundation
 
 enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case sonarr, radarr
+    /// A download client rather than an *arr app: Mindseerr uses it to pause, resume and read torrents.
+    case qbittorrent
 
     var id: String { rawValue }
 
@@ -11,6 +13,7 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .sonarr: return "Sonarr"
         case .radarr: return "Radarr"
+        case .qbittorrent: return "qBittorrent"
         }
     }
 
@@ -22,17 +25,21 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
         switch self {
         case .sonarr: return 8989
         case .radarr: return 7878
+        case .qbittorrent: return 8080
         }
     }
 }
 
-/// A connected Sonarr or Radarr server.
+/// A connected Sonarr, Radarr or qBittorrent server.
 struct ArrService: Codable, Hashable, Identifiable, Sendable {
     var id = UUID()
     var kind: ArrKind
     var name: String
     var baseURL: URL
+    /// Sonarr and Radarr sign in with this key; qBittorrent uses `username` and `password` instead.
     var apiKey: String
+    var username: String?
+    var password: String?
 
     /// Turns what the user typed into a server address: adds http:// when there's no scheme and
     /// drops a trailing slash, keeping any base path (e.g. http://nas:8989/sonarr).
@@ -95,8 +102,13 @@ struct ArrDownload: Identifiable, Sendable {
     }
 
     let id: String
+    let serviceID: UUID
     let serviceName: String
     let kind: ArrKind
+    /// The download client's ID for this download: a torrent's info hash. Matches it to a qBittorrent torrent.
+    let downloadId: String?
+    /// The queue entries behind this download (a season pack has one per episode), for removing it.
+    let queueIds: [Int]
     let title: String
     /// "Season 1, Episode 3", "Season 1 · 10 episodes", etc. Nil for movies.
     let episodeLabel: String?
@@ -194,8 +206,11 @@ enum ArrClient {
         let title = first.movie?.title ?? first.series?.title ?? first.title ?? "Unknown title"
         return ArrDownload(
             id: "\(service.id.uuidString)-\(key)",
+            serviceID: service.id,
             serviceName: service.name,
             kind: service.kind,
+            downloadId: first.downloadId,
+            queueIds: records.map(\.id),
             title: title,
             episodeLabel: episodeLabel,
             tmdbId: first.movie?.tmdbId ?? first.series?.tmdbId,
@@ -261,16 +276,41 @@ enum ArrClient {
 
     // MARK: Plumbing
 
+    /// Takes a download out of the queue and deletes it from the download client too, without
+    /// blocklisting the release. The Seerr request is left alone.
+    static func cancel(_ download: ArrDownload, on service: ArrService) async throws {
+        struct Body: Encodable { let ids: [Int] }
+        _ = try await send("queue/bulk", method: "DELETE", from: service, query: [
+            .init(name: "removeFromClient", value: "true"),
+            .init(name: "blocklist", value: "false"),
+        ], body: try JSONEncoder().encode(Body(ids: download.queueIds)))
+    }
+
     private static func get<T: Decodable>(_ path: String, from service: ArrService,
                                           query: [URLQueryItem] = []) async throws -> T {
+        let data = try await send(path, method: "GET", from: service, query: query)
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a \(service.kind.name) server?")
+        }
+    }
+
+    private static func send(_ path: String, method: String, from service: ArrService,
+                             query: [URLQueryItem] = [], body: Data? = nil) async throws -> Data {
         var url = service.baseURL.appendingPathComponent("api/v3").appendingPathComponent(path)
         if !query.isEmpty, var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {
             components.queryItems = query
             url = components.url ?? url
         }
         var request = URLRequest(url: url)
+        request.httpMethod = method
         request.setValue(service.apiKey, forHTTPHeaderField: "X-Api-Key")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
 
         let data: Data
         let response: URLResponse
@@ -281,15 +321,10 @@ enum ArrClient {
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         switch status {
-        case 200..<300: break
+        case 200..<300: return data
         case 401, 403: throw APIError(status: status, message: "\(service.name) rejected the API key. Copy it again from Settings → General in \(service.kind.name).")
         case 404: throw APIError(status: status, message: "\(service.name) didn't recognize that address. If it uses a URL base (like /\(service.kind.rawValue)), include it.")
         default: throw APIError(status: status, message: "\(service.name) returned error \(status).")
-        }
-        do {
-            return try JSONDecoder().decode(T.self, from: data)
-        } catch {
-            throw APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a \(service.kind.name) server?")
         }
     }
 

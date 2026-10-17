@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// The connected Sonarr/Radarr servers and what they're downloading, shared by the whole app so
+/// The connected Sonarr/Radarr/qBittorrent servers and what they're downloading, shared by the whole app so
 /// posters, detail pages and the Admin tab all show the same progress.
 @MainActor
 @Observable
@@ -12,6 +12,10 @@ final class DownloadMonitor {
     private(set) var errors: [UUID: String] = [:]
     /// False until the first refresh after the services changed.
     private(set) var loaded = false
+    /// Which qBittorrent server holds each torrent (by lowercased info hash), so a download can be paused or resumed.
+    private(set) var torrentOwners: [String: UUID] = [:]
+
+    @ObservationIgnored private var qbitClients: [UUID: QBittorrentClient] = [:]
 
     private let refreshInterval: Duration = .seconds(10)
 
@@ -32,6 +36,8 @@ final class DownloadMonitor {
     func remove(_ service: ArrService) {
         services.removeAll { $0.id == service.id }
         errors[service.id] = nil
+        qbitClients[service.id] = nil
+        torrentOwners = torrentOwners.filter { $0.value != service.id }
         save()
     }
 
@@ -56,7 +62,38 @@ final class DownloadMonitor {
         return items.map(\.progress).reduce(0, +) / Double(items.count)
     }
 
+    // MARK: Controls
+
+    /// Whether Mindseerr can pause and resume this download: its torrent is on a connected qBittorrent server.
+    func canPause(_ download: ArrDownload) -> Bool {
+        guard let hash = download.downloadId?.lowercased(), torrentOwners[hash] != nil else { return false }
+        switch download.phase {
+        case .downloading, .queued, .paused, .delayed, .warning: return true
+        case .importing, .failed, .other: return false
+        }
+    }
+
+    /// Pauses a running download, or resumes a paused one.
+    func togglePause(_ download: ArrDownload) async throws {
+        guard let hash = download.downloadId?.lowercased(),
+              let owner = torrentOwners[hash], let client = qbitClients[owner] else { return }
+        if download.phase == .paused {
+            try await client.resume(hash: hash)
+        } else {
+            try await client.pause(hash: hash)
+        }
+        await refresh()
+    }
+
+    /// Cancels a download: removes it from the Sonarr/Radarr queue and deletes it from the download client.
+    func cancel(_ download: ArrDownload) async throws {
+        guard let service = services.first(where: { $0.id == download.serviceID }) else { return }
+        try await ArrClient.cancel(download, on: service)
+        await refresh()
+    }
+
     // MARK: Polling
+
 
     /// Refreshes the queues until cancelled. Run it with `.task(id: services)` so it restarts when
     /// services are added or removed.
@@ -65,6 +102,7 @@ final class DownloadMonitor {
         guard !services.isEmpty else {
             downloads = []
             errors = [:]
+            torrentOwners = [:]
             return
         }
         while !Task.isCancelled {
@@ -76,7 +114,9 @@ final class DownloadMonitor {
     /// Reads every service's queue at once. A service that can't be reached reports its error
     /// without hiding the others' downloads.
     func refresh() async {
-        let current = services
+        let current = services.filter { $0.kind != .qbittorrent }
+        let torrentServices = services.filter { $0.kind == .qbittorrent }
+        async let torrents = readTorrents(torrentServices)
         let results = await withTaskGroup(of: (UUID, Result<[ArrDownload], Error>).self) { group in
             for service in current {
                 group.addTask {
@@ -99,8 +139,26 @@ final class DownloadMonitor {
             case nil: break
             }
         }
+        let (owners, torrentFailures) = await torrents
         downloads = fresh
-        errors = failures
+        errors = failures.merging(torrentFailures) { first, _ in first }
+        torrentOwners = owners
         loaded = true
+    }
+
+    /// Reads which torrents each qBittorrent server holds. One that can't be reached reports its error.
+    private func readTorrents(_ services: [ArrService]) async -> ([String: UUID], [UUID: String]) {
+        var owners: [String: UUID] = [:]
+        var failures: [UUID: String] = [:]
+        for service in services {
+            let client = qbitClients[service.id] ?? QBittorrentClient(service: service)
+            qbitClients[service.id] = client
+            do {
+                for hash in try await client.torrentHashes() { owners[hash] = service.id }
+            } catch {
+                failures[service.id] = AppState.friendly(error)
+            }
+        }
+        return (owners, failures)
     }
 }
