@@ -56,7 +56,8 @@ Each service connects the way it allows. **Trakt** and **TMDB** sign in with a c
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
 - **Admin tab** for admins and users with the Manage Requests permission: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
-- **Pure black (#000000) background** everywhere, so OLED pixels stay off behind the UI.
+- **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
+- **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
 - **Discover**: Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
 - **Search** across movies and series with the tvOS search keyboard.
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
