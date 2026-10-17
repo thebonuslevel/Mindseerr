@@ -6,6 +6,36 @@
 
 Oppresseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev) (the merged Overseerr + Jellyseerr project).
 
+## Screenshots
+
+*Shown in the Despair theme. The download in these shots is a real Radarr download, paused at 2%.*
+
+### Admin panel: Sonarr & Radarr
+
+![Admin panel with request counts, connected Sonarr and Radarr services, and an active download](docs/screenshots/admin-download-services.png)
+
+Connect your **Sonarr** and **Radarr** servers right from the Admin tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
+
+**Active Downloads** then shows everything in their queues, matched to the Seerr request it came from: who asked for it, which server is fetching it, a progress bar, status and time left. Series show which season and episode is downloading. The list refreshes every 10 seconds.
+
+### Admin panel: progress on requests
+
+![Admin request list where a request shows a download progress line under its status badges](docs/screenshots/admin-request-progress.png)
+
+The request list knows what's downloading too. Any request whose title is in a Sonarr or Radarr queue gets a progress line under its status badges, so you can tell an approved request that's on its way from one that's stuck.
+
+### Detail page
+
+![Movie detail page with a download progress bar on a frosted panel under the title](docs/screenshots/detail-progress.png)
+
+Open a title that's downloading and its progress sits right under the title on a frosted panel that stays readable over any backdrop: status, percent, time left and which server has it. For a series with several episodes downloading, each gets its own line labeled with its season and episode.
+
+### Discover: progress on posters
+
+![Discover rows where a requested movie's poster has a thin progress bar along its bottom edge](docs/screenshots/discover-poster-progress.png)
+
+While browsing, posters of titles that are downloading get a thin progress bar along their bottom edge, drawn in the current theme's highlight color, on Discover, in expanded sections and in Search. No need to open anything to see what's on its way.
+
 ## Features
 
 - **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
