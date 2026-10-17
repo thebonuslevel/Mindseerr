@@ -64,7 +64,7 @@
     {"id": 9104, "type": "tv", "tvdb": 8104, "title": "Brine & Bone", "year": 2026, "seasons": [6], "genres": ["Crime"], "vote": 0,
      "tagline": "The sea gives back what it takes.", "overview": "A coroner in a fishing port starts finding the same tattoo on every body that washes ashore.",
      "colors": ["5A6E7A", "141C22"], "status": "pending", "requestedBy": 2, "requestSeasons": [1], "pendingRequest": true},
-    {"id": 9105, "type": "tv", "tvdb": 8105, "title": "Lantern Street", "year": 2025, "seasons": [10], "genres": ["Drama"], "vote": 7.7,
+    {"id": 9105, "type": "tv", "tvdb": 8105, "title": "Lantern Street", "year": 2025, "seasons": [10, 10, 8, 8, 6], "genres": ["Drama"], "vote": 7.7,
      "tagline": "Every window tells a story.", "overview": "The lives of one city block, told one lit window at a time.",
      "colors": ["D69A3C", "3A2008"], "status": null},
     {"id": 9106, "type": "tv", "tvdb": 8106, "title": "Signal Fires", "year": 2026, "seasons": [8], "genres": ["Action & Adventure"], "vote": 0,

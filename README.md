@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="docs/logo.png" alt="Oppresseerr logo" width="200">
+  <img src="docs/logo.png" alt="Mindseerr logo" width="200">
 </p>
 
-# Oppresseerr
+# Mindseerr
 
-Oppresseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev) (the merged Overseerr + Jellyseerr project).
+Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev) (the merged Overseerr + Jellyseerr project).
 
 ## Screenshots
 
@@ -48,7 +48,7 @@ While browsing, posters of titles that are downloading get a thin progress bar a
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
 - **My Requests**: everything you've requested with its approval and availability status.
-- **Watchlists**: import your Trakt and Letterboxd watchlists, see which titles are already on your server, and request the rest one at a time or all at once.
+- **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest one at a time or all at once.
 - Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
 
 ## Requirements
@@ -61,18 +61,18 @@ While browsing, posters of titles that are downloading get a thin progress bar a
 ## Build & run
 
 ```sh
-cd Oppresseerr
+cd Mindseerr
 xcodegen generate
-open Oppresseerr.xcodeproj
+open Mindseerr.xcodeproj
 ```
 
-1. Select the **Oppresseerr** target → *Signing & Capabilities* → pick your Team. Change the bundle ID from `com.example.oppresseerr` if you like (or edit `project.yml` and regenerate).
+1. Select the **Mindseerr** target → *Signing & Capabilities* → pick your Team. Change the bundle ID from `com.example.mindseerr` if you like (or edit `project.yml` and regenerate).
 2. Choose an Apple TV simulator or your paired Apple TV and press **Run**.
 3. Enter your server address (e.g. `http://192.168.1.10:5055` or `https://seerr.example.com`), then sign in with the Plex code.
 
 To run on a real Apple TV: on the Apple TV open *Settings → Remotes and Devices → Remote App and Devices*, then in Xcode open *Window → Devices and Simulators* and pair it.
 
-## Watchlists (Trakt, Letterboxd)
+## Watchlists (Trakt, Letterboxd, TMDB, TheTVDB)
 
 The **Watchlists** tab imports a watchlist, matches every title to your Seerr server and shows whether it's available, requested or missing. Open a title to request it, or use **Request All Missing**. Series are requested for every season that isn't already available or requested.
 
@@ -80,45 +80,56 @@ The **Watchlists** tab imports a watchlist, matches every title to your Seerr se
 |---|---|---|
 | Trakt | Real sign-in: a code on the TV, approved on Trakt's activation page | Your Trakt app's Client ID in `project.yml` (below) |
 | Letterboxd | Reads your public watchlist page by username | Watchlist set to public |
+| TMDB | Real sign-in: scan a QR code and approve on themoviedb.org | Your own TMDB API Read Access Token, entered in the app |
+| TheTVDB | Your TheTVDB PIN; imports your favorites (TheTVDB's watchlist) | Your own TheTVDB API key and subscriber PIN, entered in the app |
 
-Letterboxd's API is invite-only, so it doesn't allow an app sign-in. Oppresseerr reads the public watchlist page and never asks for your password. If Letterboxd changes its pages or blocks the request, import the watchlist into Trakt on trakt.tv and use the Trakt tab instead.
+Letterboxd's API is invite-only, so it doesn't allow an app sign-in. Mindseerr reads the public watchlist page and never asks for your password. If Letterboxd changes its pages or blocks the request, import the watchlist into Trakt on trakt.tv and use the Trakt tab instead.
 
 ### Setting up Trakt
 
-1. At [developer.trakt.tv](https://developer.trakt.tv/apps/new), create a new app named Oppresseerr. For the **Redirect URI**, use `urn:ietf:wg:oauth:2.0:oob`. Trakt warns about it because it's meant for web sign-ins, but Oppresseerr signs in with a code and never redirects. If Trakt won't save it, use any `https://` address you own instead. (Trakt may ask you to verify your account with GitHub first.)
+1. At [developer.trakt.tv](https://developer.trakt.tv/apps/new), create a new app named Mindseerr. For the **Redirect URI**, use `urn:ietf:wg:oauth:2.0:oob`. Trakt warns about it because it's meant for web sign-ins, but Mindseerr signs in with a code and never redirects. If Trakt won't save it, use any `https://` address you own instead. (Trakt may ask you to verify your account with GitHub first.)
 2. In `project.yml`, paste the **Client ID** into `TRAKT_CLIENT_ID`. Leave `TRAKT_CLIENT_SECRET` empty: Trakt stopped issuing secrets to new apps in October 2026, and the TV code sign-in doesn't need one. If you registered an `https://` redirect, put the same address in `TRAKT_REDIRECT_URI`; it's sent when the app renews your sign-in and must match.
 3. Run `xcodegen generate` and build again.
 
 The Client ID is built into the app. That's expected for TV apps and isn't a secret on its own.
+
+### Setting up TMDB and TheTVDB
+
+Each person enters their own key on the service's tab in the app; it's kept in the Keychain on that Apple TV.
+
+- **TMDB:** at [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api), request a free API key and paste the long **API Read Access Token**, then sign in with the QR code.
+- **TheTVDB:** register a project at [thetvdb.com/api-information](https://thetvdb.com/api-information) for an API key, and take your PIN from [thetvdb.com/dashboard/account/apikey](https://thetvdb.com/dashboard/account/apikey) (PINs come with a subscription).
+
+To ship a build with a key already inside, set `TMDB_READ_ACCESS_TOKEN` or `TVDB_API_KEY` in `project.yml` and run `xcodegen generate`. A key entered in the app takes priority.
 
 ## Make an IPA
 
 On your Mac, in Terminal:
 
 ```sh
-cd Oppresseerr
+cd Mindseerr
 ./make-ipa.sh
 ```
 
-It generates the project if needed, archives a Release build and writes `Oppresseerr.ipa` next to the script.
+It generates the project if needed, archives a Release build and writes `Mindseerr.ipa` next to the script.
 
 - **Signed (default)** uses the Team you picked in Xcode. It installs on Apple TVs registered to your team. Pair yours first (Xcode → Window → Devices and Simulators), then install the IPA from that same window: select the Apple TV, click **+** under *Installed Apps* and pick the file.
 - **`TEAM=ABCDE12345 ./make-ipa.sh`** passes your team ID directly, if Xcode lost the Team setting after `xcodegen generate`.
-- **`./make-ipa.sh --unsigned`** makes `Oppresseerr-unsigned.ipa` for signing later with another tool.
+- **`./make-ipa.sh --unsigned`** makes `Mindseerr-unsigned.ipa` for signing later with another tool.
 
 With a free Apple ID the signed app expires after 7 days; run the script again to renew it.
 
 ## Project layout
 
 ```
-Oppresseerr/
-├── make-ipa.sh                Builds Oppresseerr.ipa (see above)
+Mindseerr/
+├── make-ipa.sh                Builds Mindseerr.ipa (see above)
 ├── project.yml                  XcodeGen spec (tvOS 17, ATS allows http for LAN servers)
-└── Oppresseerr/
+└── Mindseerr/
     ├── App/                     App entry, RootView, tabs, AppState (session & phase)
     ├── Models/                  Codable types for media, requests, users
     ├── Networking/              SeerrClient (actor), PlexAuth (PIN flow), Keychain
-    │   └── Watchlists/          Trakt client, Letterboxd importer, WatchlistStore
+    │   └── Watchlists/          Trakt, TMDB and TheTVDB clients, Letterboxd importer, WatchlistStore
     └── Views/
         ├── Onboarding/          Server address, sign-in (Plex, Jellyfin/Emby, Seerr account, API key)
         ├── Admin/               Approve, decline, retry and delete requests

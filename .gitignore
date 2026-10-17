@@ -5,3 +5,5 @@ DerivedData/
 build/
 .DS_Store
 *.ipa
+Support/TopShelf-Info.plist
+Support/*.entitlements

@@ -1,4 +1,4 @@
-name: Oppresseerr
+name: Mindseerr
 options:
   bundleIdPrefix: com.example
   deploymentTarget:
@@ -12,26 +12,40 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
 
 targets:
-  Oppresseerr:
+  Mindseerr:
     type: application
     platform: tvOS
     sources:
-      - Oppresseerr
+      - Mindseerr
+      - Shared
+    dependencies:
+      - target: MindseerrTopShelf
+    entitlements:
+      path: Support/Mindseerr.entitlements
+      properties:
+        # Shared with the Top Shelf extension, which shows the trending titles the app saves there.
+        com.apple.security.application-groups: [group.com.example.mindseerr]
     info:
       path: Support/Info.plist
       properties:
-        CFBundleDisplayName: Oppresseerr
+        CFBundleDisplayName: Mindseerr
         UIRequiredDeviceCapabilities: [arm64]
-        NSLocalNetworkUsageDescription: Oppresseerr connects to your media request server on your local network.
+        NSLocalNetworkUsageDescription: Mindseerr connects to your media request server on your local network.
         TraktClientID: "$(TRAKT_CLIENT_ID)"
         TraktClientSecret: "$(TRAKT_CLIENT_SECRET)"
         TraktRedirectURI: "$(TRAKT_REDIRECT_URI)"
+        TMDBReadAccessToken: "$(TMDB_READ_ACCESS_TOKEN)"
+        TVDBAPIKey: "$(TVDB_API_KEY)"
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
           NSAllowsLocalNetworking: true
+        # mindseerr://media/<movie|tv>/<id> — used by Top Shelf items to open a title.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.example.mindseerr
+            CFBundleURLSchemes: [mindseerr]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.oppresseerr
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.mindseerr
         TARGETED_DEVICE_FAMILY: "3"
         CODE_SIGN_STYLE: Automatic
         ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"
@@ -44,3 +58,34 @@ targets:
         TRAKT_CLIENT_SECRET: ""
         # Must match the Redirect URI on your Trakt app (only used when renewing the sign-in).
         TRAKT_REDIRECT_URI: "urn:ietf:wg:oauth:2.0:oob"
+        # Optional: a TMDB "API Read Access Token" (themoviedb.org/settings/api) built into the app. People can
+        # also enter their own on the TMDB tab, which takes priority. Run xcodegen generate after changing it.
+        TMDB_READ_ACCESS_TOKEN: ""
+        # Optional: a TheTVDB API key (thetvdb.com/api-information) built into the app. People can also enter
+        # their own on the TheTVDB tab, which takes priority.
+        TVDB_API_KEY: ""
+
+  # Top Shelf: trending titles above the apps when Mindseerr is in the top row of the home screen.
+  MindseerrTopShelf:
+    type: app-extension
+    platform: tvOS
+    sources:
+      - TopShelf
+      - Shared
+    entitlements:
+      path: Support/TopShelf.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.example.mindseerr]
+    info:
+      path: Support/TopShelf-Info.plist
+      properties:
+        CFBundleDisplayName: Mindseerr
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.tv-top-shelf
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ContentProvider
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.mindseerr.topshelf
+        TARGETED_DEVICE_FAMILY: "3"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""

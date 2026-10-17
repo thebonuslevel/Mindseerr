@@ -3,7 +3,7 @@
 
     python3 server.py [port] [art dir]     (defaults: 8765, /tmp/oppdemo/img)
 
-Then launch a Debug build with OPPRESSEERR_DEMO=http://127.0.0.1:<port>. Read-only: anything that
+Then launch a Debug build with MINDSEERR_DEMO=http://127.0.0.1:<port>. Read-only: anything that
 would change data (approve, request, delete...) is refused.
 """
 import json, os, sys
@@ -17,6 +17,35 @@ CATALOG = json.load(open(os.path.join(HERE, "catalog.json")))
 TITLES = {t["id"]: t for t in CATALOG["titles"]}
 USERS = {int(k): v for k, v in CATALOG["users"].items()}
 MEDIA_STATUS = {"pending": 2, "processing": 3, "available": 5}
+PEOPLE = ["Ada Morrow", "Felix Okafor", "June Halloway", "Ravi Castellan", "Odette Brandt", "Silas Wren",
+          "Mina Calder", "Tobias Reyes", "Clara Vance", "Hugo Lindqvist", "Ines Marlowe", "Dex Adebayo"]
+ROLES = ["The Keeper", "Captain Hale", "Dr. Ivers", "Nell", "The Stranger", "Marta", "Young Tom", "Inspector Rook"]
+
+# Radarr/Sonarr as Seerr lists them: a standard and a 4K server of each.
+SERVICES = {
+    "radarr": [
+        {"id": 0, "name": "Radarr", "is4k": False, "isDefault": True, "activeProfileId": 4, "activeDirectory": "/data/movies"},
+        {"id": 1, "name": "Radarr 4K", "is4k": True, "isDefault": True, "activeProfileId": 5, "activeDirectory": "/data/movies-4k"},
+    ],
+    "sonarr": [
+        {"id": 0, "name": "Sonarr", "is4k": False, "isDefault": True, "activeProfileId": 4, "activeDirectory": "/data/tv",
+         "activeLanguageProfileId": 1},
+        {"id": 1, "name": "Sonarr 4K", "is4k": True, "isDefault": True, "activeProfileId": 5, "activeDirectory": "/data/tv-4k",
+         "activeLanguageProfileId": 1},
+    ],
+}
+PROFILES = [{"id": 1, "name": "Any"}, {"id": 3, "name": "HD-720p"}, {"id": 4, "name": "HD-1080p"}, {"id": 5, "name": "Ultra-HD"}]
+
+def credits(t):
+    n = t["id"] % len(PEOPLE)
+    order = PEOPLE[n:] + PEOPLE[:n]
+    cast = [{"id": 100 + i, "name": name, "character": ROLES[(i + t["id"]) % len(ROLES)], "order": i, "profilePath": None}
+            for i, name in enumerate(order[:8])]
+    crew = [{"id": 200 + n, "name": order[8], "job": "Director", "department": "Directing", "profilePath": None},
+            {"id": 201 + n, "name": order[9], "job": "Screenplay", "department": "Writing", "profilePath": None},
+            {"id": 202 + n, "name": order[10], "job": "Producer", "department": "Production", "profilePath": None},
+            {"id": 203 + n, "name": order[11], "job": "Original Music Composer", "department": "Sound", "profilePath": None}]
+    return {"cast": cast, "crew": crew}
 
 def user(uid):
     return {"id": uid, "displayName": USERS[uid], "permissions": 2 if uid == 1 else 32}
@@ -44,7 +73,11 @@ def result(t):
 
 def detail(t):
     d = result(t)
-    d.update(tagline=t["tagline"], genres=[{"id": i, "name": g} for i, g in enumerate(t["genres"])])
+    d.update(tagline=t["tagline"], genres=[{"id": i, "name": g} for i, g in enumerate(t["genres"])],
+             relatedVideos=[{"key": f"demo{t['id']}", "name": "Official Trailer", "type": "Trailer", "site": "YouTube"}],
+             credits=credits(t))
+    if t["type"] == "tv":
+        d["createdBy"] = [{"id": 300 + t["id"], "name": PEOPLE[(t["id"] + 5) % len(PEOPLE)], "profilePath": None}]
     if t["type"] == "movie":
         d["runtime"] = t["runtime"]
     else:
@@ -149,6 +182,30 @@ class Handler(BaseHTTPRequestHandler):
             term = q.get("query", "").lower()
             items = [result(t) for t in CATALOG["titles"] if term in t["title"].lower()]
             return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(items), "results": items})
+        for service in ("radarr", "sonarr"):
+            if p == f"/service/{service}":
+                return self.send_json(SERVICES[service])
+            if p.startswith(f"/service/{service}/"):
+                sid = int(p.split("/")[3])
+                server = next((x for x in SERVICES[service] if x["id"] == sid), None)
+                if not server:
+                    return self.send_json({"message": "no such server"}, 404)
+                folder = server["activeDirectory"]
+                body = {"server": server, "profiles": PROFILES,
+                        "rootFolders": [{"id": 1, "path": folder, "freeSpace": 3.2e12},
+                                        {"id": 2, "path": folder + "-archive", "freeSpace": 9.8e11}], "tags": []}
+                if service == "sonarr":
+                    body["languageProfiles"] = [{"id": 1, "name": "English"}, {"id": 2, "name": "Original"}]
+                return self.send_json(body)
+        for kind in ("movie", "tv"):
+            for related in ("recommendations", "similar"):
+                if p.startswith(f"/{kind}/") and p.endswith(f"/{related}"):
+                    tid = int(p.split("/")[2])
+                    same = [x for x in CATALOG["titles"] if x["type"] == kind and x["id"] != tid]
+                    shift = (tid + (0 if related == "recommendations" else 3)) % max(1, len(same))
+                    picks = (same[shift:] + same[:shift])[:7]
+                    return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(picks),
+                                           "results": [result(x) for x in picks]})
         for kind in ("movie", "tv"):
             if p.startswith(f"/{kind}/"):
                 t = TITLES.get(int(p.split("/")[2]))

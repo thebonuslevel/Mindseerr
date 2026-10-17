@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds Oppresseerr.ipa for Apple TV. Run on a Mac with Xcode installed.
+# Builds Mindseerr.ipa for Apple TV. Run on a Mac with Xcode installed.
 #
 #   ./make-ipa.sh               Signed with your Apple developer team. Installs on Apple TVs
 #                               registered to that team (yours, once it's paired with Xcode).
@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP=Oppresseerr
+APP=Mindseerr
 PROJECT="$APP.xcodeproj"
 BUILD="build"
 
