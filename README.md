@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" alt="Oppresseerr logo" width="200">
+</p>
+
 # Oppresseerr
 
 Oppresseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev) (the merged Overseerr + Jellyseerr project).
