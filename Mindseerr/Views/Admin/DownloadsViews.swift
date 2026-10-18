@@ -168,19 +168,21 @@ struct DownloadRow: View {
     private var route: MediaRoute? { download.route ?? request?.route }
 
     var body: some View {
+        // One panel holds the title and its buttons; selecting the title opens it, and the buttons sit inside the panel.
         HStack(spacing: 20) {
             if let route {
                 NavigationLink(value: route) { content }
+                    .buttonStyle(DownloadLinkStyle())
             } else {
                 // Still focusable, so the list can be scrolled with the remote.
                 content
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 16)
-                    .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
+                    .padding(12)
                     .focusable()
             }
             DownloadControlButtons(downloads: [download], onCancel: onCancel)
         }
+        .padding(14)
+        .background(Color.primary.opacity(0.1), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .focusSection()
         .task(id: route) {
             if let route { detail = try? await app.api.detail(for: route) }
@@ -237,6 +239,20 @@ struct DownloadRow: View {
         }
         parts.append(download.serviceName)
         return parts.joined(separator: "  ·  ")
+    }
+}
+
+/// The look of a title inside a download panel: no platter of its own, just a soft highlight while focused.
+private struct DownloadLinkStyle: ButtonStyle {
+    @Environment(\.isFocused) private var focused
+    @Environment(\.appTheme) private var theme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(focused ? theme.highlight.opacity(0.3) : .clear))
+            .animation(.easeOut(duration: 0.15), value: focused)
     }
 }
 
