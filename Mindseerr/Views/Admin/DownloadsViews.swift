@@ -122,9 +122,6 @@ struct DownloadRow: View {
     let onCancel: () -> Void
 
     @State private var detail: MediaDetail?
-    @State private var pausing = false
-    @State private var notice: String?
-
     /// Sonarr v3 doesn't report TMDB IDs, so fall back to the matched request's title.
     private var route: MediaRoute? { download.route ?? request?.route }
 
@@ -140,45 +137,12 @@ struct DownloadRow: View {
                     .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16))
                     .focusable()
             }
-            if app.downloads.canPause(download) { pauseButton }
-            cancelButton
+            DownloadControlButtons(downloads: [download], onCancel: onCancel)
         }
         .focusSection()
         .task(id: route) {
             if let route { detail = try? await app.api.detail(for: route) }
         }
-        .alert("Download", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(notice ?? "")
-        }
-    }
-
-    /// Takes the download out of the queue and the download client (after a confirmation on the Admin screen).
-    private var cancelButton: some View {
-        Button(action: onCancel) {
-            Image(systemName: "slash.circle")
-        }
-        .accessibilityLabel("Cancel download")
-    }
-
-    /// Pauses the download in qBittorrent, or resumes it when it's paused.
-    private var pauseButton: some View {
-        Button {
-            guard !pausing else { return }
-            pausing = true
-            Task {
-                defer { pausing = false }
-                do { try await app.downloads.togglePause(download) } catch { notice = AppState.friendly(error) }
-            }
-        } label: {
-            if pausing {
-                ProgressView()
-            } else {
-                Image(systemName: download.phase == .paused ? "play.fill" : "pause.fill")
-            }
-        }
-        .accessibilityLabel(download.phase == .paused ? "Resume download" : "Pause download")
     }
 
     private var content: some View {
@@ -287,6 +251,53 @@ struct DownloadPhaseBadge: View {
         case .warning: return .orange
         case .failed: return .red
         case .other: return .gray
+        }
+    }
+}
+
+// MARK: - Controls
+
+/// Pause/resume and cancel buttons for one title's downloads. Pause only shows when Mindseerr can control the
+/// torrent (it's on a connected qBittorrent); cancel always works through Sonarr/Radarr and asks the caller to confirm.
+struct DownloadControlButtons: View {
+    @Environment(AppState.self) private var app
+    let downloads: [ArrDownload]
+    let onCancel: () -> Void
+
+    @State private var pausing = false
+    @State private var notice: String?
+
+    private var paused: Bool { downloads.allSatisfy { $0.phase == .paused } }
+
+    var body: some View {
+        HStack(spacing: 20) {
+            if app.downloads.canPause(downloads) {
+                Button {
+                    guard !pausing else { return }
+                    pausing = true
+                    Task {
+                        defer { pausing = false }
+                        do { try await app.downloads.togglePause(downloads) } catch { notice = AppState.friendly(error) }
+                    }
+                } label: {
+                    if pausing {
+                        ProgressView()
+                    } else {
+                        Image(systemName: paused ? "play.fill" : "pause.fill")
+                    }
+                }
+                .accessibilityLabel(paused ? "Resume download" : "Pause download")
+            }
+            Button(action: onCancel) {
+                Image(systemName: "slash.circle")
+            }
+            .accessibilityLabel("Cancel download")
+        }
+        .fixedSize()
+        .alert("Download", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(notice ?? "")
         }
     }
 }

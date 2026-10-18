@@ -73,23 +73,44 @@ final class DownloadMonitor {
         }
     }
 
-    /// Pauses a running download, or resumes a paused one.
-    func togglePause(_ download: ArrDownload) async throws {
-        guard let hash = download.downloadId?.lowercased(),
-              let owner = torrentOwners[hash], let client = qbitClients[owner] else { return }
-        if download.phase == .paused {
-            try await client.resume(hash: hash)
-        } else {
-            try await client.pause(hash: hash)
+    /// Whether any of these downloads can be paused or resumed.
+    func canPause(_ downloads: [ArrDownload]) -> Bool {
+        downloads.contains { canPause($0) }
+    }
+
+    /// Pauses running downloads, or resumes them when every one is already paused.
+    func togglePause(_ downloads: [ArrDownload]) async throws {
+        let controllable = downloads.filter { canPause($0) }
+        let resume = controllable.allSatisfy { $0.phase == .paused }
+        // A season pack is several entries with one torrent: only touch each torrent once.
+        var done: Set<String> = []
+        for download in controllable {
+            guard let hash = download.downloadId?.lowercased(), done.insert(hash).inserted,
+                  let owner = torrentOwners[hash], let client = qbitClients[owner] else { continue }
+            if resume {
+                try await client.resume(hash: hash)
+            } else if download.phase != .paused {
+                try await client.pause(hash: hash)
+            }
         }
         await refresh()
     }
 
-    /// Cancels a download: removes it from the Sonarr/Radarr queue and deletes it from the download client.
-    func cancel(_ download: ArrDownload) async throws {
-        guard let service = services.first(where: { $0.id == download.serviceID }) else { return }
-        try await ArrClient.cancel(download, on: service)
+    func togglePause(_ download: ArrDownload) async throws {
+        try await togglePause([download])
+    }
+
+    /// Cancels downloads: removes them from the Sonarr/Radarr queue and deletes them from the download client.
+    func cancel(_ downloads: [ArrDownload]) async throws {
+        for download in downloads {
+            guard let service = services.first(where: { $0.id == download.serviceID }) else { continue }
+            try await ArrClient.cancel(download, on: service)
+        }
         await refresh()
+    }
+
+    func cancel(_ download: ArrDownload) async throws {
+        try await cancel([download])
     }
 
     // MARK: Polling
