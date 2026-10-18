@@ -6,19 +6,32 @@ struct SearchView: View {
     @State private var results: [MediaResult] = []
     @State private var loading = false
     @State private var error: String?
+    @State private var path = NavigationPath()
+
+    private static let topID = "search-top"
 
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
 
     var body: some View {
-        NavigationStack {
+        ScrollViewReader { scroll in
+        NavigationStack(path: $path) {
             ScrollView {
                 content
                     .frame(maxWidth: .infinity)
+                    .id(Self.topID)
             }
             .themedBackground()
             .searchable(text: $query, prompt: "Movies and series")
             .task(id: query) { await runSearch() }
             .mediaDestinations()
+        }
+        // Leaving the tab closes any open title, clears the search and scrolls to the top, so coming back shows
+        // the empty Search page. (On the stack itself: a pushed title also hides the results, which mustn't reset anything.)
+        .onDisappear {
+            path = NavigationPath()
+            query = ""
+            scroll.scrollTo(Self.topID, anchor: .top)
+        }
         }
     }
 
