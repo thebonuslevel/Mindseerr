@@ -41,7 +41,8 @@ enum DemoMode {
             .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
         return [ArrKind.sonarr, .radarr, .qbittorrent].filter { wanted?.contains($0.rawValue) ?? true }.compactMap { kind in
             URL(string: "\(base)/\(kind.rawValue)").map {
-                ArrService(kind: kind, name: kind.name, baseURL: $0, apiKey: kind == .qbittorrent ? "qbt_demo" : "demo")
+                ArrService(kind: kind, name: kind.name, baseURL: $0, apiKey: "demo",
+                           username: kind == .qbittorrent ? "demo" : nil, password: kind == .qbittorrent ? "demo" : nil)
             }
         }
     }

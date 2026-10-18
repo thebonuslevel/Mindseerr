@@ -36,8 +36,10 @@ struct ArrService: Codable, Hashable, Identifiable, Sendable {
     var kind: ArrKind
     var name: String
     var baseURL: URL
-    /// The API key: Sonarr and Radarr's, or one created in qBittorrent (5.2 or newer).
+    /// Sonarr and Radarr sign in with this key; qBittorrent uses `username` and `password` instead.
     var apiKey: String
+    var username: String?
+    var password: String?
 
     /// Turns what the user typed into a server address: adds http:// when there's no scheme and
     /// drops a trailing slash, keeping any base path (e.g. http://nas:8989/sonarr).

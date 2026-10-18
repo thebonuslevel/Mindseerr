@@ -34,25 +34,27 @@ struct QBitTorrent: Decodable, Sendable {
     }
 }
 
-/// Talks to a qBittorrent server through its Web API, signed with an API key (qBittorrent 5.2 or newer). Mindseerr uses it to pause and resume the
+/// Talks to a qBittorrent server through its Web API (v4.1+). Mindseerr uses it to pause and resume the
 /// torrents that Sonarr and Radarr are downloading, matched by the torrent's info hash.
 ///
+/// One client per server: each keeps its own session, since qBittorrent signs in with a cookie.
 actor QBittorrentClient {
     private let service: ArrService
     private let session: URLSession
+    private var signedIn = false
 
     init(service: ArrService) {
         self.service = service
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 15
-        config.httpCookieStorage = nil   // the API key signs every request; no session cookie is needed
         session = URLSession(configuration: config)
     }
 
     // MARK: - Reading
 
-    /// Checks the address and API key. Returns the server's version, or throws a readable error.
+    /// Checks the address and sign-in. Returns the server's version, or throws a readable error.
     func checkConnection() async throws -> String {
+        try await login()
         let data = try await call("app/version", method: "GET")
         return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -92,11 +94,38 @@ actor QBittorrentClient {
 
     // MARK: - Plumbing
 
+    private func login() async throws {
+        let (data, status) = try await raw("auth/login", method: "POST", form: [
+            "username": service.username ?? "",
+            "password": service.password ?? "",
+        ])
+        // Success is "200 Ok." on older versions and an empty "204 No Content" on newer ones; a wrong
+        // username or password is "200 Fails." (or a 401/403).
+        guard (200..<300).contains(status) else {
+            throw failure(status: status)
+        }
+        if String(decoding: data, as: UTF8.self).contains("Fails") {
+            throw APIError(status: 401, message: "\(service.name) rejected the username or password.")
+        }
+        signedIn = true
+    }
+
+    /// A request that signs in first if needed and once more if the session has expired.
     private func call(_ path: String, method: String, form: [String: String]? = nil) async throws -> Data {
+        if !signedIn { try await login() }
+        var (data, status) = try await raw(path, method: method, form: form)
+        if status == 403 {
+            try await login()
+            (data, status) = try await raw(path, method: method, form: form)
+        }
+        guard (200..<300).contains(status) else { throw failure(status: status) }
+        return data
+    }
+
+    private func raw(_ path: String, method: String, form: [String: String]? = nil) async throws -> (Data, Int) {
         let url = service.baseURL.appendingPathComponent("api/v2").appendingPathComponent(path)
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.setValue("Bearer \(service.apiKey)", forHTTPHeaderField: "Authorization")
         // qBittorrent's CSRF protection wants the request to say which page it came from.
         request.setValue(service.baseURL.absoluteString, forHTTPHeaderField: "Referer")
         request.setValue(service.baseURL.absoluteString, forHTTPHeaderField: "Origin")
@@ -104,23 +133,18 @@ actor QBittorrentClient {
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
             request.httpBody = Data(Self.encode(form).utf8)
         }
-        let data: Data
-        let status: Int
         do {
-            let (body, response) = try await session.data(for: request)
-            data = body
-            status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let (data, response) = try await session.data(for: request)
+            return (data, (response as? HTTPURLResponse)?.statusCode ?? 0)
         } catch let error as URLError where error.code != .cancelled {
             throw APIError(status: 0, message: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port.")
         }
-        guard (200..<300).contains(status) else { throw failure(status: status) }
-        return data
     }
 
     private func failure(status: Int) -> APIError {
         switch status {
         case 401, 403:
-            return APIError(status: status, message: "\(service.name) rejected the API key. Create one in qBittorrent under Tools → Options → Web UI → Authentication. API keys need qBittorrent 5.2 or newer.")
+            return APIError(status: status, message: "\(service.name) refused the sign-in. Check the username and password, and that the Web UI is enabled in qBittorrent.")
         case 404:
             return APIError(status: status, message: "\(service.name) didn't recognize that address. Use the Web UI address, like http://192.168.1.10:8080.")
         default:

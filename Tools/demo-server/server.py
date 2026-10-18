@@ -195,10 +195,19 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length).decode() if length else ""
 
-        # A fake qBittorrent (API key auth): version and the torrents behind the queues' downloadIds.
+        # A fake qBittorrent: sign-in, version and the torrents behind the queues' downloadIds.
         if p.startswith("/qbittorrent/api/v2/"):
             action = p[len("/qbittorrent/api/v2/"):]
-            if not self.headers.get("Authorization", "").startswith("Bearer qbt_"):
+            if action == "auth/login":
+                form = parse_qs(body)
+                if form.get("username") != ["demo"] or form.get("password") != ["demo"]:
+                    return self.send_text("Fails.")
+                # Newer qBittorrent answers a good login with an empty 204 and a session cookie.
+                self.send_response(204)
+                self.send_header("Set-Cookie", "SID=demo; HttpOnly; path=/")
+                self.end_headers()
+                return
+            if "SID=demo" not in self.headers.get("Cookie", ""):
                 return self.send_text("Forbidden", 403)
             if action == "torrents/delete":
                 for h in parse_qs(body).get("hashes", [""])[0].split("|"):
@@ -229,10 +238,10 @@ class Handler(BaseHTTPRequestHandler):
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         p = url.path.rstrip("/")
 
-        if p.startswith("/qbittorrent/api/v2/") and not self.headers.get("Authorization", "").startswith("Bearer qbt_"):
+        if p.startswith("/qbittorrent/api/v2/") and "SID=demo" not in self.headers.get("Cookie", ""):
             return self.send_text("Forbidden", 403)
         if p == "/qbittorrent/api/v2/app/version":
-            return self.send_text("v5.2.4")
+            return self.send_text("v5.0.1")
         if p == "/qbittorrent/api/v2/torrents/info":
             return self.send_json(torrents())
 
