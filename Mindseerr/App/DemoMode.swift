@@ -41,7 +41,9 @@ enum DemoMode {
             .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
         return [ArrKind.sonarr, .radarr, .qbittorrent, .deluge, .transmission].filter { (wanted ?? ["sonarr", "radarr", "qbittorrent"]).contains($0.rawValue) }.compactMap { kind in
             URL(string: "\(base)/\(kind.rawValue)").map {
-                ArrService(kind: kind, name: kind.name, baseURL: $0, apiKey: "demo",
+                // A fixed id per kind, so "what was downloading last launch" still lines up after a relaunch.
+                ArrService(id: UUID(uuidString: "00000000-0000-0000-0000-00000000000\(ArrKind.allCases.firstIndex(of: kind) ?? 0)") ?? UUID(),
+                           kind: kind, name: kind.name, baseURL: $0, apiKey: "demo",
                            username: kind.usesUsername ? "demo" : nil, password: kind.isDownloadClient ? "demo" : nil)
             }
         }

@@ -212,7 +212,13 @@ final class DownloadMonitor {
         fresh += extra.map { makeDownload($0.torrent, on: $0.service) }
 
         let unreachable = Set(failures.keys).union(torrentFailures.keys)
-        if loaded { announceFinished(old: downloads, new: fresh, unreachable: unreachable) }
+        // What was last seen: in memory while the app has been running, or what was saved when it was last open.
+        // The latter is how a download that finished while the app was closed gets announced on reopening.
+        let previous = loaded ? downloads.map(SavedDownload.init) : SavedDownload.load()
+        announceFinished(old: previous, new: fresh, unreachable: unreachable)
+        // Keep what an unreachable service held, so its downloads aren't judged finished next time.
+        let kept = previous.filter { unreachable.contains($0.serviceID) }
+        SavedDownload.save(fresh.map(SavedDownload.init) + kept)
         downloads = fresh
         errors = failures.merging(torrentFailures) { first, _ in first }
         torrentOwners = owners
@@ -245,16 +251,28 @@ final class DownloadMonitor {
     /// Queues a banner for each download that has left the queues since the last refresh and was nearly done
     /// (or importing) when last seen: that's a finish, where a cancelled, failed or blocklisted one isn't.
     /// A service that couldn't be read is skipped, so a network blip doesn't announce everything it held.
-    private func announceFinished(old: [ArrDownload], new: [ArrDownload], unreachable: Set<UUID>) {
+    private func announceFinished(old: [SavedDownload], new: [ArrDownload], unreachable: Set<UUID>) {
         let stillThere = Set(new.map(\.id))
+        let live = Set(services.map(\.id))
         var announced: Set<String> = []
-        for download in old where !stillThere.contains(download.id) && !unreachable.contains(download.serviceID) {
+        var finished: [FinishedDownload] = []
+        // A removed service's downloads vanish too, which isn't a finish.
+        for download in old where !stillThere.contains(download.id) && !unreachable.contains(download.serviceID) && live.contains(download.serviceID) {
             if userRemoved.remove(download.id) != nil { continue }
-            guard download.progress >= 0.9 || download.phase == .importing, download.tmdbId != nil else { continue }
+            guard download.progress >= 0.9 || download.importing, let tmdbId = download.tmdbId else { continue }
             // One banner per title and episode, even if two services held it.
-            guard announced.insert("\(download.tmdbId ?? 0)-\(download.episodeLabel ?? "")").inserted else { continue }
-            guard DownloadNotifications.isEnabled else { continue }
-            bannerQueue.append(FinishedDownload(title: download.title, episodeLabel: download.episodeLabel, route: download.route))
+            guard announced.insert("\(tmdbId)-\(download.episodeLabel ?? "")").inserted else { continue }
+            finished.append(FinishedDownload(title: download.title, episodeLabel: download.episodeLabel,
+                                             route: MediaRoute(type: download.type, tmdbId: tmdbId)))
+        }
+        guard DownloadNotifications.isEnabled, !finished.isEmpty else { return }
+        // After a long time away there can be many: show a few, then one banner for the rest.
+        let shown = 4
+        bannerQueue += finished.prefix(shown)
+        if finished.count > shown {
+            let more = finished.count - shown
+            bannerQueue.append(FinishedDownload(title: more == 1 ? "1 more download" : "\(more) more downloads",
+                                                episodeLabel: nil, route: nil))
         }
         if banner == nil { dismissBanner() }
     }
@@ -321,5 +339,39 @@ final class DownloadMonitor {
         if (result.type == .tv) == parsed.isSeries { points += 2 }
         if let year = parsed.year, result.year == String(year) { points += 1 }
         return points
+    }
+}
+
+/// What the app remembers about a download between launches, to tell which finished while it was closed.
+private struct SavedDownload: Codable {
+    let id: String
+    let serviceID: UUID
+    let title: String
+    let episodeLabel: String?
+    let tmdbId: Int?
+    let type: MediaType
+    let progress: Double
+    let importing: Bool
+
+    init(_ download: ArrDownload) {
+        id = download.id
+        serviceID = download.serviceID
+        title = download.title
+        episodeLabel = download.episodeLabel
+        tmdbId = download.tmdbId
+        type = download.mediaType
+        progress = download.progress
+        importing = download.phase == .importing
+    }
+
+    private static let key = "downloads.lastSeen"
+
+    static func load() -> [SavedDownload] {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return [] }
+        return (try? JSONDecoder().decode([SavedDownload].self, from: data)) ?? []
+    }
+
+    static func save(_ downloads: [SavedDownload]) {
+        if let data = try? JSONEncoder().encode(downloads) { UserDefaults.standard.set(data, forKey: key) }
     }
 }

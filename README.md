@@ -70,7 +70,7 @@ Below that, **Recommended** and **Similar** rows suggest more to watch. They're 
 
 When a download for one of your requests finishes, a **Download finished** banner slides into the top right corner, shaped like an iOS or macOS notification: a rounded, see-through card tinted with your theme's highlight color, with the title's poster, its name and, for a series, the season and episode. It appears over whichever screen you're on, stays for a few seconds, and never takes the remote's focus. If several finish together they show one after another. Downloads you cancel yourself don't count, and neither do failed ones. A download counts as finished when it leaves the queue nearly done or importing.
 
-tvOS doesn't allow banners from an app that isn't open, so this works while Mindseerr is running, on any tab. You can turn it off under **Settings → Notifications → Download Finished**.
+tvOS doesn't allow banners from an app that isn't open, so while Mindseerr is closed nothing can pop up. Instead, Mindseerr remembers what was downloading when you last used it, and when you reopen it, shows a banner for each download that finished in the meantime (a few of them, then one banner for the rest). While it's open, banners appear on any tab as downloads finish. You can turn it off under **Settings → Notifications → Download Finished**.
 
 ### Discover: progress on posters
 
@@ -256,7 +256,7 @@ Done:
 - [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB, with a picker for titles and seasons
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
-- [x] A banner when a download finishes, on any screen (tvOS can't show banners while the app is closed)
+- [x] A banner when a download finishes, on any screen, including ones that finished while the app was closed (shown when it's reopened)
 - [x] Themes, including a light one
 - [x] Tabs that return to their top level when you leave them
 
@@ -264,7 +264,6 @@ Still to do:
 
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - A request list for non-admin users, now that the Requests tab is gone (for example on the Settings or Discover screens)
-- Show a banner for downloads that finished while the app was closed, when it's next opened
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
 - Browse Discover by genre, studio or network, and filter or sort search results
 - Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
