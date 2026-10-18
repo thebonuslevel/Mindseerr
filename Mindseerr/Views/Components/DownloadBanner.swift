@@ -43,8 +43,8 @@ struct DownloadBanner: View {
         // The theme's secondary (highlight) color, left see-through over a blur like system notifications.
         .background {
             RoundedRectangle(cornerRadius: corner, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).fill(theme.highlight.opacity(0.32)))
+                .fill(.ultraThinMaterial.opacity(0.5))
+                .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).fill(theme.highlight.opacity(0.16)))
         }
         .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(.white.opacity(0.18), lineWidth: 1))
         .shadow(color: .black.opacity(0.3), radius: 22, y: 8)
