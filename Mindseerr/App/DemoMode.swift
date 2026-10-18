@@ -36,13 +36,13 @@ enum DemoMode {
     static var arrServices: [ArrService]? {
         guard let base else { return nil }
         // MINDSEERR_DEMO_SERVICES=qbittorrent (comma-separated kinds) limits which services the demo has,
-        // for showing qBittorrent on its own.
+        // for showing one download client on its own. By default the demo has Sonarr, Radarr and qBittorrent.
         let wanted = ProcessInfo.processInfo.environment["MINDSEERR_DEMO_SERVICES"]?
             .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-        return [ArrKind.sonarr, .radarr, .qbittorrent].filter { wanted?.contains($0.rawValue) ?? true }.compactMap { kind in
+        return [ArrKind.sonarr, .radarr, .qbittorrent, .deluge, .transmission].filter { (wanted ?? ["sonarr", "radarr", "qbittorrent"]).contains($0.rawValue) }.compactMap { kind in
             URL(string: "\(base)/\(kind.rawValue)").map {
                 ArrService(kind: kind, name: kind.name, baseURL: $0, apiKey: "demo",
-                           username: kind == .qbittorrent ? "demo" : nil, password: kind == .qbittorrent ? "demo" : nil)
+                           username: kind.usesUsername ? "demo" : nil, password: kind.isDownloadClient ? "demo" : nil)
             }
         }
     }

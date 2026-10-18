@@ -10,17 +10,23 @@ Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev
 
 *Simulated examples: the titles, poster art, people and downloads are invented and served by the demo server in `Tools/demo-server`. Shown in the Gloam theme.*
 
-### Admin panel: Sonarr, Radarr & qBittorrent
+### Admin panel: Sonarr, Radarr & download clients
 
 ![Admin panel with request counts, connected Sonarr and Radarr services, and the Active Downloads list](docs/screenshots/admin-download-services.png)
 
 Connect your **Sonarr** and **Radarr** servers right from the Admin tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
 
-Add your **qBittorrent** the same way, with its Web UI address, username and password. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same qBittorrent they use.
+Add your torrent client the same way: **qBittorrent**, **Deluge** or **Transmission**. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same client they use.
 
-**qBittorrent works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent and Active Downloads reads progress straight from it.
+| Client | Address | Sign-in |
+|---|---|---|
+| qBittorrent | Web UI address, like `http://192.168.1.10:8080` | Web UI username and password |
+| Deluge | Web UI address, like `http://192.168.1.10:8112` | Web UI password (default `deluge`); its Web UI has to be connected to a daemon under Connection Manager |
+| Transmission | Like `http://192.168.1.10:9091` | Username and password only if you turned RPC authentication on |
 
-![Active Downloads fed only by qBittorrent, with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
+**A torrent client works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent, Deluge or Transmission and Active Downloads reads progress straight from it.
+
+![Active Downloads fed only by a torrent client (qBittorrent shown), with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
 
 Mindseerr lists every unfinished torrent and works out which Seerr title it is from its release name, so *The.Drowned.Lighthouse.2026.1080p.WEB-DL* becomes the movie *The Drowned Lighthouse*, and *Deep.Station.S02E05* becomes Season 2, Episode 5 of *Deep Station*. Matched titles get their poster and the name of whoever requested them, and show up as progress on Discover, detail pages and the Requests tab just like Sonarr and Radarr downloads. A torrent whose name doesn't match a title is still listed, by its release name. Finished and seeding torrents are left out.
 
@@ -34,7 +40,7 @@ The request list knows what's downloading too. Any request whose title is in a S
 
 ### Admin panel: pause, resume and cancel downloads
 
-On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, and shows once qBittorrent is connected and is holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later. The same two buttons appear on the items in the **Requests** tab while their title is downloading.
+On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, Deluge or Transmission, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later. The same two buttons appear on the items in the **Requests** tab while their title is downloading.
 
 ![The Requests tab with a paused download showing a Play button and a Cancel button beside it](docs/screenshots/requests-download-controls.png)
 
@@ -97,7 +103,7 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
-- **Download controls**: connect qBittorrent to pause, resume or cancel a download right from Active Downloads on the Admin tab. It also works without Sonarr or Radarr, reading download progress straight from qBittorrent.
+- **Download controls**: connect qBittorrent, Deluge or Transmission to pause, resume or cancel a download right from Active Downloads on the Admin tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
 - **Admin tab** for admins and users with the Manage Requests permission: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
@@ -239,12 +245,12 @@ Done:
 - [x] Cast & crew and "Similar"/"Recommended" rows on detail pages
 - [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB
-- [x] qBittorrent: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
+- [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] Themes, including a light one
 
 Still to do:
 
-- Support more download clients (SABnzbd, NZBGet, Deluge, Transmission) for progress and the download controls
+- Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
 - A notification or banner when a request you made finishes downloading
 - Browse Discover by genre, studio or network, and filter or sort search results

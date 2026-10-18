@@ -1,7 +1,7 @@
 import Foundation
 
 /// One torrent as qBittorrent lists it.
-struct QBitTorrent: Decodable, Sendable {
+private struct QBitTorrent: Decodable, Sendable {
     let hash: String
     let name: String
     /// 0...1
@@ -38,7 +38,7 @@ struct QBitTorrent: Decodable, Sendable {
 /// torrents that Sonarr and Radarr are downloading, matched by the torrent's info hash.
 ///
 /// One client per server: each keeps its own session, since qBittorrent signs in with a cookie.
-actor QBittorrentClient {
+actor QBittorrentClient: TorrentClient {
     private let service: ArrService
     private let session: URLSession
     private var signedIn = false
@@ -60,12 +60,15 @@ actor QBittorrentClient {
     }
 
     /// Every torrent on the server, with its progress.
-    func torrents() async throws -> [QBitTorrent] {
+    func torrents() async throws -> [TorrentInfo] {
         let data = try await call("torrents/info", method: "GET")
         guard let torrents = try? JSONDecoder().decode([QBitTorrent].self, from: data) else {
             throw APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a qBittorrent server?")
         }
-        return torrents
+        return torrents.map {
+            TorrentInfo(hash: $0.hash.lowercased(), name: $0.name, progress: $0.progress, phase: $0.phase,
+                        state: $0.state, secondsLeft: $0.secondsLeft, isFinished: $0.isFinished)
+        }
     }
 
     // MARK: - Controlling

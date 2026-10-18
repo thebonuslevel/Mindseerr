@@ -20,7 +20,7 @@ struct AddArrServiceView: View {
         VStack(alignment: .leading, spacing: 30) {
             Text("Add a Download Service")
                 .font(.largeTitle).bold()
-            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent works on its own, reading progress straight from it, and alongside Sonarr and Radarr it adds pause, resume and cancel.")
+            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent, Deluge and Transmission work on their own, reading progress straight from the client, and alongside Sonarr and Radarr they add pause, resume and cancel.")
                 .foregroundStyle(.secondary)
 
             Picker("Service", selection: $kind) {
@@ -29,17 +29,19 @@ struct AddArrServiceView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 600)
+            .frame(maxWidth: 1000)
 
             VStack(alignment: .leading, spacing: 20) {
                 TextField("Name (optional), like \(kind.name) 4K", text: $name)
                 TextField("Address, like http://192.168.1.10:\(kind.defaultPortText)", text: $address)
                     .keyboardType(.URL)
                     .textContentType(.URL)
-                if kind == .qbittorrent {
-                    TextField("Web UI username", text: $username)
-                        .textContentType(.username)
-                    SecureField("Web UI password", text: $password)
+                if kind.isDownloadClient {
+                    if kind.usesUsername {
+                        TextField(kind == .transmission ? "Username (if it has one)" : "Web UI username", text: $username)
+                            .textContentType(.username)
+                    }
+                    SecureField(kind == .transmission ? "Password (if it has one)" : "Web UI password", text: $password)
                 } else {
                     TextField("API key", text: $apiKey)
                         .textContentType(.password)
@@ -49,9 +51,7 @@ struct AddArrServiceView: View {
             .autocorrectionDisabled()
             .frame(maxWidth: 1000)
 
-            Text(kind == .qbittorrent
-                 ? "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). With no Sonarr or Radarr, Mindseerr shows its unfinished torrents and matches them to titles by their release names. With them, add the same qBittorrent they use and its torrents are matched to their downloads."
-                 : "The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue)).")
+            Text(hint)
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: 1400, alignment: .leading)
@@ -66,7 +66,7 @@ struct AddArrServiceView: View {
                 Button(action: save) {
                     Label("Test & Save", systemImage: "checkmark.circle")
                 }
-                .disabled(checking || address.trimmed.isEmpty || (kind == .qbittorrent ? false : apiKey.trimmed.isEmpty))
+                .disabled(checking || address.trimmed.isEmpty || !hasCredentials)
 
                 Button("Cancel", role: .cancel) { dismiss() }
 
@@ -81,6 +81,24 @@ struct AddArrServiceView: View {
         .themedBackground()
     }
 
+    /// Sonarr and Radarr need an API key; qBittorrent and Deluge a password; Transmission only if it has one set.
+    private var hasCredentials: Bool {
+        kind.isDownloadClient ? (!kind.requiresPassword || !password.isEmpty) : !apiKey.trimmed.isEmpty
+    }
+
+    private var hint: String {
+        switch kind {
+        case .sonarr, .radarr:
+            return "The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue))."
+        case .qbittorrent:
+            return "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). Add the same qBittorrent that Sonarr and Radarr use, and its torrents are matched to their downloads. Without them, its unfinished torrents are matched to titles by release name."
+        case .deluge:
+            return "Use the address of Deluge's Web UI and its password (the default is “deluge”). The Web UI has to be connected to a daemon under Connection Manager."
+        case .transmission:
+            return "Use Transmission's address. Enter a username and password only if you turned RPC authentication on."
+        }
+    }
+
     private func save() {
         guard let url = ArrService.normalizedURL(from: address) else {
             error = "Enter the \(kind.name) server's address, like http://192.168.1.10:\(kind.defaultPortText)."
@@ -89,16 +107,16 @@ struct AddArrServiceView: View {
         let service = ArrService(kind: kind,
                                  name: name.trimmed.isEmpty ? kind.name : name.trimmed,
                                  baseURL: url,
-                                 apiKey: kind == .qbittorrent ? "" : apiKey.trimmed,
-                                 username: kind == .qbittorrent ? username.trimmed : nil,
-                                 password: kind == .qbittorrent ? password : nil)
+                                 apiKey: kind.isDownloadClient ? "" : apiKey.trimmed,
+                                 username: kind.usesUsername ? username.trimmed : nil,
+                                 password: kind.isDownloadClient ? password : nil)
         Task {
             checking = true
             error = nil
             defer { checking = false }
             do {
-                if kind == .qbittorrent {
-                    _ = try await QBittorrentClient(service: service).checkConnection()
+                if kind.isDownloadClient {
+                    _ = try await TorrentClients.make(for: service).checkConnection()
                 } else {
                     _ = try await ArrClient.checkConnection(service)
                 }

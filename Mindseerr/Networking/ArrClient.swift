@@ -4,8 +4,8 @@ import Foundation
 
 enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case sonarr, radarr
-    /// A download client rather than an *arr app: Mindseerr uses it to pause, resume and read torrents.
-    case qbittorrent
+    /// Download clients rather than *arr apps: Mindseerr reads their torrents, and can pause, resume and cancel them.
+    case qbittorrent, deluge, transmission
 
     var id: String { rawValue }
 
@@ -14,8 +14,22 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
         case .sonarr: return "Sonarr"
         case .radarr: return "Radarr"
         case .qbittorrent: return "qBittorrent"
+        case .deluge: return "Deluge"
+        case .transmission: return "Transmission"
         }
     }
+
+    /// A torrent client (as opposed to Sonarr or Radarr).
+    var isDownloadClient: Bool {
+        switch self {
+        case .sonarr, .radarr: return false
+        case .qbittorrent, .deluge, .transmission: return true
+        }
+    }
+
+    /// Sonarr and Radarr sign in with an API key; the torrent clients with a password (and a username, except Deluge).
+    var usesUsername: Bool { self == .qbittorrent || self == .transmission }
+    var requiresPassword: Bool { self == .qbittorrent || self == .deluge }
 
     /// The port as plain text for addresses. Interpolating the Int into SwiftUI text would format it
     /// like a number ("8,989").
@@ -26,6 +40,8 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
         case .sonarr: return 8989
         case .radarr: return 7878
         case .qbittorrent: return 8080
+        case .deluge: return 8112
+        case .transmission: return 9091
         }
     }
 }
@@ -126,7 +142,7 @@ struct ArrDownload: Identifiable, Sendable {
         switch kind {
         case .radarr: return .movie
         case .sonarr: return .tv
-        case .qbittorrent: return resolvedType ?? .movie
+        case .qbittorrent, .deluge, .transmission: return resolvedType ?? .movie
         }
     }
 

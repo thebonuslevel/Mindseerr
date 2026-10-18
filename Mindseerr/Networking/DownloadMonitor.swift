@@ -15,7 +15,7 @@ final class DownloadMonitor {
     /// Which qBittorrent server holds each torrent (by lowercased info hash), so a download can be paused or resumed.
     private(set) var torrentOwners: [String: UUID] = [:]
 
-    @ObservationIgnored private var qbitClients: [UUID: QBittorrentClient] = [:]
+    @ObservationIgnored private var torrentClients: [UUID: TorrentClient] = [:]
     /// Used to work out which Seerr title a qBittorrent-only download is for (see `identity(of:)`).
     @ObservationIgnored private var seerr: SeerrClient?
     /// Which title each torrent turned out to be, by lowercased info hash; nil when nothing matched.
@@ -46,7 +46,7 @@ final class DownloadMonitor {
     func remove(_ service: ArrService) {
         services.removeAll { $0.id == service.id }
         errors[service.id] = nil
-        qbitClients[service.id] = nil
+        torrentClients[service.id] = nil
         torrentOwners = torrentOwners.filter { $0.value != service.id }
         save()
     }
@@ -96,7 +96,7 @@ final class DownloadMonitor {
         var done: Set<String> = []
         for download in controllable {
             guard let hash = download.downloadId?.lowercased(), done.insert(hash).inserted,
-                  let owner = torrentOwners[hash], let client = qbitClients[owner] else { continue }
+                  let owner = torrentOwners[hash], let client = torrentClients[owner] else { continue }
             if resume {
                 try await client.resume(hash: hash)
             } else if download.phase != .paused {
@@ -114,9 +114,9 @@ final class DownloadMonitor {
     func cancel(_ downloads: [ArrDownload]) async throws {
         for download in downloads {
             guard let service = services.first(where: { $0.id == download.serviceID }) else { continue }
-            if service.kind == .qbittorrent {
-                // A download read straight from qBittorrent has no queue entry: remove the torrent itself.
-                if let hash = download.downloadId, let client = qbitClients[service.id] { try await client.delete(hash: hash) }
+            if service.kind.isDownloadClient {
+                // A download read straight from a torrent client has no queue entry: remove the torrent itself.
+                if let hash = download.downloadId, let client = torrentClients[service.id] { try await client.delete(hash: hash) }
             } else {
                 try await ArrClient.cancel(download, on: service)
             }
@@ -152,8 +152,8 @@ final class DownloadMonitor {
     /// Reads every service's queue at once. A service that can't be reached reports its error
     /// without hiding the others' downloads.
     func refresh() async {
-        let current = services.filter { $0.kind != .qbittorrent }
-        let torrentServices = services.filter { $0.kind == .qbittorrent }
+        let current = services.filter { !$0.kind.isDownloadClient }
+        let torrentServices = services.filter { $0.kind.isDownloadClient }
         async let torrents = readTorrents(torrentServices)
         let results = await withTaskGroup(of: (UUID, Result<[ArrDownload], Error>).self) { group in
             for service in current {
@@ -194,13 +194,13 @@ final class DownloadMonitor {
 
     /// Reads which torrents each qBittorrent server holds. One that can't be reached reports its error.
     private func readTorrents(_ services: [ArrService]) async
-        -> ([String: UUID], [UUID: String], [(service: ArrService, torrent: QBitTorrent)]) {
+        -> ([String: UUID], [UUID: String], [(service: ArrService, torrent: TorrentInfo)]) {
         var owners: [String: UUID] = [:]
         var failures: [UUID: String] = [:]
-        var listed: [(service: ArrService, torrent: QBitTorrent)] = []
+        var listed: [(service: ArrService, torrent: TorrentInfo)] = []
         for service in services {
-            let client = qbitClients[service.id] ?? QBittorrentClient(service: service)
-            qbitClients[service.id] = client
+            let client = torrentClients[service.id] ?? TorrentClients.make(for: service)
+            torrentClients[service.id] = client
             do {
                 for torrent in try await client.torrents() {
                     owners[torrent.hash.lowercased()] = service.id
@@ -215,7 +215,7 @@ final class DownloadMonitor {
 
     // MARK: qBittorrent-only downloads
 
-    private func makeDownload(_ torrent: QBitTorrent, on service: ArrService) -> ArrDownload {
+    private func makeDownload(_ torrent: TorrentInfo, on service: ArrService) -> ArrDownload {
         let parsed = ReleaseName.parse(torrent.name)
         let identity = identities[torrent.hash.lowercased()] ?? nil
         let type: MediaType = identity?.type ?? (parsed.isSeries ? .tv : .movie)
@@ -223,7 +223,7 @@ final class DownloadMonitor {
             id: "\(service.id.uuidString)-\(torrent.hash.lowercased())",
             serviceID: service.id,
             serviceName: service.name,
-            kind: .qbittorrent,
+            kind: service.kind,
             downloadId: torrent.hash,
             queueIds: [],
             title: identity?.title ?? parsed.title,
@@ -233,14 +233,14 @@ final class DownloadMonitor {
             progress: min(max(torrent.progress, 0), 1),
             secondsLeft: torrent.secondsLeft,
             phase: torrent.phase,
-            message: torrent.phase.isProblem ? "qBittorrent reports “\(torrent.state)”." : nil,
+            message: torrent.phase.isProblem ? "\(service.kind.name) reports “\(torrent.state)”." : nil,
             resolvedType: type
         )
     }
 
     /// Looks up the Seerr title for torrents not seen before. A torrent that matches nothing is remembered
     /// as unmatched, so it isn't searched for again on every refresh.
-    private func identify(_ torrents: [QBitTorrent]) async {
+    private func identify(_ torrents: [TorrentInfo]) async {
         guard let seerr else { return }
         let fresh = torrents.filter { identities[$0.hash.lowercased()] == nil }
         guard !fresh.isEmpty else { return }

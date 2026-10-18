@@ -5,8 +5,9 @@
 
 Then launch a Debug build with MINDSEERR_DEMO=http://127.0.0.1:<port>. Almost read-only: anything that
 would change data (approve, request, delete...) is refused. The exceptions are the download controls,
-which only change in-memory state: pausing/resuming or deleting a torrent on the fake qBittorrent and removing
-a download from the Sonarr/Radarr queue. Restart the server to reset them.
+which only change in-memory state: pausing/resuming or deleting a torrent on the fake qBittorrent, Deluge or
+Transmission (all three show the same torrents; pick one with MINDSEERR_DEMO_SERVICES) and removing a
+download from the Sonarr/Radarr queue. Restart the server to reset them.
 """
 import json, os, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -187,6 +188,75 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def send_with(self, body, status=200, headers=None):
+        data = json.dumps(body).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        for key, value in (headers or {}).items():
+            self.send_header(key, value)
+        self.end_headers()
+        self.wfile.write(data)
+
+    def deluge(self, body):
+        """A fake Deluge Web UI: password sign-in with a session cookie, then JSON-RPC calls."""
+        call = json.loads(body or "{}")
+        method, params, cid = call.get("method"), call.get("params", []), call.get("id")
+        def ok(result, headers=None):
+            return self.send_with({"result": result, "error": None, "id": cid}, headers=headers)
+        if method == "auth.login":
+            good = params and params[0] == "demo"
+            return ok(bool(good), {"Set-Cookie": "_session_id=demo; path=/"} if good else None)
+        if "_session_id=demo" not in self.headers.get("Cookie", ""):
+            return self.send_with({"result": None, "error": {"message": "Not authenticated", "code": 1}, "id": cid})
+        if method == "web.connected":
+            return ok(True)
+        if method == "daemon.get_version":
+            return ok("2.1.1")
+        if method == "web.update_ui":
+            states = {"downloading": "Downloading", "pausedDL": "Paused", "queuedDL": "Queued", "uploading": "Seeding"}
+            return ok({"torrents": {t["hash"]: {"name": t["name"], "progress": t["progress"] * 100,
+                                                "state": states.get(t["state"], "Downloading"),
+                                                "eta": 0 if t["eta"] >= 8640000 else t["eta"], "message": "OK"}
+                                    for t in torrents()}})
+        if method in ("core.pause_torrents", "core.pause_torrent"):
+            PAUSED.update(params[0]); return ok(None)
+        if method in ("core.resume_torrents", "core.resume_torrent"):
+            PAUSED.difference_update(params[0]); return ok(None)
+        if method == "core.remove_torrent":
+            if params[0].startswith("dl"): CANCELLED.add(int(params[0][2:]))
+            return ok(True)
+        return self.send_with({"result": None, "error": {"message": "Unknown method", "code": 2}, "id": cid})
+
+    def transmission(self, body):
+        """A fake Transmission: Basic auth, the 409 session-id handshake, and the RPC calls Mindseerr makes."""
+        import base64
+        if self.headers.get("Authorization") != "Basic " + base64.b64encode(b"demo:demo").decode():
+            self.send_response(401); self.send_header("Content-Length", "0"); self.end_headers(); return
+        if self.headers.get("X-Transmission-Session-Id") != "demo-session":
+            return self.send_with({}, 409, {"X-Transmission-Session-Id": "demo-session"})
+        call = json.loads(body or "{}")
+        method, args = call.get("method"), call.get("arguments", {})
+        def ok(arguments):
+            return self.send_with({"result": "success", "arguments": arguments})
+        if method == "session-get":
+            return ok({"version": "4.0.5 (demo)"})
+        if method == "torrent-get":
+            statuses = {"downloading": 4, "pausedDL": 0, "queuedDL": 3, "uploading": 6}
+            return ok({"torrents": [{"hashString": t["hash"], "name": t["name"], "percentDone": t["progress"],
+                                     "status": statuses.get(t["state"], 4), "eta": -1 if t["eta"] >= 8640000 else t["eta"],
+                                     "error": 0, "errorString": ""} for t in torrents()]})
+        ids = args.get("ids", [])
+        if method == "torrent-stop":
+            PAUSED.update(ids); return ok({})
+        if method == "torrent-start":
+            PAUSED.difference_update(ids); return ok({})
+        if method == "torrent-remove":
+            for h in ids:
+                if h.startswith("dl"): CANCELLED.add(int(h[2:]))
+            return ok({})
+        return self.send_with({"result": "method not recognized"})
+
     def send_text(self, text, status=200):
         data = text.encode()
         self.send_response(status)
@@ -200,6 +270,11 @@ class Handler(BaseHTTPRequestHandler):
         p = url.path.rstrip("/")
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length).decode() if length else ""
+
+        if p.endswith("/deluge/json"):
+            return self.deluge(body)
+        if p.endswith("/transmission/rpc"):
+            return self.transmission(body)
 
         # A fake qBittorrent: sign-in, version and the torrents behind the queues' downloadIds.
         if p.startswith("/qbittorrent/api/v2/"):
