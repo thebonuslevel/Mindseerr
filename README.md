@@ -28,7 +28,7 @@ Add your torrent client the same way: **qBittorrent**, **Deluge** or **Transmiss
 
 ![Active Downloads fed only by a torrent client (qBittorrent shown), with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
 
-Mindseerr lists every unfinished torrent and works out which Seerr title it is from its release name, so *The.Drowned.Lighthouse.2026.1080p.WEB-DL* becomes the movie *The Drowned Lighthouse*, and *Deep.Station.S02E05* becomes Season 2, Episode 5 of *Deep Station*. Matched titles get their poster and the name of whoever requested them, and show up as progress on Discover, detail pages and the Requests tab just like Sonarr and Radarr downloads. A torrent whose name doesn't match a title is still listed, by its release name. Finished and seeding torrents are left out.
+Mindseerr lists every unfinished torrent and works out which Seerr title it is from its release name, so *The.Drowned.Lighthouse.2026.1080p.WEB-DL* becomes the movie *The Drowned Lighthouse*, and *Deep.Station.S02E05* becomes Season 2, Episode 5 of *Deep Station*. Matched titles get their poster and the name of whoever requested them, and show up as progress on Discover and detail pages just like Sonarr and Radarr downloads. A torrent whose name doesn't match a title is still listed, by its release name. Finished and seeding torrents are left out.
 
 **Active Downloads** then shows the downloads in their queues that belong to a Seerr request, matched to the request they came from: who asked for it, which server is fetching it, a progress bar, status and time left. Series show which season and episode is downloading. The list refreshes every 10 seconds. Downloads with no Seerr request behind them, such as something you added straight to Sonarr, Radarr or qBittorrent, are left out.
 
@@ -40,9 +40,7 @@ The request list knows what's downloading too. Any request whose title is in a S
 
 ### Admin panel: pause, resume and cancel downloads
 
-On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, Deluge or Transmission, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later. The same two buttons appear on the items in the **Requests** tab while their title is downloading.
-
-![The Requests tab with a paused download showing a Play button and a Cancel button beside it](docs/screenshots/requests-download-controls.png)
+On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, Deluge or Transmission, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
 
 ### Detail page
 
@@ -124,7 +122,6 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Search** across movies and series with the tvOS search keyboard.
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
-- **My Requests**: what you've requested that isn't finished yet, with its approval and availability status. Completed requests (marked completed, or fully available on your server) are hidden.
 - **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest one at a time or all at once.
 - Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
 
@@ -213,7 +210,6 @@ Mindseerr/
         ├── Discover/            Paginated poster rows
         ├── Search/              Debounced search grid
         ├── Detail/              Detail page + season picker
-        ├── Requests/            My Requests list
         ├── Watchlists/          Watchlists tab, connect screens, Trakt sign-in
         ├── Settings/            Account, server, sign out
         └── Components/          Posters and status badges
@@ -233,7 +229,6 @@ All calls go to `<server>/api/v1`:
 | Search | `GET /search?query=…&page=…` |
 | Details | `GET /movie/{tmdbId}`, `GET /tv/{tmdbId}` |
 | Request | `POST /request` `{ mediaType, mediaId, seasons?, is4k }` |
-| My requests | `GET /request?requestedBy={userId}&take=&skip=&sort=added` |
 | Match an IMDb ID | `GET /search?query=imdb:tt…` |
 | Admin: list / counts | `GET /request?filter=pending\|processing\|failed\|available\|all`, `GET /request/count` |
 | Admin: actions | `POST /request/{id}/approve`, `POST /request/{id}/decline`, `POST /request/{id}/retry`, `DELETE /request/{id}` |

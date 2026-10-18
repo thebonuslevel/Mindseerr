@@ -44,7 +44,7 @@ struct MainTabView: View {
     /// Changing this rebuilds Settings, so coming back to the tab shows its top level, scrolled to the top.
     @State private var settingsResetID = UUID()
 
-    private enum Tab: Hashable { case discover, search, watchlists, requests, admin, settings }
+    private enum Tab: Hashable { case discover, search, watchlists, admin, settings }
 
     // The Settings page shows the logo itself (it opens the About page), so the tab bar's stays hidden.
     private var showsLogo: Bool { false }
@@ -66,10 +66,6 @@ struct MainTabView: View {
                 .tabBarLogo(visible: showsLogo)
                 .tabItem { Text("Watchlists") }
                 .tag(Tab.watchlists)
-            RequestsView()
-                .tabBarLogo(visible: showsLogo)
-                .tabItem { Text("Requests") }
-                .tag(Tab.requests)
             if app.user?.canManageRequests == true {
                 AdminView()
                     .tabBarLogo(visible: showsLogo)

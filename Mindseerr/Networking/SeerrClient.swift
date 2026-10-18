@@ -178,16 +178,6 @@ actor SeerrClient {
         return try await send("\(base)/\(route.tmdbId)/\(list.rawValue)", query: ["page": "\(page)"])
     }
 
-    func requests(for userId: Int, skip: Int, take: Int = 20) async throws -> RequestPage {
-        try await send("request", query: [
-            "take": "\(take)",
-            "skip": "\(skip)",
-            "sort": "added",
-            "filter": "all",
-            "requestedBy": "\(userId)",
-        ])
-    }
-
     // MARK: - Managing requests (needs the Manage Requests permission)
 
     enum RequestFilter: String, CaseIterable, Identifiable, Sendable {
