@@ -38,6 +38,11 @@ struct MediaRequest: Decodable, Identifiable, Sendable {
         return status
     }
 
+    /// Done: the request is marked completed, or its title is fully available on the server.
+    var isCompleted: Bool {
+        status == .completed || media?.status == .available
+    }
+
     var createdDateText: String? {
         guard let createdAt else { return nil }
         let precise = ISO8601DateFormatter()

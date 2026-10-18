@@ -124,7 +124,7 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Search** across movies and series with the tvOS search keyboard.
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
-- **My Requests**: everything you've requested with its approval and availability status.
+- **My Requests**: what you've requested that isn't finished yet, with its approval and availability status. Completed requests (marked completed, or fully available on your server) are hidden.
 - **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest one at a time or all at once.
 - Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
 

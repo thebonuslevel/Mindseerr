@@ -2,7 +2,9 @@ import SwiftUI
 
 struct RequestsView: View {
     @Environment(AppState.self) private var app
-    @State private var requests: [MediaRequest] = []
+    /// Everything fetched, completed requests included; only the unfinished ones are listed.
+    @State private var fetched: [MediaRequest] = []
+    private var requests: [MediaRequest] { fetched.filter { !$0.isCompleted } }
     @State private var page = 0
     @State private var totalPages = 1
     @State private var loading = false
@@ -17,12 +19,15 @@ struct RequestsView: View {
             Group {
                 if requests.isEmpty && !loadedOnce {
                     ProgressView()
-                } else if let error, requests.isEmpty {
+                } else if let error, fetched.isEmpty {
                     ContentUnavailableView("Couldn't Load Requests", systemImage: "exclamationmark.triangle",
                                            description: Text(error))
                 } else if requests.isEmpty {
-                    ContentUnavailableView("No Requests Yet", systemImage: "tray",
-                                           description: Text("Movies and series you request will show up here."))
+                    ContentUnavailableView(fetched.isEmpty ? "No Requests Yet" : "Nothing in Progress",
+                                           systemImage: fetched.isEmpty ? "tray" : "checkmark.circle",
+                                           description: Text(fetched.isEmpty
+                                                ? "Movies and series you request will show up here."
+                                                : "Your completed requests are hidden. New ones will show up here."))
                 } else {
                     List {
                         ForEach(requests) { request in
@@ -46,18 +51,22 @@ struct RequestsView: View {
         .onDisappear { path = NavigationPath() }
     }
 
+    /// How many unfinished requests to try to have on screen before waiting for the user to scroll.
+    private let minVisible = 8
+
     private func refresh() async {
         guard let userId = app.user?.id, !loading else { return }
         loading = true
         defer { loading = false; loadedOnce = true }
         do {
             let response = try await app.api.requests(for: userId, skip: 0, take: pageSize)
-            requests = response.results
+            fetched = response.results
             page = 1
             totalPages = response.pageInfo.pages
             error = nil
+            await fillVisible(userId: userId)
         } catch {
-            if requests.isEmpty { self.error = AppState.friendly(error) }
+            if fetched.isEmpty { self.error = AppState.friendly(error) }
         }
     }
 
@@ -65,14 +74,28 @@ struct RequestsView: View {
         guard let userId = app.user?.id, !loading, page < totalPages else { return }
         loading = true
         defer { loading = false }
+        await fetchNextPage(userId: userId)
+        await fillVisible(userId: userId)
+    }
+
+    /// Completed requests are hidden, so a page can add little or nothing to the list: keep reading pages until
+    /// there's enough to fill the screen, or there are no more.
+    private func fillVisible(userId: Int) async {
+        while requests.count < minVisible, page < totalPages {
+            await fetchNextPage(userId: userId)
+        }
+    }
+
+    private func fetchNextPage(userId: Int) async {
         do {
             let response = try await app.api.requests(for: userId, skip: page * pageSize, take: pageSize)
-            let known = Set(requests.map(\.id))
-            requests += response.results.filter { !known.contains($0.id) }
+            let known = Set(fetched.map(\.id))
+            fetched += response.results.filter { !known.contains($0.id) }
             page += 1
             totalPages = response.pageInfo.pages
         } catch {
-            // Keep what's already shown; scrolling to the end again retries.
+            // Keep what's already shown, and stop paging; coming back to the tab reloads.
+            page = totalPages
         }
     }
 }
