@@ -186,16 +186,32 @@ struct ExpandedSectionView: View {
     }
 }
 
-/// "Suggested for You": titles worked out from the user's requests and the server's library (see `SuggestionEngine`).
+/// "Suggested for You": titles worked out from the user's requests, the server's library, what's trending and new,
+/// and Rotten Tomatoes (see `SuggestionEngine`). The title expands it to a full-screen grid like the other rows.
 /// Hidden until there's something to show.
 struct SuggestionsRowView: View {
     let model: SuggestionsModel
+    @State private var expanded = false
+    @FocusState private var titleFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if !model.items.isEmpty {
-                Text("Suggested for You")
-                    .font(.title3).fontWeight(.semibold)
+                Button { expanded = true } label: {
+                    HStack(spacing: 16) {
+                        Text("Suggested for You")
+                            .font(.title3).fontWeight(.semibold)
+                        if titleFocused {
+                            Label("Expand", systemImage: "arrow.up.left.and.arrow.down.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .buttonStyle(ThemedButtonStyle(idleFill: false))
+                .focused($titleFocused)
+                .animation(.easeOut(duration: 0.15), value: titleFocused)
+
                 ScrollView(.horizontal) {
                     LazyHStack(alignment: .top, spacing: 40) {
                         ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
@@ -206,5 +222,31 @@ struct SuggestionsRowView: View {
             }
         }
         .focusSection()
+        .fullScreenCover(isPresented: $expanded) {
+            ExpandedSuggestionsView(model: model)
+        }
+    }
+}
+
+/// The suggestions as a full-screen grid.
+struct ExpandedSuggestionsView: View {
+    let model: SuggestionsModel
+
+    private let columns = [GridItem(.adaptive(minimum: 240), spacing: 40)]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView(.vertical) {
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
+                    ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
+                }
+                .padding(.vertical, 30) // room for the focus lift
+            }
+            .scrollClipDisabled()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .themedBackground()
+            .navigationTitle("Suggested for You")
+            .mediaDestinations()
+        }
     }
 }

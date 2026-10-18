@@ -86,14 +86,22 @@ tvOS doesn't allow banners from an app that isn't open, so while Mindseerr is cl
 
 ### Discover: suggested for you
 
-A **Suggested for You** row sits at the top of Discover. Mindseerr builds it from Seerr's own data, in four steps:
+![The Suggested for You row at the top of Discover, with its title highlighted and an Expand hint](docs/screenshots/discover-suggested.png)
 
-1. **Seeds:** your own recent requests, counted three times as heavily, plus the titles that are available on your server.
-2. **Candidates:** the recommendations Seerr gives for each seed. A title that several seeds point at scores higher.
-3. **Filtering:** anything already available, being downloaded or requested is dropped.
-4. **Rotten Tomatoes:** the best candidates are checked against their Rotten Tomatoes scores (critics, averaged with the audience score when there is one; TMDB's rating stands in when there is none). Well-rated titles are promoted and poorly rated ones demoted, and clearly bad ones are left out as long as enough good ones remain.
+A **Suggested for You** row sits at the top of Discover. Select its title to expand it into a full-screen grid, like the other rows.
 
-The row is worked out when you open Discover and kept for a few hours, and it stays hidden until there's something to show. On a non-admin account, "all available titles" may be limited to your own, because Seerr only shows regular users their own requests.
+![The Suggested for You row expanded into a full-screen poster grid](docs/screenshots/discover-suggested-expanded.png)
+
+Mindseerr builds it from Seerr's own data and balances four things:
+
+| Factor | Weight | What it is |
+|---|---|---|
+| **Taste** | 50% | Seerr's recommendations for your own recent requests (counted three times as heavily) and for the titles available on your server. A title several of them point at scores higher. |
+| **Rotten Tomatoes** | 25% | The Tomatometer, averaged with the audience score when there is one (TMDB's rating stands in when there is none). Well-rated titles are promoted and poorly rated ones demoted. |
+| **Trending** | 12.5% | Where the title sits on Seerr's Trending list. Trending titles that nothing recommended still join the candidates. |
+| **New** | 12.5% | How recently it came out, or is about to: newest scores highest, fading over about three years. |
+
+Anything already available, being downloaded or requested is dropped, and clearly poorly rated titles are left out as long as enough good ones remain. The row is worked out when you open Discover and kept for a few hours, and it stays hidden until there's something to show. On a non-admin account, "all available titles" may be limited to your own, because Seerr only shows regular users their own requests.
 
 ### Discover: progress on posters
 
@@ -130,6 +138,8 @@ Put Mindseerr in the top row of your Home Screen and the **Top Shelf**, the area
 ![Settings with the Look and Feel section: Appearance set to Gloam and Top Shelf set to a section of Discover](docs/screenshots/settings-top-shelf.png)
 
 Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look and Feel** to pick what it shows: **Suggested for You**, **Trending** (the default), **Popular Movies**, **Upcoming Movies**, **Popular Series** or **Upcoming Series**. Choose **Off** at the top of that list to turn it off, and the Home Screen shows the Mindseerr banner instead. The change applies right away. The same section holds **Appearance**, where you pick the app's theme.
+
+![The Top Shelf menu listing Off and every Discover section, with a tick on the current choice](docs/screenshots/top-shelf-menu.png)
 
 ## Features
 
@@ -275,18 +285,22 @@ Done:
 
 - [x] 4K requests when the server has a 4K Radarr/Sonarr
 - [x] Request-option overrides (server, quality profile, root folder) for users with *Advanced Requests*
-- [x] Cast & crew and "Similar"/"Recommended" rows on detail pages
-- [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
+- [x] Cast & crew and "Similar"/"Recommended" rows on detail pages, with a page for each person's other work sorted by Rotten Tomatoes
+- [x] Rotten Tomatoes scores on detail pages
+- [x] Top Shelf showing any Discover section, switched on, off or between sections from one menu in Settings
+- [x] A personalised, expandable "Suggested for You" row balancing taste, Rotten Tomatoes, trending and new releases
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB, with a picker for titles and seasons
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] A banner when a download finishes, on any screen, including ones that finished while the app was closed (shown when it's reopened)
+- [x] An Activity tab for everyone: the admin panel for admins, a user's own requests for everyone else
 - [x] Themes, including a light one
 - [x] Tabs that return to their top level when you leave them
 
 Still to do:
 
+- A play button that opens an available title in Plex, Infuse, Swiftfin or another player
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
-- A request list for non-admin users, now that the Requests tab is gone (for example on the Settings or Discover screens)
+- Show download progress to non-admin users without every Apple TV needing the download services set up
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
 - Browse Discover by genre, studio or network, and filter or sort search results
 - Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
