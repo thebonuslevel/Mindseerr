@@ -9,11 +9,14 @@ struct WatchlistsView: View {
     @State private var confirmRequestAll = false
     @State private var confirmDisconnect = false
     @State private var summary: String?
+    @State private var path = NavigationPath()
 
+    private static let topID = "watchlists-top"
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
 
     var body: some View {
-        NavigationStack {
+        ScrollViewReader { scroll in
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 40) {
                     Picker("Watchlist", selection: $store.source) {
@@ -35,11 +38,18 @@ struct WatchlistsView: View {
                 }
                 .padding(.vertical, 30)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .id(Self.topID)
             }
             .themedBackground()
             .mediaDestinations()
             // Re-check statuses when coming back from a detail page, in case something was requested.
             .onAppear { Task { await store.resolve(store.source, api: app.api) } }
+        }
+        // Leaving the tab pops back to the list and scrolls to the top, so coming back shows the top level.
+        // (On the stack itself: a pushed detail page also hides the list, which mustn't reset anything.)
+        .onDisappear {
+            path = NavigationPath()
+            scroll.scrollTo(Self.topID, anchor: .top)
         }
         .task { await store.load(api: app.api) }
         .onChange(of: store.source) { _, newSource in
@@ -83,6 +93,7 @@ struct WatchlistsView: View {
         } message: {
             Text(summary ?? "")
         }
+        }   // ScrollViewReader
     }
 
     // MARK: - Header
