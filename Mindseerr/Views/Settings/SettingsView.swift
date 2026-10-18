@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .gloam
     @State private var topShelfOn = TopShelfCache.isEnabled
     @State private var notifyOn = DownloadNotifications.isEnabled
+    @State private var shelfSection = TopShelfCache.section
 
     var body: some View {
         NavigationStack {
@@ -24,10 +25,15 @@ struct SettingsView: View {
                     } label: {
                         LabeledContent("Top Shelf", value: topShelfOn ? "On" : "Off")
                     }
+                    NavigationLink {
+                        TopShelfSectionView()
+                    } label: {
+                        LabeledContent("Top Shelf Shows", value: shelfSection.title)
+                    }
                 } header: {
                     Text("Look and Feel")
                 } footer: {
-                    Text("Shows trending titles above the apps when Mindseerr is in the top row of the Home Screen. When off, the Mindseerr banner shows instead.")
+                    Text("Shows titles from a section of Discover above the apps when Mindseerr is in the top row of the Home Screen. Choose which section under Top Shelf Shows. When off, the Mindseerr banner shows instead.")
                 }
                 Section {
                     // Selecting the row flips it, like a switch.
@@ -72,6 +78,8 @@ struct SettingsView: View {
                 }
             }
             .themedBackground()
+            // The choice is made on a pushed page; pick it up when coming back.
+            .onAppear { shelfSection = TopShelfCache.section }
             .navigationDestination(isPresented: $showAbout) { AboutView() }
             .confirmationDialog("Sign out of Seerr?", isPresented: $confirmSignOut, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) { Task { await app.signOut() } }
@@ -174,5 +182,55 @@ struct BareButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .opacity(configuration.isPressed && pressable ? 0.85 : 1)
+    }
+}
+
+/// Its own page for choosing which Discover section the Top Shelf shows.
+struct TopShelfSectionView: View {
+    @Environment(AppState.self) private var app
+    @State private var chosen = TopShelfCache.section
+    @State private var loading: TopShelfCache.Section?
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(TopShelfCache.Section.allCases) { option in
+                    Button { choose(option) } label: {
+                        HStack {
+                            Text(option.title)
+                            Spacer()
+                            if loading == option {
+                                ProgressView()
+                            } else if option == chosen {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } footer: {
+                Text("The Top Shelf shows the first titles of the section you pick, as of the last time Mindseerr loaded it. Open Discover now and then to keep it fresh.")
+            }
+        }
+        .themedBackground()
+        .navigationTitle("Top Shelf Shows")
+    }
+
+    private func choose(_ option: TopShelfCache.Section) {
+        chosen = option
+        TopShelfCache.section = option
+        Task {
+            // A section is only saved once Discover has loaded it, so fetch it now if it hasn't been.
+            if TopShelfCache.load(option).isEmpty || option == .suggested && app.suggestions.items.isEmpty {
+                loading = option
+                defer { loading = nil }
+                if option == .suggested {
+                    await app.suggestions.refresh(api: app.api, userId: app.user?.id)
+                } else if let section = DiscoverSection(rawValue: option.rawValue),
+                          let response = try? await app.api.discover(section, page: 1) {
+                    MediaRowModel.saveForTopShelf(response.results.filter { $0.route != nil }, section: option)
+                }
+            }
+            TVTopShelfContentProvider.topShelfContentDidChange()
+        }
     }
 }

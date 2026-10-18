@@ -117,13 +117,13 @@ Each service connects the way it allows. **Trakt** and **TMDB** sign in with a c
 
 ![The Apple TV Home Screen with Mindseerr in the top row and a row of trending posters above the apps](docs/screenshots/top-shelf.png)
 
-Put Mindseerr in the top row of your Home Screen and the **Top Shelf**, the area above your apps, fills with what's trending on Seerr. Highlight Mindseerr to see the posters, then select one to open that title's page in the app. The titles are the ones Mindseerr last loaded on Discover, so open the app now and then to keep the row fresh. Until it has loaded Discover once, tvOS shows the Mindseerr banner instead.
+Put Mindseerr in the top row of your Home Screen and the **Top Shelf**, the area above your apps, fills with a section of Discover, Trending by default. Highlight Mindseerr to see the posters, then select one to open that title's page in the app. The titles are the ones Mindseerr last loaded for that section on Discover, so open the app now and then to keep the row fresh. Until it has loaded Discover once, tvOS shows the Mindseerr banner instead.
 
 ### Turning Top Shelf on or off
 
 ![Settings with the Look and Feel section: Appearance set to Gloam and Top Shelf set to On](docs/screenshots/settings-top-shelf.png)
 
-Top Shelf is on by default. To change it, open **Settings** and select **Top Shelf** under **Look and Feel**: the row works like a switch and flips between **On** and **Off** each time you select it. With it off, the Home Screen shows the Mindseerr banner instead of trending posters, and the change applies right away. The same section holds **Appearance**, where you pick the app's theme.
+Top Shelf is on by default. To change it, open **Settings** and select **Top Shelf** under **Look and Feel**: the row works like a switch and flips between **On** and **Off** each time you select it. With it off, the Home Screen shows the Mindseerr banner instead of trending posters, and the change applies right away. Right below it, **Top Shelf Shows** lets you choose which section the Top Shelf displays: **Suggested for You**, **Trending**, **Popular Movies**, **Upcoming Movies**, **Popular Series** or **Upcoming Series**. The same section holds **Appearance**, where you pick the app's theme.
 
 ## Features
 

@@ -11,6 +11,8 @@ final class AppState {
     var previewTheme: AppTheme?
     /// Sonarr/Radarr download progress, shown on posters, detail pages and the Admin tab.
     let downloads = DownloadMonitor()
+    /// The "Suggested for You" titles, shared by Discover and the Top Shelf.
+    let suggestions = SuggestionsModel()
     /// A title to open on Discover, from a Top Shelf link. Discover shows it and clears this.
     var deepLinkRoute: MediaRoute?
     private(set) var launchError: String?

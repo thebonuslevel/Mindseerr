@@ -23,18 +23,52 @@ enum TopShelfCache {
         set { defaults?.set(newValue, forKey: enabledKey) }
     }
 
-    /// Kept in the App Group's shared defaults, not a file: tvOS only lets apps write files to Caches,
-    /// so a file in the group container works in the Simulator but fails on a real Apple TV.
-    private static let itemsKey = "topShelf.trending"
-    private static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
+    /// What the Top Shelf can show: any Discover section, or the suggestions row. The raw values match
+    /// the app's `DiscoverSection`, so a Discover row saves under its own id.
+    enum Section: String, CaseIterable, Identifiable {
+        case suggested, trending, popularMovies, upcomingMovies, popularTV, upcomingTV
 
-    static func save(_ items: [Item]) {
-        guard let data = try? JSONEncoder().encode(items) else { return }
-        defaults?.set(data, forKey: itemsKey)
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .suggested: return "Suggested for You"
+            case .trending: return "Trending"
+            case .popularMovies: return "Popular Movies"
+            case .upcomingMovies: return "Upcoming Movies"
+            case .popularTV: return "Popular Series"
+            case .upcomingTV: return "Upcoming Series"
+            }
+        }
+
+        /// The heading above the posters on the Top Shelf.
+        var shelfTitle: String { self == .trending ? "Trending on Seerr" : title }
     }
 
-    static func load() -> [Item] {
-        guard let data = defaults?.data(forKey: itemsKey) else { return [] }
+    private static let sectionKey = "topShelf.section"
+
+    /// Which section the Top Shelf shows (Trending by default). Stored in the App Group so the extension can read it.
+    static var section: Section {
+        get { Section(rawValue: defaults?.string(forKey: sectionKey) ?? "") ?? .trending }
+        set { defaults?.set(newValue.rawValue, forKey: sectionKey) }
+    }
+
+    /// Kept in the App Group's shared defaults, not a file: tvOS only lets apps write files to Caches,
+    /// so a file in the group container works in the Simulator but fails on a real Apple TV.
+    private static func itemsKey(_ section: Section) -> String { "topShelf.items.\(section.rawValue)" }
+    /// Where the first version kept the trending titles.
+    private static let legacyTrendingKey = "topShelf.trending"
+    private static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
+
+    static func save(_ items: [Item], for section: Section = .trending) {
+        guard let data = try? JSONEncoder().encode(items) else { return }
+        defaults?.set(data, forKey: itemsKey(section))
+    }
+
+    static func load(_ section: Section = .trending) -> [Item] {
+        let data = defaults?.data(forKey: itemsKey(section))
+            ?? (section == .trending ? defaults?.data(forKey: legacyTrendingKey) : nil)
+        guard let data else { return [] }
         return (try? JSONDecoder().decode([Item].self, from: data)) ?? []
     }
 

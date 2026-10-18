@@ -21,13 +21,14 @@ final class MediaRowModel: Identifiable {
     }
 
     /// Hands the first page of Trending to the Top Shelf extension and asks tvOS to refresh it.
-    private static func saveForTopShelf(_ items: [MediaResult]) {
+    static func saveForTopShelf(_ items: [MediaResult], section: TopShelfCache.Section) {
         TopShelfCache.save(items.prefix(20).compactMap { item in
             guard let route = item.route else { return nil }
             return TopShelfCache.Item(type: route.type.rawValue, tmdbId: route.tmdbId, title: item.displayTitle,
                                       posterURL: TMDBImage.url(item.posterPath, size: .posterLarge))
-        })
-        TVTopShelfContentProvider.topShelfContentDidChange()
+        }, for: section)
+        // Only the section the Top Shelf is showing needs it redrawn.
+        if TopShelfCache.section == section { TVTopShelfContentProvider.topShelfContentDidChange() }
     }
 
     func loadMore(using api: SeerrClient) async {
@@ -42,7 +43,10 @@ final class MediaRowModel: Identifiable {
             let fresh = response.results.filter { $0.route != nil && seen.insert($0.uid).inserted }
             items.append(contentsOf: fresh)
             error = nil
-            if section == .trending, page == 1 { Self.saveForTopShelf(items) }
+            // Each section is kept for the Top Shelf, which shows whichever one is chosen in Settings.
+            if page == 1, let shelf = TopShelfCache.Section(rawValue: section.rawValue) {
+                Self.saveForTopShelf(items, section: shelf)
+            }
         } catch {
             if items.isEmpty { self.error = AppState.friendly(error) }
         }
@@ -53,13 +57,12 @@ struct DiscoverView: View {
     @Environment(AppState.self) private var app
     @State private var rows = DiscoverSection.allCases.map { MediaRowModel(section: $0) }
     @State private var path = NavigationPath()
-    @State private var suggestions = SuggestionsModel()
 
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 40) {
-                    SuggestionsRowView(model: suggestions)
+                    SuggestionsRowView(model: app.suggestions)
                     ForEach(rows) { row in
                         MediaRowView(model: row)
                     }
@@ -69,7 +72,7 @@ struct DiscoverView: View {
             .themedBackground()
             .mediaDestinations()
         }
-        .task { await suggestions.refresh(api: app.api, userId: app.user?.id) }
+        .task { await app.suggestions.refresh(api: app.api, userId: app.user?.id) }
         // Pop back to the rows when leaving the tab, so returning always shows the top level.
         .onDisappear { path = NavigationPath() }
         // A title opened from the Top Shelf: show it on top of the rows.

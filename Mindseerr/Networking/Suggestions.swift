@@ -118,5 +118,6 @@ final class SuggestionsModel {
         guard !Task.isCancelled else { return }
         items = fresh
         loadedAt = Date()
+        MediaRowModel.saveForTopShelf(fresh, section: .suggested)
     }
 }
