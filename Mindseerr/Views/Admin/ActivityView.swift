@@ -46,15 +46,22 @@ struct MyActivityView: View {
                                                 ? "Movies and series you request will show up here."
                                                 : "Your completed requests are hidden. New ones will show up here."))
                 } else {
-                    List {
-                        Section("Your Requests") {
-                            ForEach(requests) { request in
-                                ActivityRequestRow(request: request)
-                                    .onAppear {
-                                        if request.id == requests.last?.id { Task { await loadMore() } }
-                                    }
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text("Your Requests")
+                                .font(.title3).fontWeight(.semibold)
+                            LazyVStack(spacing: 20) {
+                                ForEach(requests) { request in
+                                    ActivityRequestRow(request: request)
+                                        .onAppear {
+                                            if request.id == requests.last?.id { Task { await loadMore() } }
+                                        }
+                                }
                             }
                         }
+                        .padding(.horizontal, 50)
+                        .padding(.vertical, 30)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }
@@ -112,34 +119,69 @@ struct MyActivityView: View {
     }
 }
 
-/// One of the user's requests: poster, title, what was requested and where it stands, opening the title when selected.
+/// One of the user's requests, as a panel like the Active Downloads ones: the title (opening it when selected) and,
+/// while it's downloading, pause and cancel buttons inside the panel. The panel lights up when the title has focus.
 private struct ActivityRequestRow: View {
     @Environment(AppState.self) private var app
+    @Environment(\.appTheme) private var theme
     let request: MediaRequest
     @State private var detail: MediaDetail?
+    @State private var titleFocused = false
+    @FocusState private var plainFocused: Bool
+    @State private var confirmCancel = false
+    @State private var notice: String?
+
+    /// Sonarr/Radarr/torrent-client downloads for this title, when this device has them connected.
+    private var downloads: [ArrDownload] {
+        app.downloads.downloads.filter { $0.matches(request.media) }
+    }
 
     var body: some View {
-        Group {
+        HStack(spacing: 20) {
             if let route = request.route {
                 NavigationLink(value: route) { label }
+                    .buttonStyle(DownloadLinkStyle(isFocused: $titleFocused))
             } else {
                 label
+                    .padding(12)
+                    .focusable()
+                    .focused($plainFocused)
+                    .onChange(of: plainFocused) { _, on in titleFocused = on }
+            }
+            if !downloads.isEmpty {
+                DownloadControlButtons(downloads: downloads) { confirmCancel = true }
             }
         }
+        .padding(14)
+        .background(titleFocused ? theme.highlight.opacity(0.3) : Color.primary.opacity(0.1),
+                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .animation(.easeOut(duration: 0.15), value: titleFocused)
+        .focusSection()
         .task {
             if let route = request.route { detail = try? await app.api.detail(for: route) }
         }
-    }
-
-    /// Sonarr/Radarr downloads for this title, when this device has them connected.
-    private var downloads: [ArrDownload] {
-        app.downloads.downloads.filter { $0.matches(request.media) }
+        .confirmationDialog("Cancel this download?", isPresented: $confirmCancel, titleVisibility: .visible) {
+            Button("Cancel Download", role: .destructive) {
+                let items = downloads
+                Task {
+                    do { try await app.downloads.cancel(items) } catch { notice = AppState.friendly(error) }
+                }
+            }
+            Button("Keep Downloading", role: .cancel) {}
+        } message: {
+            Text("This removes \(detail?.displayTitle ?? "this title") from the download queue and deletes the partial download from your download client. The request stays in Seerr.")
+        }
+        .alert("Download", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(notice ?? "")
+        }
     }
 
     private var label: some View {
         HStack(spacing: 30) {
             PosterImage(url: TMDBImage.url(detail?.posterPath, size: .poster))
-                .frame(width: 100, height: 150)
+                .frame(width: 80, height: 120)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 10) {
@@ -149,15 +191,15 @@ private struct ActivityRequestRow: View {
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
                 HStack(spacing: 12) {
                     RequestStatusBadge(status: request.status)
                     if let status = request.secondaryMediaStatus { StatusBadge(status: status) }
                 }
                 ForEach(downloads) { DownloadProgressLine(download: $0) }
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 8)
     }
 
     private var subtitle: String {

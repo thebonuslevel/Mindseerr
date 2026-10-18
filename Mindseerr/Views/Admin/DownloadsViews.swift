@@ -252,7 +252,7 @@ struct DownloadRow: View {
 
 /// The look of a title inside a download panel: no platter of its own. It reports whether it has focus, and the
 /// panel around it lights up as a whole.
-private struct DownloadLinkStyle: ButtonStyle {
+struct DownloadLinkStyle: ButtonStyle {
     @Binding var isFocused: Bool
 
     func makeBody(configuration: Configuration) -> some View {
