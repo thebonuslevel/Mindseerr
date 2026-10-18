@@ -6,9 +6,9 @@ struct SettingsView: View {
     @State private var confirmSignOut = false
     @State private var showAbout = false
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .gloam
-    @State private var topShelfOn = TopShelfCache.isEnabled
     @State private var notifyOn = DownloadNotifications.isEnabled
-    @State private var shelfSection = TopShelfCache.section
+    /// What the Top Shelf shows: a Discover section, or nil when it's off.
+    @State private var shelfChoice: TopShelfCache.Section? = TopShelfCache.isEnabled ? TopShelfCache.section : nil
 
     var body: some View {
         NavigationStack {
@@ -19,21 +19,15 @@ struct SettingsView: View {
                     } label: {
                         LabeledContent("Appearance", value: theme.name)
                     }
-                    // Selecting the row flips it, like a switch.
-                    Button {
-                        topShelfOn.toggle()
-                    } label: {
-                        LabeledContent("Top Shelf", value: topShelfOn ? "On" : "Off")
-                    }
                     NavigationLink {
                         TopShelfSectionView()
                     } label: {
-                        LabeledContent("Top Shelf Shows", value: shelfSection.title)
+                        LabeledContent("Top Shelf", value: shelfChoice?.title ?? "Off")
                     }
                 } header: {
                     Text("Look and Feel")
                 } footer: {
-                    Text("Shows titles from a section of Discover above the apps when Mindseerr is in the top row of the Home Screen. Choose which section under Top Shelf Shows. When off, the Mindseerr banner shows instead.")
+                    Text("Shows titles from a section of Discover above the apps when Mindseerr is in the top row of the Home Screen. Choose the section, or Off to show the Mindseerr banner instead.")
                 }
                 Section {
                     // Selecting the row flips it, like a switch.
@@ -79,7 +73,7 @@ struct SettingsView: View {
             }
             .themedBackground()
             // The choice is made on a pushed page; pick it up when coming back.
-            .onAppear { shelfSection = TopShelfCache.section }
+            .onAppear { shelfChoice = TopShelfCache.isEnabled ? TopShelfCache.section : nil }
             .navigationDestination(isPresented: $showAbout) { AboutView() }
             .confirmationDialog("Sign out of Seerr?", isPresented: $confirmSignOut, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) { Task { await app.signOut() } }
@@ -88,10 +82,6 @@ struct SettingsView: View {
         }
         .task { await app.refreshServerVersion() }
         .onChange(of: notifyOn) { _, on in DownloadNotifications.isEnabled = on }
-        .onChange(of: topShelfOn) { _, on in
-            TopShelfCache.isEnabled = on
-            TVTopShelfContentProvider.topShelfContentDidChange() // ask tvOS to redraw it now
-        }
     }
 
     private func infoRow(_ title: String, _ value: String) -> some View {
@@ -185,38 +175,48 @@ struct BareButtonStyle: ButtonStyle {
     }
 }
 
-/// Its own page for choosing which Discover section the Top Shelf shows.
+/// Its own page for the Top Shelf: Off, or which Discover section it shows.
 struct TopShelfSectionView: View {
     @Environment(AppState.self) private var app
-    @State private var chosen = TopShelfCache.section
+    @State private var chosen: TopShelfCache.Section? = TopShelfCache.isEnabled ? TopShelfCache.section : nil
     @State private var loading: TopShelfCache.Section?
 
     var body: some View {
         List {
             Section {
+                Button { chooseOff() } label: { row("Off", selected: chosen == nil, loading: false) }
                 ForEach(TopShelfCache.Section.allCases) { option in
-                    Button { choose(option) } label: {
-                        HStack {
-                            Text(option.title)
-                            Spacer()
-                            if loading == option {
-                                ProgressView()
-                            } else if option == chosen {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
+                    Button { choose(option) } label: { row(option.title, selected: option == chosen, loading: loading == option) }
                 }
             } footer: {
-                Text("The Top Shelf shows the first titles of the section you pick, as of the last time Mindseerr loaded it. Open Discover now and then to keep it fresh.")
+                Text("The Top Shelf shows the first titles of the section you pick, as of the last time Mindseerr loaded it. Open Discover now and then to keep it fresh. With Off, tvOS shows the Mindseerr banner instead.")
             }
         }
         .themedBackground()
-        .navigationTitle("Top Shelf Shows")
+        .navigationTitle("Top Shelf")
+    }
+
+    private func row(_ title: String, selected: Bool, loading: Bool) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            if loading {
+                ProgressView()
+            } else if selected {
+                Image(systemName: "checkmark")
+            }
+        }
+    }
+
+    private func chooseOff() {
+        chosen = nil
+        TopShelfCache.isEnabled = false
+        TVTopShelfContentProvider.topShelfContentDidChange() // ask tvOS to redraw it now
     }
 
     private func choose(_ option: TopShelfCache.Section) {
         chosen = option
+        TopShelfCache.isEnabled = true
         TopShelfCache.section = option
         Task {
             // A section is only saved once Discover has loaded it, so fetch it now if it hasn't been.
