@@ -36,6 +36,8 @@ The request list knows what's downloading too. Any request whose title is in a S
 
 On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, and shows once qBittorrent is connected and is holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later. The same two buttons appear on the items in the **Requests** tab while their title is downloading.
 
+![The Requests tab with a paused download showing a Play button and a Cancel button beside it](docs/screenshots/requests-download-controls.png)
+
 ### Detail page
 
 ![Series detail page with a frosted panel under the title reading Season 2, Episode 5, and a progress bar at 81%](docs/screenshots/detail-progress.png)
