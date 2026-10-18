@@ -195,6 +195,17 @@ actor SeerrClient {
         }
     }
 
+    /// One user's own requests, newest first.
+    func requests(for userId: Int, skip: Int, take: Int = 20) async throws -> RequestPage {
+        try await send("request", query: [
+            "take": "\(take)",
+            "skip": "\(skip)",
+            "sort": "added",
+            "filter": "all",
+            "requestedBy": "\(userId)",
+        ])
+    }
+
     func allRequests(filter: RequestFilter, skip: Int, take: Int = 20) async throws -> RequestPage {
         try await send("request", query: [
             "take": "\(take)",

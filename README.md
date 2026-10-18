@@ -10,11 +10,11 @@ Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev
 
 *Simulated examples: the titles, poster art, people and downloads are invented and served by the demo server in `Tools/demo-server`. Shown in the Gloam theme.*
 
-### Admin panel: Sonarr, Radarr & download clients
+### Activity tab: Sonarr, Radarr & download clients
 
-![Admin panel with request counts, connected Sonarr and Radarr services, and the Active Downloads list](docs/screenshots/admin-download-services.png)
+![Activity tab (admin view) with request counts, connected Sonarr and Radarr services, and the Active Downloads list](docs/screenshots/admin-download-services.png)
 
-Connect your **Sonarr** and **Radarr** servers right from the Admin tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
+Connect your **Sonarr** and **Radarr** servers right from the Activity tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
 
 Add your torrent client the same way: **qBittorrent**, **Deluge** or **Transmission**. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same client they use.
 
@@ -32,13 +32,13 @@ Mindseerr lists every unfinished torrent and works out which Seerr title it is f
 
 **Active Downloads** then shows the downloads in their queues that belong to a Seerr request, matched to the request they came from: who asked for it, which server is fetching it, a progress bar, status and time left. Series show which season and episode is downloading. The list refreshes every 10 seconds. Downloads with no Seerr request behind them, such as something you added straight to Sonarr, Radarr or qBittorrent, are left out.
 
-### Admin panel: download status on requests
+### Activity tab: download status on requests
 
-![Admin request list where each request has a colored tag showing its download state: Paused, Importing, Downloading](docs/screenshots/admin-request-progress.png)
+![Request list on the Activity tab where each request has a colored tag showing its download state: Paused, Importing, Downloading](docs/screenshots/admin-request-progress.png)
 
 The request list knows what's downloading too. Any request whose title is in a Sonarr or Radarr queue gets a tag with its actual state, colored to match: **Downloading** (soft green), **Paused** (amber), **Queued** (gray), **Importing** (blue), **Needs attention** (orange) or **Failed** (red). You can tell at a glance an approved request that's on its way from one that's stuck.
 
-### Admin panel: pause, resume and cancel downloads
+### Activity tab: pause, resume and cancel downloads
 
 On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, Deluge or Transmission, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
 
@@ -114,8 +114,8 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
 - **Download finished banner** on any screen while the app is open, with a switch in Settings.
-- **Download controls**: connect qBittorrent, Deluge or Transmission to pause, resume or cancel a download right from Active Downloads on the Admin tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
-- **Admin tab** for admins and users with the Manage Requests permission: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
+- **Download controls**: connect qBittorrent, Deluge or Transmission to pause, resume or cancel a download right from Active Downloads on the Activity tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
+- **Activity tab** for everyone. Admins and users with the Manage Requests permission get the full panel: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
 - **Discover**: Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
@@ -123,8 +123,8 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
 - **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest. Pick which titles, and which seasons of each series, to send.
-- **Tabs that reset**: Discover, Search, Watchlists, Admin and Settings each return to their top level when you leave them and come back, and Search clears its box.
-- **Five tabs**: Discover, Search, Watchlists, Settings and, for admins, Admin. Everyone else sees a title's request status on its detail page and as badges on posters.
+- **Tabs that reset**: Discover, Search, Watchlists, Activity and Settings each return to their top level when you leave them and come back, and Search clears its box.
+- **Five tabs**: Discover, Search, Watchlists, Activity and Settings. The Activity tab changes with who's signed in: admins see every request with approvals and download controls, and everyone else sees their own unfinished requests and where each one stands.
 - Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
 
 ## Requirements
@@ -208,7 +208,7 @@ Mindseerr/
     │   └── Watchlists/          Trakt, TMDB and TheTVDB clients, Letterboxd importer, WatchlistStore
     └── Views/
         ├── Onboarding/          Server address, sign-in (Plex, Jellyfin/Emby, Seerr account, API key)
-        ├── Admin/               Approve, decline, retry and delete requests
+        ├── Admin/               Activity tab: the admin panel, and each user's own requests
         ├── Discover/            Paginated poster rows
         ├── Search/              Debounced search grid
         ├── Detail/              Detail page + season picker

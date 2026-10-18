@@ -357,7 +357,8 @@ class Handler(BaseHTTPRequestHandler):
 
         if p == "/status": return self.send_json({"version": "2.7.0 (demo)"})
         if p == "/settings/public": return self.send_json({"mediaServerType": 1, "applicationTitle": "Seerr"})
-        if p == "/auth/me": return self.send_json(user(1))
+        # DEMO_USER=<id> signs the demo in as a regular user (see USERS in catalog.json) instead of the admin.
+        if p == "/auth/me": return self.send_json(user(int(os.environ.get("DEMO_USER", 1))))
         if p.lstrip("/") in CATALOG["sections"]:
             items = [result(TITLES[i]) for i in CATALOG["sections"][p.lstrip("/")]]
             page = int(q.get("page", 1))
