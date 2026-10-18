@@ -119,10 +119,12 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
 - **Discover**: Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
-- **Search** across movies and series with the tvOS search keyboard.
+- **Search** across movies and series with the tvOS search keyboard. Results show availability badges and download progress like Discover.
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
-- **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest one at a time or all at once.
+- **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest. Pick which titles, and which seasons of each series, to send.
+- **Tabs that reset**: Discover, Search, Watchlists, Admin and Settings each return to their top level when you leave them and come back, and Search clears its box.
+- **Five tabs**: Discover, Search, Watchlists, Settings and, for admins, Admin. Everyone else sees a title's request status on its detail page and as badges on posters.
 - Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
 
 ## Requirements
@@ -252,15 +254,17 @@ Done:
 - [x] Request-option overrides (server, quality profile, root folder) for users with *Advanced Requests*
 - [x] Cast & crew and "Similar"/"Recommended" rows on detail pages
 - [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
-- [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB
-- [x] Choose which titles and which seasons of a series to request from a watchlist
-- [x] A banner when a download finishes, on any screen (tvOS can't show banners while the app is closed)
+- [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB, with a picker for titles and seasons
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
+- [x] A banner when a download finishes, on any screen (tvOS can't show banners while the app is closed)
 - [x] Themes, including a light one
+- [x] Tabs that return to their top level when you leave them
 
 Still to do:
 
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
+- A request list for non-admin users, now that the Requests tab is gone (for example on the Settings or Discover screens)
+- Show a banner for downloads that finished while the app was closed, when it's next opened
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
 - Browse Discover by genre, studio or network, and filter or sort search results
 - Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
