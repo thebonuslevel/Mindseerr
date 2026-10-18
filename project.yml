@@ -82,6 +82,8 @@ targets:
       path: Support/TopShelf-Info.plist
       properties:
         CFBundleDisplayName: Mindseerr
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.tv-top-shelf
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ContentProvider
