@@ -51,12 +51,11 @@ struct WatchlistsView: View {
         .sheet(isPresented: $showTMDBSignIn) {
             TMDBSignInView(store: store)
         }
-        .confirmationDialog("Request \(store.missingCount(store.source)) titles that aren't on your server?",
-                            isPresented: $confirmRequestAll, titleVisibility: .visible) {
-            Button("Request All") {
+        .fullScreenCover(isPresented: $confirmRequestAll) {
+            WatchlistRequestSheet(items: store.visibleItems(store.source, missingOnly: true)) { choices in
                 let source = store.source
                 Task {
-                    let result = await store.requestAllMissing(source, api: app.api)
+                    let result = await store.requestAllMissing(source, api: app.api, choices: choices)
                     var text = result.sent == 1 ? "Requested 1 title." : "Requested \(result.sent) titles."
                     if result.failed > 0 {
                         text += " \(result.failed) couldn't be requested"
@@ -65,9 +64,6 @@ struct WatchlistsView: View {
                     summary = text
                 }
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Series are requested for every season that isn't already available or requested.")
         }
         .confirmationDialog("Disconnect \(store.source.name)?", isPresented: $confirmDisconnect,
                             titleVisibility: .visible) {
@@ -126,7 +122,7 @@ struct WatchlistsView: View {
                 Button {
                     confirmRequestAll = true
                 } label: {
-                    Label("Request All Missing (\(missing))", systemImage: "plus.circle.fill")
+                    Label("Request Missing (\(missing))", systemImage: "plus.circle.fill")
                 }
                 .disabled(missing == 0 || busy)
 

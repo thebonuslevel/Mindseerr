@@ -311,6 +311,7 @@ class Handler(BaseHTTPRequestHandler):
                         tid = (record.get("movie") or record.get("series"))["tmdbId"]
                         CANCELLED.add(tid)
                 return self.send_json({})
+        print("refused", self.command, p, body, flush=True)  # shows what the app tried to send
         self.send_json({"message": "This is a read-only demo server."}, 403)
     do_DELETE = do_PUT = do_POST
 

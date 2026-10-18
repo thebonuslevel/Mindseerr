@@ -308,8 +308,15 @@ final class WatchlistStore {
         let firstError: String?
     }
 
-    func requestAllMissing(_ s: WatchlistSource, api: SeerrClient) async -> RequestSummary {
-        let targets = visibleItems(s, missingOnly: true)
+    /// What the user picked in the request sheet: the seasons wanted for each series (by item id), and the
+    /// ids of titles to leave out. Nothing here means "request everything that's missing".
+    struct RequestChoices {
+        var seasons: [String: [Int]] = [:]
+        var skipped: Set<String> = []
+    }
+
+    func requestAllMissing(_ s: WatchlistSource, api: SeerrClient, choices: RequestChoices = RequestChoices()) async -> RequestSummary {
+        let targets = visibleItems(s, missingOnly: true).filter { !choices.skipped.contains($0.id) }
         var sent = 0, failed = 0
         var firstError: String?
         for (index, item) in targets.enumerated() {
@@ -318,7 +325,9 @@ final class WatchlistStore {
             do {
                 if route.type == .tv {
                     let detail = try await api.detail(for: route, useCache: false)
-                    let seasons = detail.requestableSeasonNumbers
+                    // The seasons the user picked, limited to ones that can still be requested.
+                    let open = detail.requestableSeasonNumbers
+                    let seasons = choices.seasons[item.id].map { picked in open.filter(picked.contains) } ?? open
                     guard !seasons.isEmpty else { continue }
                     _ = try await api.request(route, seasons: seasons)
                 } else {

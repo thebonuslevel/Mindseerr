@@ -86,7 +86,11 @@ While browsing, posters of titles that are downloading get a thin progress bar a
 
 Bring your watchlists along. Pick **Trakt**, **Letterboxd**, **TMDB** or **TheTVDB** along the top and Mindseerr imports it and matches every title to your Seerr server. Each poster gets a badge: **Available** (green), **Requested** (indigo) or **Partial** (teal, when some seasons are still missing), and titles that aren't on your server carry no badge. A summary line counts what's available, requested and missing.
 
-**Request All Missing** sends a request for everything that isn't on your server yet (series for every season that isn't already available or requested), **Not on Server Only** filters the grid down to just those titles, and **Refresh** imports the list again. Select any poster to open its detail page and request it from there. Titles that can't be matched to a movie or series stay visible and are marked **No Match**.
+**Request Missing** opens a **Choose What to Request** screen first, so you decide what actually gets requested instead of sending everything (below). **Not on Server Only** filters the grid down to just the missing titles, and **Refresh** imports the list again. Select any poster to open its detail page and request it from there. Titles that can't be matched to a movie or series stay visible and are marked **No Match**.
+
+![The Choose What to Request screen with movies ticked and seasons of a series partly unticked](docs/screenshots/watchlist-choose-seasons.png)
+
+Every missing movie and series starts ticked. Untick any movie you don't want, and for each series pick just the seasons you're after, with **All** and **None** shortcuts. Only seasons that can still be requested are offered (ones already available or requested are left out), each with its episode count. A series with no seasons picked is skipped, and the button counts what you're about to send, such as **Request 7 Titles**.
 
 ### Connecting a watchlist
 
@@ -254,6 +258,7 @@ Done:
 - [x] Cast & crew and "Similar"/"Recommended" rows on detail pages
 - [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB
+- [x] Choose which titles and which seasons of a series to request from a watchlist
 - [x] A banner when a download finishes, on any screen (tvOS can't show banners while the app is closed)
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] Themes, including a light one
@@ -263,7 +268,6 @@ Still to do:
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
 - Browse Discover by genre, studio or network, and filter or sort search results
-- Choose seasons for a series when requesting from a watchlist, instead of requesting every missing season
 - Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
 - Send Seerr's XSRF token so the app works with CSRF protection turned on
 - Localization
