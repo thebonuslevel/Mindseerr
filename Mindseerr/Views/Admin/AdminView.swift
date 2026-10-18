@@ -195,7 +195,6 @@ struct AdminView: View {
 
     private var downloadsSection: some View {
         let linked = linkedDownloads
-        let hidden = downloads.count - linked.count
         return VStack(alignment: .leading, spacing: 20) {
             Text(linked.isEmpty ? "Active Downloads" : "Active Downloads (\(linked.count))")
                 .font(.title3).fontWeight(.semibold)
@@ -213,12 +212,6 @@ struct AdminView: View {
                                     onCancel: { downloadToCancel = download })
                     }
                 }
-            }
-            if hidden > 0, trackedLoaded {
-                Text(hidden == 1 ? "1 other download isn't linked to a Seerr request and is hidden."
-                                 : "\(hidden) other downloads aren't linked to a Seerr request and are hidden.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
         }
         .focusSection()
