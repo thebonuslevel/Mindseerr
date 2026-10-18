@@ -16,7 +16,7 @@ Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev
 
 Connect your **Sonarr** and **Radarr** servers right from the Admin tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
 
-Add your **qBittorrent** the same way, with its Web UI address, username and password. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same qBittorrent they use.
+Add your **qBittorrent** the same way, with its Web UI address and an **API key**. Create the key in qBittorrent under *Tools → Options → Web UI → Authentication*; API keys need qBittorrent **5.2 or newer**. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same qBittorrent they use.
 
 **qBittorrent works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent and Active Downloads reads progress straight from it.
 

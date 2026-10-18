@@ -11,8 +11,6 @@ struct AddArrServiceView: View {
     @State private var name = ""
     @State private var address = ""
     @State private var apiKey = ""
-    @State private var username = ""
-    @State private var password = ""
     @State private var checking = false
     @State private var error: String?
 
@@ -36,21 +34,15 @@ struct AddArrServiceView: View {
                 TextField("Address, like http://192.168.1.10:\(kind.defaultPortText)", text: $address)
                     .keyboardType(.URL)
                     .textContentType(.URL)
-                if kind == .qbittorrent {
-                    TextField("Web UI username", text: $username)
-                        .textContentType(.username)
-                    SecureField("Web UI password", text: $password)
-                } else {
-                    TextField("API key", text: $apiKey)
-                        .textContentType(.password)
-                }
+                TextField(kind == .qbittorrent ? "API key, like qbt_…" : "API key", text: $apiKey)
+                    .textContentType(.password)
             }
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .frame(maxWidth: 1000)
 
             Text(kind == .qbittorrent
-                 ? "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). With no Sonarr or Radarr, Mindseerr shows its unfinished torrents and matches them to titles by their release names. With them, add the same qBittorrent they use and its torrents are matched to their downloads."
+                 ? "Use qBittorrent's Web UI address and an API key from Tools → Options → Web UI → Authentication (qBittorrent 5.2 or newer). Add the same qBittorrent that Sonarr and Radarr use."
                  : "The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue)).")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -66,7 +58,7 @@ struct AddArrServiceView: View {
                 Button(action: save) {
                     Label("Test & Save", systemImage: "checkmark.circle")
                 }
-                .disabled(checking || address.trimmed.isEmpty || (kind == .qbittorrent ? false : apiKey.trimmed.isEmpty))
+                .disabled(checking || address.trimmed.isEmpty || apiKey.trimmed.isEmpty)
 
                 Button("Cancel", role: .cancel) { dismiss() }
 
@@ -89,9 +81,7 @@ struct AddArrServiceView: View {
         let service = ArrService(kind: kind,
                                  name: name.trimmed.isEmpty ? kind.name : name.trimmed,
                                  baseURL: url,
-                                 apiKey: kind == .qbittorrent ? "" : apiKey.trimmed,
-                                 username: kind == .qbittorrent ? username.trimmed : nil,
-                                 password: kind == .qbittorrent ? password : nil)
+                                 apiKey: apiKey.trimmed)
         Task {
             checking = true
             error = nil

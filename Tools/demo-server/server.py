@@ -195,11 +195,11 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length).decode() if length else ""
 
-        # A fake qBittorrent: sign-in, version and the torrents behind the queues' downloadIds.
+        # A fake qBittorrent (API key auth): version and the torrents behind the queues' downloadIds.
         if p.startswith("/qbittorrent/api/v2/"):
             action = p[len("/qbittorrent/api/v2/"):]
-            if action == "auth/login":
-                return self.send_text("Ok.")
+            if not self.headers.get("Authorization", "").startswith("Bearer qbt_"):
+                return self.send_text("Forbidden", 403)
             if action == "torrents/delete":
                 for h in parse_qs(body).get("hashes", [""])[0].split("|"):
                     if h.startswith("dl") and h[2:].isdigit():
@@ -229,8 +229,10 @@ class Handler(BaseHTTPRequestHandler):
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         p = url.path.rstrip("/")
 
+        if p.startswith("/qbittorrent/api/v2/") and not self.headers.get("Authorization", "").startswith("Bearer qbt_"):
+            return self.send_text("Forbidden", 403)
         if p == "/qbittorrent/api/v2/app/version":
-            return self.send_text("v5.0.1")
+            return self.send_text("v5.2.4")
         if p == "/qbittorrent/api/v2/torrents/info":
             return self.send_json(torrents())
 
