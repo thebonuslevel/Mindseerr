@@ -232,7 +232,24 @@ All calls go to `<server>/api/v1`:
 
 ## Ideas for next steps
 
-- 4K requests (`is4k: true`) when the server has a 4K Radarr/Sonarr
-- Request-option overrides (server, quality profile, root folder) for users with *Advanced Requests*
-- Cast & crew and "Similar"/"Recommended" rows on detail pages
-- Top Shelf extension showing trending titles
+Done:
+
+- [x] 4K requests when the server has a 4K Radarr/Sonarr
+- [x] Request-option overrides (server, quality profile, root folder) for users with *Advanced Requests*
+- [x] Cast & crew and "Similar"/"Recommended" rows on detail pages
+- [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
+- [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB
+- [x] qBittorrent: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
+- [x] Themes, including a light one
+
+Still to do:
+
+- Support more download clients (SABnzbd, NZBGet, Deluge, Transmission) for progress and the download controls
+- An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
+- A notification or banner when a request you made finishes downloading
+- Browse Discover by genre, studio or network, and filter or sort search results
+- Choose seasons for a series when requesting from a watchlist, instead of requesting every missing season
+- Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
+- Send Seerr's XSRF token so the app works with CSRF protection turned on
+- Localization
+- A signed build through TestFlight or the App Store, so installing doesn't need sideloading
