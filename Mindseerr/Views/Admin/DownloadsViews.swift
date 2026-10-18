@@ -17,11 +17,15 @@ struct AddArrServiceView: View {
     @State private var error: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
+        // Scrolls, so the longer clients' forms and hints never run off the bottom of the screen.
+        ScrollView {
+        VStack(alignment: .leading, spacing: 22) {
             Text("Add a Download Service")
                 .font(.largeTitle).bold()
             Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent, Deluge and Transmission work on their own, reading progress straight from the client, and alongside Sonarr and Radarr they add pause, resume and cancel.")
                 .foregroundStyle(.secondary)
+                .frame(maxWidth: 1300, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)   // wrap onto as many lines as it needs
 
             Picker("Service", selection: $kind) {
                 ForEach(ArrKind.allCases) { option in
@@ -31,7 +35,7 @@ struct AddArrServiceView: View {
             .pickerStyle(.segmented)
             .frame(maxWidth: 1000)
 
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 TextField("Name (optional), like \(kind.name) 4K", text: $name)
                 TextField("Address, like http://192.168.1.10:\(kind.defaultPortText)", text: $address)
                     .keyboardType(.URL)
@@ -54,12 +58,14 @@ struct AddArrServiceView: View {
             Text(hint)
                 .font(.callout)
                 .foregroundStyle(.secondary)
-                .frame(maxWidth: 1400, alignment: .leading)
+                .frame(maxWidth: 1300, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
 
             if let error {
                 Text(error)
                     .foregroundStyle(.red)
-                    .frame(maxWidth: 1400, alignment: .leading)
+                    .frame(maxWidth: 1300, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             HStack(spacing: 30) {
@@ -76,8 +82,10 @@ struct AddArrServiceView: View {
                 }
             }
         }
-        .padding(80)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, 80)
+        .padding(.vertical, 50)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
         .themedBackground()
     }
 
@@ -89,13 +97,29 @@ struct AddArrServiceView: View {
     private var hint: String {
         switch kind {
         case .sonarr, .radarr:
-            return "The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue))."
+            return """
+            The API key is in \(kind.name) under Settings → General → Security.
+
+            If \(kind.name) uses a URL base, include it in the address, like http://nas:\(kind.defaultPortText)/\(kind.rawValue).
+            """
         case .qbittorrent:
-            return "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). Add the same qBittorrent that Sonarr and Radarr use, and its torrents are matched to their downloads. Without them, its unfinished torrents are matched to titles by release name."
+            return """
+            Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI).
+
+            Add the same qBittorrent that Sonarr and Radarr use, and its torrents are matched to their downloads. Without them, its unfinished torrents are matched to titles by release name.
+            """
         case .deluge:
-            return "Use the address of Deluge's Web UI and its password (the default is “deluge”). The Web UI has to be connected to a daemon under Connection Manager."
+            return """
+            Use the address of Deluge's Web UI and its password (the default is “deluge”).
+
+            The Web UI has to be connected to a daemon under Connection Manager.
+            """
         case .transmission:
-            return "Use Transmission's address. Enter a username and password only if you turned RPC authentication on."
+            return """
+            Use Transmission's address, like http://192.168.1.10:9091.
+
+            Enter a username and password only if you turned RPC authentication on.
+            """
         }
     }
 

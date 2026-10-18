@@ -87,7 +87,7 @@ struct AdminView: View {
         .onDisappear { path = NavigationPath() }
         // Look up who requested what whenever a new download shows up.
         .task(id: downloads.map(\.id)) { await loadTrackedRequests() }
-        .sheet(isPresented: $showAddService) {
+        .fullScreenCover(isPresented: $showAddService) {
             AddArrServiceView { service in monitor.add(service) }
         }
         .confirmationDialog("Remove \(serviceToRemove?.name ?? "this service")?",
