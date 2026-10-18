@@ -107,6 +107,21 @@ struct MediaResult: Decodable, Sendable {
     }
 }
 
+// MARK: - Rotten Tomatoes
+
+/// Rotten Tomatoes scores for a title, as Seerr passes them along (`/movie/{id}/ratings`, `/tv/{id}/ratings`).
+/// Series only carry the critics' score.
+struct RottenTomatoesRating: Decodable, Sendable {
+    let criticsScore: Int?
+    /// "Certified Fresh", "Fresh" or "Rotten".
+    let criticsRating: String?
+    let audienceScore: Int?
+    /// "Upright" or "Spilled".
+    let audienceRating: String?
+
+    var hasScore: Bool { criticsScore != nil || audienceScore != nil }
+}
+
 // MARK: - Movie / series detail
 
 /// Cast and crew as TMDB lists them, passed along by Seerr.

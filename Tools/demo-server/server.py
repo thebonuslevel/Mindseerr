@@ -393,6 +393,14 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(picks),
                                            "results": [result(x) for x in picks]})
         for kind in ("movie", "tv"):
+            if p.startswith(f"/{kind}/") and p.endswith("/ratings"):
+                tid = int(p.split("/")[2])
+                critics, audience = 55 + tid * 7 % 45, 50 + tid * 11 % 48
+                body = {"criticsScore": critics, "criticsRating": "Certified Fresh" if critics >= 75 else ("Fresh" if critics >= 60 else "Rotten")}
+                if kind == "movie":
+                    body.update(audienceScore=audience, audienceRating="Upright" if audience >= 60 else "Spilled")
+                return self.send_json(body)
+        for kind in ("movie", "tv"):
             if p.startswith(f"/{kind}/"):
                 t = TITLES.get(int(p.split("/")[2]))
                 return self.send_json(detail(t)) if t and t["type"] == kind else self.send_json({"message": "not found"}, 404)

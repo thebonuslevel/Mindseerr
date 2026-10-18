@@ -129,6 +129,13 @@ actor SeerrClient {
         return detail
     }
 
+    /// The Rotten Tomatoes scores for a title, or nil when Seerr has none (or can't look them up).
+    func rottenTomatoes(for route: MediaRoute) async -> RottenTomatoesRating? {
+        let path = (route.type == .tv ? "tv/" : "movie/") + "\(route.tmdbId)/ratings"
+        guard let rating: RottenTomatoesRating = try? await send(path), rating.hasScore else { return nil }
+        return rating
+    }
+
     /// Requests a movie, or specific seasons of a series.
     func request(_ route: MediaRoute, seasons: [Int]? = nil, options: RequestOptions = RequestOptions()) async throws -> MediaRequest {
         struct Body: Encodable {

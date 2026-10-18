@@ -7,6 +7,7 @@ struct MediaDetailView: View {
     let route: MediaRoute
 
     @State private var detail: MediaDetail?
+    @State private var tomatoes: RottenTomatoesRating?
     @State private var loadError: String?
     /// The Radarr (movie) or Sonarr (series) servers in Seerr; decides whether 4K is offered.
     @State private var servers: [RequestServer] = []
@@ -46,6 +47,7 @@ struct MediaDetailView: View {
             }
         }
         .task { await load() }
+        .task { tomatoes = await app.api.rottenTomatoes(for: route) }
         .task { servers = (try? await app.api.requestServers(for: route.type)) ?? [] }
         // Full screen: as a sheet, tvOS sizes it to its content and the season list collapses.
         .fullScreenCover(item: $requestTarget) { target in
@@ -128,6 +130,7 @@ struct MediaDetailView: View {
                 Text(detail.metadataLine)
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                if let tomatoes { RottenTomatoesScores(rating: tomatoes) }
                 HStack(spacing: 12) {
                     if let status = detail.mediaInfo?.status {
                         StatusBadge(status: status)

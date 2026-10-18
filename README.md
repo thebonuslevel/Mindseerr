@@ -54,6 +54,12 @@ Open a title that's downloading and its progress sits right under the title on a
 
 Every title opens to a page with its poster, tagline, year, runtime or season count, genres, rating and overview. Right under it are the actions. **Request** (or **Request Series**) sends it to your standard Radarr or Sonarr, and when your Seerr server has a 4K server and your account may use it, **Request in 4K** appears beside it. The two copies are tracked separately, so you can have a title available in HD and still request it in 4K, and each shows its own status: **Requested**, **Available**, **4K Requested** or **4K Available**. For a series you pick which seasons to request. **Trailer** opens the official trailer in the YouTube app, so install YouTube from the App Store on your Apple TV if you haven't.
 
+### Detail page: Rotten Tomatoes scores
+
+![Movie detail page showing a 76% Certified Fresh Tomatometer and a 59% Spilled audience score under the title](docs/screenshots/detail-ratings.png)
+
+Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: the critics' **Tomatometer** with its label (Certified Fresh, Fresh or Rotten) and, for movies, the **Audience** score (Upright or Spilled). Series show the critics' score only. The scores come from Seerr, so they appear when your Seerr server can look them up and are simply left out when it can't.
+
 ### Detail page: cast, crew and suggestions
 
 ![Detail page scrolled to the Cast row, with round avatars and each actor's name and character](docs/screenshots/detail-cast.png)
