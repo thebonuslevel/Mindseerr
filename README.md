@@ -68,9 +68,9 @@ Below that, **Recommended** and **Similar** rows suggest more to watch. They're 
 
 ### Download finished notification
 
-![A "Download finished" banner for Hollow Crown Road over the Discover screen](docs/screenshots/download-finished-banner.png)
+![A rounded, translucent "Download finished" banner for Hollow Crown Road in the top right corner of the Discover screen](docs/screenshots/download-finished-banner.png)
 
-When a download for one of your requests finishes, a **Download finished** banner slides in at the top right with the title's poster, its name and, for a series, the season and episode. It appears over whichever screen you're on, stays for a few seconds, and never takes the remote's focus. If several finish together they show one after another. Downloads you cancel yourself don't count, and neither do failed ones. A download counts as finished when it leaves the queue nearly done or importing.
+When a download for one of your requests finishes, a **Download finished** banner slides into the top right corner, shaped like an iOS or macOS notification: a rounded, see-through card tinted with your theme's highlight color, with the title's poster, its name and, for a series, the season and episode. It appears over whichever screen you're on, stays for a few seconds, and never takes the remote's focus. If several finish together they show one after another. Downloads you cancel yourself don't count, and neither do failed ones. A download counts as finished when it leaves the queue nearly done or importing.
 
 tvOS doesn't allow banners from an app that isn't open, so this works while Mindseerr is running, on any tab. You can turn it off under **Settings → Notifications → Download Finished**.
 
