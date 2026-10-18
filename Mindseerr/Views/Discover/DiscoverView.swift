@@ -53,11 +53,13 @@ struct DiscoverView: View {
     @Environment(AppState.self) private var app
     @State private var rows = DiscoverSection.allCases.map { MediaRowModel(section: $0) }
     @State private var path = NavigationPath()
+    @State private var suggestions = SuggestionsModel()
 
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 40) {
+                    SuggestionsRowView(model: suggestions)
                     ForEach(rows) { row in
                         MediaRowView(model: row)
                     }
@@ -67,6 +69,7 @@ struct DiscoverView: View {
             .themedBackground()
             .mediaDestinations()
         }
+        .task { await suggestions.refresh(api: app.api, userId: app.user?.id) }
         // Pop back to the rows when leaving the tab, so returning always shows the top level.
         .onDisappear { path = NavigationPath() }
         // A title opened from the Top Shelf: show it on top of the rows.
@@ -177,5 +180,28 @@ struct ExpandedSectionView: View {
         .task {
             if model.items.isEmpty { await model.loadMore(using: app.api) }
         }
+    }
+}
+
+/// "Suggested for You": titles worked out from the user's requests and the server's library (see `SuggestionEngine`).
+/// Hidden until there's something to show.
+struct SuggestionsRowView: View {
+    let model: SuggestionsModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if !model.items.isEmpty {
+                Text("Suggested for You")
+                    .font(.title3).fontWeight(.semibold)
+                ScrollView(.horizontal) {
+                    LazyHStack(alignment: .top, spacing: 40) {
+                        ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
+                    }
+                    .padding(.vertical, 30) // room for the focus lift
+                }
+                .scrollClipDisabled()
+            }
+        }
+        .focusSection()
     }
 }

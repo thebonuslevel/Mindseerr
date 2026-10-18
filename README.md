@@ -78,6 +78,17 @@ When a download for one of your requests finishes, a **Download finished** banne
 
 tvOS doesn't allow banners from an app that isn't open, so while Mindseerr is closed nothing can pop up. Instead, Mindseerr remembers what was downloading when you last used it, and when you reopen it, shows a banner for each download that finished in the meantime (a few of them, then one banner for the rest). While it's open, banners appear on any tab as downloads finish. You can turn it off under **Settings → Notifications → Download Finished**.
 
+### Discover: suggested for you
+
+A **Suggested for You** row sits at the top of Discover. Mindseerr builds it from Seerr's own data, in four steps:
+
+1. **Seeds:** your own recent requests, counted three times as heavily, plus the titles that are available on your server.
+2. **Candidates:** the recommendations Seerr gives for each seed. A title that several seeds point at scores higher.
+3. **Filtering:** anything already available, being downloaded or requested is dropped.
+4. **Rotten Tomatoes:** the best candidates are checked against their Rotten Tomatoes scores (critics, averaged with the audience score when there is one; TMDB's rating stands in when there is none). Well-rated titles are promoted and poorly rated ones demoted, and clearly bad ones are left out as long as enough good ones remain.
+
+The row is worked out when you open Discover and kept for a few hours, and it stays hidden until there's something to show. On a non-admin account, "all available titles" may be limited to your own, because Seerr only shows regular users their own requests.
+
 ### Discover: progress on posters
 
 ![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
@@ -124,7 +135,7 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Activity tab** for everyone. Admins and users with the Manage Requests permission get the full panel: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
-- **Discover**: Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
+- **Discover**: Suggested for You, Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
 - **Search** across movies and series with the tvOS search keyboard. Results show availability badges and download progress like Discover.
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
