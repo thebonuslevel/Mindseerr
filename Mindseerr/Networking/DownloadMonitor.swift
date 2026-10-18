@@ -16,6 +16,16 @@ final class DownloadMonitor {
     private(set) var torrentOwners: [String: UUID] = [:]
 
     @ObservationIgnored private var qbitClients: [UUID: QBittorrentClient] = [:]
+    /// Used to work out which Seerr title a qBittorrent-only download is for (see `identity(of:)`).
+    @ObservationIgnored private var seerr: SeerrClient?
+    /// Which title each torrent turned out to be, by lowercased info hash; nil when nothing matched.
+    @ObservationIgnored private var identities: [String: TorrentIdentity?] = [:]
+
+    private struct TorrentIdentity: Sendable {
+        let tmdbId: Int
+        let type: MediaType
+        let title: String
+    }
 
     private let refreshInterval: Duration = .seconds(10)
 
@@ -104,7 +114,12 @@ final class DownloadMonitor {
     func cancel(_ downloads: [ArrDownload]) async throws {
         for download in downloads {
             guard let service = services.first(where: { $0.id == download.serviceID }) else { continue }
-            try await ArrClient.cancel(download, on: service)
+            if service.kind == .qbittorrent {
+                // A download read straight from qBittorrent has no queue entry: remove the torrent itself.
+                if let hash = download.downloadId, let client = qbitClients[service.id] { try await client.delete(hash: hash) }
+            } else {
+                try await ArrClient.cancel(download, on: service)
+            }
         }
         await refresh()
     }
@@ -117,8 +132,10 @@ final class DownloadMonitor {
 
 
     /// Refreshes the queues until cancelled. Run it with `.task(id: services)` so it restarts when
-    /// services are added or removed.
-    func run() async {
+    /// services are added or removed. `api` lets qBittorrent downloads be matched to Seerr titles when
+    /// there's no Sonarr or Radarr to say which title they are.
+    func run(api: SeerrClient? = nil) async {
+        seerr = api
         loaded = false
         guard !services.isEmpty else {
             downloads = []
@@ -160,7 +177,15 @@ final class DownloadMonitor {
             case nil: break
             }
         }
-        let (owners, torrentFailures) = await torrents
+        let (owners, torrentFailures, listed) = await torrents
+
+        // Torrents Sonarr/Radarr already report are shown through them. Any other unfinished torrent is
+        // shown straight from qBittorrent, matched to a Seerr title by its release name.
+        let known = Set(fresh.compactMap { $0.downloadId?.lowercased() })
+        let extra = listed.filter { !$0.torrent.isFinished && !known.contains($0.torrent.hash.lowercased()) }
+        await identify(extra.map(\.torrent))
+        fresh += extra.map { makeDownload($0.torrent, on: $0.service) }
+
         downloads = fresh
         errors = failures.merging(torrentFailures) { first, _ in first }
         torrentOwners = owners
@@ -168,18 +193,82 @@ final class DownloadMonitor {
     }
 
     /// Reads which torrents each qBittorrent server holds. One that can't be reached reports its error.
-    private func readTorrents(_ services: [ArrService]) async -> ([String: UUID], [UUID: String]) {
+    private func readTorrents(_ services: [ArrService]) async
+        -> ([String: UUID], [UUID: String], [(service: ArrService, torrent: QBitTorrent)]) {
         var owners: [String: UUID] = [:]
         var failures: [UUID: String] = [:]
+        var listed: [(service: ArrService, torrent: QBitTorrent)] = []
         for service in services {
             let client = qbitClients[service.id] ?? QBittorrentClient(service: service)
             qbitClients[service.id] = client
             do {
-                for hash in try await client.torrentHashes() { owners[hash] = service.id }
+                for torrent in try await client.torrents() {
+                    owners[torrent.hash.lowercased()] = service.id
+                    listed.append((service, torrent))
+                }
             } catch {
                 failures[service.id] = AppState.friendly(error)
             }
         }
-        return (owners, failures)
+        return (owners, failures, listed)
+    }
+
+    // MARK: qBittorrent-only downloads
+
+    private func makeDownload(_ torrent: QBitTorrent, on service: ArrService) -> ArrDownload {
+        let parsed = ReleaseName.parse(torrent.name)
+        let identity = identities[torrent.hash.lowercased()] ?? nil
+        let type: MediaType = identity?.type ?? (parsed.isSeries ? .tv : .movie)
+        return ArrDownload(
+            id: "\(service.id.uuidString)-\(torrent.hash.lowercased())",
+            serviceID: service.id,
+            serviceName: service.name,
+            kind: .qbittorrent,
+            downloadId: torrent.hash,
+            queueIds: [],
+            title: identity?.title ?? parsed.title,
+            episodeLabel: type == .tv ? parsed.episodeLabel : nil,
+            tmdbId: identity?.tmdbId,
+            tvdbId: nil,
+            progress: min(max(torrent.progress, 0), 1),
+            secondsLeft: torrent.secondsLeft,
+            phase: torrent.phase,
+            message: torrent.phase.isProblem ? "qBittorrent reports “\(torrent.state)”." : nil,
+            resolvedType: type
+        )
+    }
+
+    /// Looks up the Seerr title for torrents not seen before. A torrent that matches nothing is remembered
+    /// as unmatched, so it isn't searched for again on every refresh.
+    private func identify(_ torrents: [QBitTorrent]) async {
+        guard let seerr else { return }
+        let fresh = torrents.filter { identities[$0.hash.lowercased()] == nil }
+        guard !fresh.isEmpty else { return }
+        let found = await boundedMap(fresh, limit: 4) { torrent in
+            (torrent.hash.lowercased(), await Self.identity(of: torrent.name, using: seerr))
+        }
+        for (hash, identity) in found { identities[hash] = .some(identity) }
+    }
+
+    /// Searches Seerr for the title named by a release name: the result whose title matches exactly,
+    /// preferring the expected kind (series for S01E02-style names, otherwise movies) and the same year.
+    nonisolated private static func identity(of name: String, using seerr: SeerrClient) async -> TorrentIdentity? {
+        let parsed = ReleaseName.parse(name)
+        guard let results = try? await seerr.search(parsed.title).results else { return nil }
+        func normalized(_ text: String) -> String {
+            text.lowercased().filter { $0.isLetter || $0.isNumber }
+        }
+        let wanted = normalized(parsed.title)
+        let candidates = results.filter { $0.route != nil && normalized($0.displayTitle) == wanted }
+        let best = candidates.max { score($0, parsed) < score($1, parsed) }
+        guard let best else { return nil }
+        return TorrentIdentity(tmdbId: best.id, type: best.type, title: best.displayTitle)
+    }
+
+    nonisolated private static func score(_ result: MediaResult, _ parsed: ReleaseName) -> Int {
+        var points = 0
+        if (result.type == .tv) == parsed.isSeries { points += 2 }
+        if let year = parsed.year, result.year == String(year) { points += 1 }
+        return points
     }
 }

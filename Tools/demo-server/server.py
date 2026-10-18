@@ -5,8 +5,8 @@
 
 Then launch a Debug build with MINDSEERR_DEMO=http://127.0.0.1:<port>. Almost read-only: anything that
 would change data (approve, request, delete...) is refused. The exceptions are the download controls,
-which only change in-memory state: pausing/resuming a torrent on the fake qBittorrent and removing a
-download from the Sonarr/Radarr queue. Restart the server to reset them.
+which only change in-memory state: pausing/resuming or deleting a torrent on the fake qBittorrent and removing
+a download from the Sonarr/Radarr queue. Restart the server to reset them.
 """
 import json, os, sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -138,6 +138,37 @@ def queue(service):
                                 "episode": {"seasonNumber": season, "episodeNumber": episode}}); rid += 1
     return {"page": 1, "pageSize": 200, "totalRecords": len(records), "records": records}
 
+def torrents():
+    """The fake qBittorrent's torrents: one per download, named like a release so Mindseerr can match it to a title."""
+    out = []
+    for t in CATALOG["titles"]:
+        d = t.get("download")
+        if not d or t["id"] in CANCELLED:
+            continue
+        dotted = t["title"].replace("&", "and").replace(" ", ".")
+        if t["type"] == "tv":
+            season, episode = d["episodes"][0]
+            tag = f"S{season:02d}E{episode:02d}" if len(d["episodes"]) == 1 else f"S{season:02d}"
+            name = f"{dotted}.{tag}.1080p.WEB-DL.x265-DEMO"
+        else:
+            name = f"{dotted}.{t['year']}.1080p.WEB-DL.x265-DEMO"
+        h = f"dl{t['id']}"
+        if d["status"] == "completed":
+            state = "uploading"
+        elif h in PAUSED:
+            state = "pausedDL"
+        elif d["status"] == "queued":
+            state = "queuedDL"
+        else:
+            state = "downloading"
+        left = d.get("timeleft")
+        eta = 8640000
+        if left:
+            hh, mm, ss = (int(x) for x in left.split(":"))
+            eta = hh * 3600 + mm * 60 + ss
+        out.append({"hash": h, "name": name, "progress": d["progress"], "state": state, "eta": eta})
+    return out
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -169,6 +200,11 @@ class Handler(BaseHTTPRequestHandler):
             action = p[len("/qbittorrent/api/v2/"):]
             if action == "auth/login":
                 return self.send_text("Ok.")
+            if action == "torrents/delete":
+                for h in parse_qs(body).get("hashes", [""])[0].split("|"):
+                    if h.startswith("dl") and h[2:].isdigit():
+                        CANCELLED.add(int(h[2:]))
+                return self.send_text("")
             if action in ("torrents/pause", "torrents/stop", "torrents/resume", "torrents/start"):
                 hashes = {h for h in parse_qs(body).get("hashes", [""])[0].split("|") if h}
                 if action in ("torrents/pause", "torrents/stop"):
@@ -196,8 +232,7 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/qbittorrent/api/v2/app/version":
             return self.send_text("v5.0.1")
         if p == "/qbittorrent/api/v2/torrents/info":
-            return self.send_json([{"hash": f"dl{t['id']}", "name": t["title"], "state": "downloading"}
-                                   for t in CATALOG["titles"] if t.get("download") and t["id"] not in CANCELLED])
+            return self.send_json(torrents())
 
         if p.startswith("/img/"):
             name = os.path.basename(p)

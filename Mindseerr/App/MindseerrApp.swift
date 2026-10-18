@@ -93,7 +93,7 @@ struct MainTabView: View {
             app.deepLinkRoute = MediaRoute(type: type, tmdbId: link.tmdbId)
         }
         // Keeps Sonarr/Radarr progress current on every tab; restarts when services change.
-        .task(id: app.downloads.services) { await app.downloads.run() }
+        .task(id: app.downloads.services) { await app.downloads.run(api: app.api) }
     }
 }
 

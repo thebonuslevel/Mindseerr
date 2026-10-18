@@ -39,7 +39,7 @@ struct AdminView: View {
                 VStack(alignment: .leading, spacing: 36) {
                     countsRow
                     servicesSection
-                    if services.contains(where: { $0.kind != .qbittorrent }) { downloadsSection }
+                    if !services.isEmpty { downloadsSection }
 
                     HStack(spacing: 30) {
                         Picker("Show", selection: $filter) {

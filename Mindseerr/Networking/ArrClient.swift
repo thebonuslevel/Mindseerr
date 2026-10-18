@@ -119,8 +119,16 @@ struct ArrDownload: Identifiable, Sendable {
     let secondsLeft: Int?
     let phase: Phase
     let message: String?
+    /// For a download read straight from qBittorrent, what kind of title it turned out to be.
+    var resolvedType: MediaType? = nil
 
-    var mediaType: MediaType { kind == .radarr ? .movie : .tv }
+    var mediaType: MediaType {
+        switch kind {
+        case .radarr: return .movie
+        case .sonarr: return .tv
+        case .qbittorrent: return resolvedType ?? .movie
+        }
+    }
 
     var route: MediaRoute? {
         tmdbId.map { MediaRoute(type: mediaType, tmdbId: $0) }

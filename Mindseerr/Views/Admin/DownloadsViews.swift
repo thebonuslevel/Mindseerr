@@ -20,7 +20,7 @@ struct AddArrServiceView: View {
         VStack(alignment: .leading, spacing: 30) {
             Text("Add a Download Service")
                 .font(.largeTitle).bold()
-            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. Add qBittorrent too and you can pause, resume and cancel those downloads.")
+            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent works on its own, reading progress straight from it, and alongside Sonarr and Radarr it adds pause, resume and cancel.")
                 .foregroundStyle(.secondary)
 
             Picker("Service", selection: $kind) {
@@ -50,7 +50,7 @@ struct AddArrServiceView: View {
             .frame(maxWidth: 1000)
 
             Text(kind == .qbittorrent
-                 ? "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). Mindseerr matches its torrents to the downloads Sonarr and Radarr report, so add the same qBittorrent they use."
+                 ? "Use the address and sign-in of qBittorrent's Web UI (Tools → Options → Web UI). With no Sonarr or Radarr, Mindseerr shows its unfinished torrents and matches them to titles by their release names. With them, add the same qBittorrent they use and its torrents are matched to their downloads."
                  : "The API key is in \(kind.name) under Settings → General → Security. If \(kind.name) uses a URL base, include it in the address (like http://nas:\(kind.defaultPortText)/\(kind.rawValue)).")
                 .font(.callout)
                 .foregroundStyle(.secondary)

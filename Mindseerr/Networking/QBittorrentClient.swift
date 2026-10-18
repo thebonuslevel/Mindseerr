@@ -1,5 +1,39 @@
 import Foundation
 
+/// One torrent as qBittorrent lists it.
+struct QBitTorrent: Decodable, Sendable {
+    let hash: String
+    let name: String
+    /// 0...1
+    let progress: Double
+    let state: String
+    /// Seconds left; qBittorrent reports 8640000 for "never".
+    let eta: Int?
+
+    /// Finished downloading and now seeding (or paused or queued after finishing).
+    var isFinished: Bool {
+        switch state {
+        case "uploading", "pausedUP", "stoppedUP", "queuedUP", "stalledUP", "checkingUP", "forcedUP": return true
+        default: return false
+        }
+    }
+
+    var phase: ArrDownload.Phase {
+        switch state {
+        case "pausedDL", "stoppedDL": return .paused
+        case "queuedDL": return .queued
+        case "error", "missingFiles": return .failed
+        case "checkingDL", "checkingResumeData", "moving": return .other("Checking")
+        default: return .downloading   // downloading, stalled, fetching metadata, allocating
+        }
+    }
+
+    var secondsLeft: Int? {
+        guard let eta, eta > 0, eta < 8_640_000 else { return nil }
+        return eta
+    }
+}
+
 /// Talks to a qBittorrent server through its Web API (v4.1+). Mindseerr uses it to pause and resume the
 /// torrents that Sonarr and Radarr are downloading, matched by the torrent's info hash.
 ///
@@ -25,14 +59,13 @@ actor QBittorrentClient {
         return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// The info hashes (lowercased) of every torrent on the server.
-    func torrentHashes() async throws -> Set<String> {
-        struct Torrent: Decodable { let hash: String }
+    /// Every torrent on the server, with its progress.
+    func torrents() async throws -> [QBitTorrent] {
         let data = try await call("torrents/info", method: "GET")
-        guard let torrents = try? JSONDecoder().decode([Torrent].self, from: data) else {
+        guard let torrents = try? JSONDecoder().decode([QBitTorrent].self, from: data) else {
             throw APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a qBittorrent server?")
         }
-        return Set(torrents.map { $0.hash.lowercased() })
+        return torrents
     }
 
     // MARK: - Controlling
@@ -44,6 +77,11 @@ actor QBittorrentClient {
 
     func resume(hash: String) async throws {
         try await control(hash: hash, "torrents/resume", fallback: "torrents/start")
+    }
+
+    /// Removes a torrent and deletes its downloaded files.
+    func delete(hash: String) async throws {
+        _ = try await call("torrents/delete", method: "POST", form: ["hashes": hash, "deleteFiles": "true"])
     }
 
     private func control(hash: String, _ path: String, fallback: String) async throws {

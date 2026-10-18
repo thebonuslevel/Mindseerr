@@ -16,7 +16,13 @@ Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev
 
 Connect your **Sonarr** and **Radarr** servers right from the Admin tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
 
-Add your **qBittorrent** the same way (its Web UI address, username and password) and Mindseerr can pause, resume and cancel those downloads, as described below. Add the same qBittorrent that Sonarr and Radarr use: Mindseerr matches its torrents to their downloads.
+Add your **qBittorrent** the same way, with its Web UI address, username and password. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same qBittorrent they use.
+
+**qBittorrent works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent and Active Downloads reads progress straight from it.
+
+![Active Downloads fed only by qBittorrent, with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
+
+Mindseerr lists every unfinished torrent and works out which Seerr title it is from its release name, so *The.Drowned.Lighthouse.2026.1080p.WEB-DL* becomes the movie *The Drowned Lighthouse*, and *Deep.Station.S02E05* becomes Season 2, Episode 5 of *Deep Station*. Matched titles get their poster and the name of whoever requested them, and show up as progress on Discover, detail pages and the Requests tab just like Sonarr and Radarr downloads. A torrent whose name doesn't match a title is still listed, by its release name. Finished and seeding torrents are left out.
 
 **Active Downloads** then shows everything in their queues, matched to the Seerr request it came from: who asked for it, which server is fetching it, a progress bar, status and time left. Series show which season and episode is downloading. The list refreshes every 10 seconds.
 
@@ -89,7 +95,7 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
-- **Download controls**: connect qBittorrent to pause, resume or cancel a download right from Active Downloads on the Admin tab.
+- **Download controls**: connect qBittorrent to pause, resume or cancel a download right from Active Downloads on the Admin tab. It also works without Sonarr or Radarr, reading download progress straight from qBittorrent.
 - **Admin tab** for admins and users with the Manage Requests permission: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
