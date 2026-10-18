@@ -48,9 +48,9 @@ struct DownloadBanner: View {
         }
         .overlay(RoundedRectangle(cornerRadius: corner, style: .continuous).strokeBorder(.white.opacity(0.18), lineWidth: 1))
         .shadow(color: .black.opacity(0.3), radius: 22, y: 8)
-        // Tucked into the top right corner, clear of the tab bar in the middle.
-        .padding(.trailing, 44)
-        .padding(.top, 36)
+        // Top right: level with the top of the tab bar (46 points down), and the same distance from the right edge.
+        .padding(.trailing, 46)
+        .padding(.top, 46)
         .allowsHitTesting(false)
         .accessibilityElement(children: .combine)
         .task {

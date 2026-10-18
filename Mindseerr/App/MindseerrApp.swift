@@ -93,12 +93,18 @@ struct MainTabView: View {
             app.deepLinkRoute = MediaRoute(type: type, tmdbId: link.tmdbId)
         }
         // A finished download announces itself over whichever tab is showing, for a few seconds.
-        .overlay(alignment: .topTrailing) {
-            if let finished = app.downloads.banner {
-                DownloadBanner(item: finished)
-                    .id(finished.id)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+        .overlay {
+            // Laid out against the whole screen (not the safe area) so the banner's margins match the tab bar's.
+            ZStack(alignment: .topTrailing) {
+                Color.clear
+                if let finished = app.downloads.banner {
+                    DownloadBanner(item: finished)
+                        .id(finished.id)
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
             }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
         }
         .animation(.spring(duration: 0.4), value: app.downloads.banner?.id)
         .task(id: app.downloads.banner?.id) {
