@@ -39,7 +39,7 @@ struct DownloadBanner: View {
             }
         }
         .padding(16)
-        .frame(width: 410)
+        .frame(width: 600)
         // The theme's secondary (highlight) color, left see-through over a blur like system notifications.
         .background {
             RoundedRectangle(cornerRadius: corner, style: .continuous)
