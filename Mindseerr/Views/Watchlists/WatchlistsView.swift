@@ -185,6 +185,9 @@ struct WatchlistsView: View {
                     WatchlistCard(item: item)
                 }
             }
+            // A section of its own, so pressing down from any of the buttons above lands on the nearest
+            // poster, not only from the button that happens to sit right over one.
+            .focusSection()
         }
     }
 }
