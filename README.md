@@ -68,6 +68,12 @@ Scroll down for the **Cast**, shown as round avatars with each actor's name and 
 
 ![Recommended row of posters with Requested, Available and Pending badges and a download progress bar](docs/screenshots/detail-recommended.png)
 
+Cast and crew are selectable. Choosing one opens their page, with their photo, a short bio and their other movies and series, **best rated first**.
+
+![A cast member's page with their biography and a grid of their other work sorted by Rotten Tomatoes score, highest first](docs/screenshots/person-credits.png)
+
+The order follows each title's Rotten Tomatoes Tomatometer, printed under its poster. Titles without a Rotten Tomatoes score fall back to TMDB's rating, shown as a star. Each title is a normal poster card with its availability badge, so you can open it and request it from there.
+
 Below that, **Recommended** and **Similar** rows suggest more to watch. They're ordinary poster cards, so each one carries its availability badge and any download progress bar, and selecting one opens its own detail page. It's an easy way to find the next thing to request without going back to search.
 
 ### Download finished notification

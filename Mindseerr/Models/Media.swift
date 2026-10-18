@@ -107,6 +107,33 @@ struct MediaResult: Decodable, Sendable {
     }
 }
 
+// MARK: - People
+
+/// A cast or crew member, as a place to navigate to.
+struct PersonRoute: Hashable, Sendable {
+    let id: Int
+    let name: String
+    let profilePath: String?
+}
+
+/// A person's details (`/person/{id}`).
+struct PersonDetail: Decodable, Sendable {
+    let id: Int
+    let name: String
+    let biography: String?
+    let birthday: String?
+    let placeOfBirth: String?
+    let profilePath: String?
+    let knownForDepartment: String?
+}
+
+/// Everything a person has been in (`/person/{id}/combined_credits`), as titles. A title can appear in both
+/// lists when the person acted in and directed it.
+struct PersonCredits: Decodable, Sendable {
+    let cast: [MediaResult]?
+    let crew: [MediaResult]?
+}
+
 // MARK: - Rotten Tomatoes
 
 /// Rotten Tomatoes scores for a title, as Seerr passes them along (`/movie/{id}/ratings`, `/tv/{id}/ratings`).

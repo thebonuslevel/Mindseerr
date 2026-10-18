@@ -21,9 +21,9 @@ struct DetailRow<Content: View>: View {
     }
 }
 
-/// A person in the Cast or Crew row: round photo, name, and their role. Focusable so the row can be
-/// scrolled with the remote; selecting it does nothing.
+/// A person in the Cast or Crew row: round photo, name, and their role. Selecting it opens their other work.
 struct PersonCard: View {
+    let id: Int
     let name: String
     let role: String?
     let profilePath: String?
@@ -31,7 +31,7 @@ struct PersonCard: View {
     private let size: CGFloat = 170
 
     var body: some View {
-        Button {} label: {
+        NavigationLink(value: PersonRoute(id: id, name: name, profilePath: profilePath)) {
             VStack(spacing: 14) {
                 ZStack {
                     Circle().fill(.quaternary)

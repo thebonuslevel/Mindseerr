@@ -118,5 +118,9 @@ extension View {
             MediaDetailView(route: route)
                 .themedBackground()
         }
+        .navigationDestination(for: PersonRoute.self) { person in
+            PersonView(person: person)
+                .themedBackground()
+        }
     }
 }

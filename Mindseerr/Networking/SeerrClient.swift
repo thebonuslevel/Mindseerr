@@ -129,6 +129,14 @@ actor SeerrClient {
         return detail
     }
 
+    func person(_ id: Int) async throws -> PersonDetail {
+        try await send("person/\(id)")
+    }
+
+    func credits(forPerson id: Int) async throws -> PersonCredits {
+        try await send("person/\(id)/combined_credits")
+    }
+
     /// The Rotten Tomatoes scores for a title, or nil when Seerr has none (or can't look them up).
     func rottenTomatoes(for route: MediaRoute) async -> RottenTomatoesRating? {
         let path = (route.type == .tv ? "tv/" : "movie/") + "\(route.tmdbId)/ratings"

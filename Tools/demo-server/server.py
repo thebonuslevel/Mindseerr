@@ -392,6 +392,18 @@ class Handler(BaseHTTPRequestHandler):
                     picks = (same[shift:] + same[:shift])[:7]
                     return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(picks),
                                            "results": [result(x) for x in picks]})
+        if p.startswith("/person/"):
+            pid = int(p.split("/")[2])
+            if p.endswith("/combined_credits"):
+                ids = sorted(TITLES)
+                mine = [TITLES[ids[(pid * 3 + i * 5) % len(ids)]] for i in range(9)]
+                mine = list({t["id"]: t for t in mine}.values())
+                return self.send_json({"cast": [result(t) for t in mine[:6]], "crew": [result(t) for t in mine[4:]]})
+            name = PEOPLE[pid % len(PEOPLE)]
+            return self.send_json({"id": pid, "name": name, "knownForDepartment": "Acting", "birthday": "1980-04-02",
+                                   "placeOfBirth": "Portland, Oregon, USA",
+                                   "biography": f"{name} is an invented performer from the demo catalog, known for atmospheric dramas and a quiet, "
+                                                "unshowy style. This text only exists so the person page has something to show."})
         for kind in ("movie", "tv"):
             if p.startswith(f"/{kind}/") and p.endswith("/ratings"):
                 tid = int(p.split("/")[2])

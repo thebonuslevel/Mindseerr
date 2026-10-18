@@ -162,7 +162,7 @@ struct MediaDetailView: View {
             if !cast.isEmpty {
                 DetailRow(title: "Cast") {
                     ForEach(cast.prefix(30)) { member in
-                        PersonCard(name: member.name, role: member.character, profilePath: member.profilePath)
+                        PersonCard(id: member.id, name: member.name, role: member.character, profilePath: member.profilePath)
                     }
                 }
             }
@@ -170,7 +170,7 @@ struct MediaDetailView: View {
             if !crew.isEmpty {
                 DetailRow(title: "Crew") {
                     ForEach(crew) { person in
-                        PersonCard(name: person.name, role: person.jobs.joined(separator: ", "),
+                        PersonCard(id: person.id, name: person.name, role: person.jobs.joined(separator: ", "),
                                    profilePath: person.profilePath)
                     }
                 }
