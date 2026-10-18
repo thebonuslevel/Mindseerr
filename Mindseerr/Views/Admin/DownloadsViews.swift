@@ -164,6 +164,10 @@ struct DownloadRow: View {
     let onCancel: () -> Void
 
     @State private var detail: MediaDetail?
+    /// Whether the title (not the pause or cancel button) has focus, which lights up the whole panel.
+    @State private var titleFocused = false
+    @FocusState private var plainFocused: Bool
+    @Environment(\.appTheme) private var theme
     /// Sonarr v3 doesn't report TMDB IDs, so fall back to the matched request's title.
     private var route: MediaRoute? { download.route ?? request?.route }
 
@@ -172,17 +176,21 @@ struct DownloadRow: View {
         HStack(spacing: 20) {
             if let route {
                 NavigationLink(value: route) { content }
-                    .buttonStyle(DownloadLinkStyle())
+                    .buttonStyle(DownloadLinkStyle(isFocused: $titleFocused))
             } else {
                 // Still focusable, so the list can be scrolled with the remote.
                 content
                     .padding(12)
                     .focusable()
+                    .focused($plainFocused)
+                    .onChange(of: plainFocused) { _, on in titleFocused = on }
             }
             DownloadControlButtons(downloads: [download], onCancel: onCancel)
         }
         .padding(14)
-        .background(Color.primary.opacity(0.1), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(titleFocused ? theme.highlight.opacity(0.3) : Color.primary.opacity(0.1),
+                    in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .animation(.easeOut(duration: 0.15), value: titleFocused)
         .focusSection()
         .task(id: route) {
             if let route { detail = try? await app.api.detail(for: route) }
@@ -242,17 +250,23 @@ struct DownloadRow: View {
     }
 }
 
-/// The look of a title inside a download panel: no platter of its own, just a soft highlight while focused.
+/// The look of a title inside a download panel: no platter of its own. It reports whether it has focus, and the
+/// panel around it lights up as a whole.
 private struct DownloadLinkStyle: ButtonStyle {
-    @Environment(\.isFocused) private var focused
-    @Environment(\.appTheme) private var theme
+    @Binding var isFocused: Bool
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(12)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(focused ? theme.highlight.opacity(0.3) : .clear))
-            .animation(.easeOut(duration: 0.15), value: focused)
+        FocusReporter(isFocused: $isFocused) { configuration.label.padding(12) }
+    }
+
+    private struct FocusReporter<Content: View>: View {
+        @Binding var isFocused: Bool
+        @ViewBuilder let content: Content
+        @Environment(\.isFocused) private var focused
+
+        var body: some View {
+            content.onChange(of: focused) { _, on in isFocused = on }
+        }
     }
 }
 
