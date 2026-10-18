@@ -151,7 +151,7 @@ To run on a real Apple TV: on the Apple TV open *Settings → Remotes and Device
 
 ## Watchlists (Trakt, Letterboxd, TMDB, TheTVDB)
 
-The **Watchlists** tab imports a watchlist, matches every title to your Seerr server and shows whether it's available, requested or missing. Open a title to request it, or use **Request All Missing**. Series are requested for every season that isn't already available or requested.
+The **Watchlists** tab imports a watchlist, matches every title to your Seerr server and shows whether it's available, requested or missing. Open a title to request it, or use **Request Missing** to pick which titles, and which seasons of each series, to send.
 
 | Service | How it connects | What you need |
 |---|---|---|
