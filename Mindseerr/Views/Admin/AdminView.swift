@@ -20,6 +20,8 @@ struct AdminView: View {
     // Sonarr / Radarr (the services and queues live in app.downloads)
     /// Approved requests that aren't available yet, for matching downloads to who asked for them.
     @State private var trackedRequests: [MediaRequest] = []
+    /// False until the requests have been read, so downloads aren't judged against an empty list.
+    @State private var trackedLoaded = false
     @State private var showAddService = false
     @State private var serviceToRemove: ArrService?
     @State private var pendingDelete: MediaRequest?
@@ -32,6 +34,10 @@ struct AdminView: View {
     private var services: [ArrService] { monitor.services }
     private var downloads: [ArrDownload] { monitor.downloads }
     private var serviceErrors: [UUID: String] { monitor.errors }
+
+    /// Only the downloads that belong to a Seerr request. Anything else in the queues (titles added straight
+    /// to Sonarr, Radarr or qBittorrent) has no request to show it against, so it's left out.
+    private var linkedDownloads: [ArrDownload] { downloads.filter { request(for: $0) != nil } }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -188,23 +194,31 @@ struct AdminView: View {
     }
 
     private var downloadsSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text(downloads.isEmpty ? "Active Downloads" : "Active Downloads (\(downloads.count))")
+        let linked = linkedDownloads
+        let hidden = downloads.count - linked.count
+        return VStack(alignment: .leading, spacing: 20) {
+            Text(linked.isEmpty ? "Active Downloads" : "Active Downloads (\(linked.count))")
                 .font(.title3).fontWeight(.semibold)
-            if !monitor.loaded {
+            if !monitor.loaded || (!downloads.isEmpty && !trackedLoaded) {
                 ProgressView()
-            } else if downloads.isEmpty {
+            } else if linked.isEmpty {
                 Text(serviceErrors.count == services.count
                      ? "Couldn't read any download queues."
-                     : "Nothing is downloading right now.")
+                     : "Nothing is downloading for a Seerr request right now.")
                     .foregroundStyle(.secondary)
             } else {
                 LazyVStack(alignment: .leading, spacing: 20) {
-                    ForEach(downloads) { download in
+                    ForEach(linked) { download in
                         DownloadRow(download: download, request: request(for: download),
                                     onCancel: { downloadToCancel = download })
                     }
                 }
+            }
+            if hidden > 0, trackedLoaded {
+                Text(hidden == 1 ? "1 other download isn't linked to a Seerr request and is hidden."
+                                 : "\(hidden) other downloads aren't linked to a Seerr request and are hidden.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .focusSection()
@@ -306,10 +320,17 @@ struct AdminView: View {
 
     // MARK: - Downloads
 
+    /// Reads the requests that downloads are matched against: the ones still being fetched, plus the most
+    /// recent of all, so a download for a title that's already partly available still finds its request.
     private func loadTrackedRequests() async {
-        guard !downloads.isEmpty,
-              let page = try? await app.api.allRequests(filter: .processing, skip: 0, take: 100) else { return }
-        trackedRequests = page.results
+        guard !downloads.isEmpty else { return }
+        async let processing = try? await app.api.allRequests(filter: .processing, skip: 0, take: 100)
+        async let recent = try? await app.api.allRequests(filter: .all, skip: 0, take: 100)
+        let (first, second) = await (processing, recent)
+        guard first != nil || second != nil else { return }
+        var seen = Set<Int>()
+        trackedRequests = ((first?.results ?? []) + (second?.results ?? [])).filter { seen.insert($0.id).inserted }
+        trackedLoaded = true
     }
 
     private func request(for download: ArrDownload) -> MediaRequest? {

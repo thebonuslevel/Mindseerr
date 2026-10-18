@@ -167,6 +167,12 @@ def torrents():
             hh, mm, ss = (int(x) for x in left.split(":"))
             eta = hh * 3600 + mm * 60 + ss
         out.append({"hash": h, "name": name, "progress": d["progress"], "state": state, "eta": eta})
+    # Two torrents with no Seerr request behind them (one even names a real catalog title), which the app
+    # should leave out of Active Downloads.
+    out.append({"hash": "dl7001", "name": "Cinder.Bloom.2024.1080p.WEB-DL.x265-DEMO", "progress": 0.12,
+                "state": "downloading", "eta": 3000})
+    out.append({"hash": "dl7002", "name": "Unrequested.Documentary.2021.1080p.BluRay", "progress": 0.55,
+                "state": "downloading", "eta": 900})
     return out
 
 class Handler(BaseHTTPRequestHandler):
