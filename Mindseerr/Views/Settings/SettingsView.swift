@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var showAbout = false
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .gloam
     @State private var topShelfOn = TopShelfCache.isEnabled
+    @State private var notifyOn = DownloadNotifications.isEnabled
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,18 @@ struct SettingsView: View {
                     Text("Look and Feel")
                 } footer: {
                     Text("Shows trending titles above the apps when Mindseerr is in the top row of the Home Screen. When off, the Mindseerr banner shows instead.")
+                }
+                Section {
+                    // Selecting the row flips it, like a switch.
+                    Button {
+                        notifyOn.toggle()
+                    } label: {
+                        LabeledContent("Download Finished", value: notifyOn ? "On" : "Off")
+                    }
+                } header: {
+                    Text("Notifications")
+                } footer: {
+                    Text("Shows a banner on any screen when a download for one of your requests finishes. tvOS doesn't allow banners while an app is closed, so it appears while Mindseerr is open.")
                 }
                 // Info rows are buttons that do nothing, so they take focus and get the themed cursor. That
                 // lets the remote step up through them to the tab bar after scrolling down.
@@ -66,6 +79,7 @@ struct SettingsView: View {
             }
         }
         .task { await app.refreshServerVersion() }
+        .onChange(of: notifyOn) { _, on in DownloadNotifications.isEnabled = on }
         .onChange(of: topShelfOn) { _, on in
             TopShelfCache.isEnabled = on
             TVTopShelfContentProvider.topShelfContentDidChange() // ask tvOS to redraw it now

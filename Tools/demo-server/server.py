@@ -326,6 +326,12 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/qbittorrent/api/v2/torrents/info":
             return self.send_json(torrents())
 
+        # Demo only: GET /__demo/finish/<tmdb id> takes a download out of every queue, as if it had finished,
+        # so the app's "download finished" banner can be shown.
+        if p.startswith("/__demo/finish/"):
+            CANCELLED.add(int(os.path.basename(p)))
+            return self.send_json({"finished": os.path.basename(p)})
+
         if p.startswith("/img/"):
             name = os.path.basename(p)
             path = os.path.join(ART, name)

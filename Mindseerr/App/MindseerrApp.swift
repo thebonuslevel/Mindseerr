@@ -92,6 +92,20 @@ struct MainTabView: View {
             tab = .discover
             app.deepLinkRoute = MediaRoute(type: type, tmdbId: link.tmdbId)
         }
+        // A finished download announces itself over whichever tab is showing, for a few seconds.
+        .overlay(alignment: .topTrailing) {
+            if let finished = app.downloads.banner {
+                DownloadBanner(item: finished)
+                    .id(finished.id)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(duration: 0.4), value: app.downloads.banner?.id)
+        .task(id: app.downloads.banner?.id) {
+            guard app.downloads.banner != nil else { return }
+            try? await Task.sleep(for: .seconds(8))
+            if !Task.isCancelled { app.downloads.dismissBanner() }
+        }
         // Keeps Sonarr/Radarr progress current on every tab; restarts when services change.
         .task(id: app.downloads.services) { await app.downloads.run(api: app.api) }
     }

@@ -1,7 +1,26 @@
 import Foundation
 import Observation
 
-/// The connected Sonarr/Radarr/qBittorrent servers and what they're downloading, shared by the whole app so
+/// A download that just finished, shown as a banner.
+struct FinishedDownload: Identifiable, Sendable {
+    let id = UUID()
+    let title: String
+    /// "Season 2, Episode 5" for a series; nil for a movie.
+    let episodeLabel: String?
+    let route: MediaRoute?
+}
+
+/// Whether finished downloads pop up a banner. On by default; the switch is in Settings.
+enum DownloadNotifications {
+    private static let key = "notifications.downloadFinished"
+
+    static var isEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: key) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: key) }
+    }
+}
+
+/// The connected Sonarr/Radarr/torrent-client servers and what they're downloading, shared by the whole app so
 /// posters, detail pages and the Admin tab all show the same progress.
 @MainActor
 @Observable
@@ -14,6 +33,11 @@ final class DownloadMonitor {
     private(set) var loaded = false
     /// Which qBittorrent server holds each torrent (by lowercased info hash), so a download can be paused or resumed.
     private(set) var torrentOwners: [String: UUID] = [:]
+    /// The banner on screen for a download that just finished, if any. Others wait their turn.
+    private(set) var banner: FinishedDownload?
+    @ObservationIgnored private var bannerQueue: [FinishedDownload] = []
+    /// Downloads the user cancelled, so their disappearing isn't announced as a finish.
+    @ObservationIgnored private var userRemoved: Set<String> = []
 
     @ObservationIgnored private var torrentClients: [UUID: TorrentClient] = [:]
     /// Used to work out which Seerr title a qBittorrent-only download is for (see `identity(of:)`).
@@ -112,6 +136,7 @@ final class DownloadMonitor {
 
     /// Cancels downloads: removes them from the Sonarr/Radarr queue and deletes them from the download client.
     func cancel(_ downloads: [ArrDownload]) async throws {
+        userRemoved.formUnion(downloads.map(\.id))
         for download in downloads {
             guard let service = services.first(where: { $0.id == download.serviceID }) else { continue }
             if service.kind.isDownloadClient {
@@ -186,6 +211,8 @@ final class DownloadMonitor {
         await identify(extra.map(\.torrent))
         fresh += extra.map { makeDownload($0.torrent, on: $0.service) }
 
+        let unreachable = Set(failures.keys).union(torrentFailures.keys)
+        if loaded { announceFinished(old: downloads, new: fresh, unreachable: unreachable) }
         downloads = fresh
         errors = failures.merging(torrentFailures) { first, _ in first }
         torrentOwners = owners
@@ -211,6 +238,30 @@ final class DownloadMonitor {
             }
         }
         return (owners, failures, listed)
+    }
+
+    // MARK: Finished downloads
+
+    /// Queues a banner for each download that has left the queues since the last refresh and was nearly done
+    /// (or importing) when last seen: that's a finish, where a cancelled, failed or blocklisted one isn't.
+    /// A service that couldn't be read is skipped, so a network blip doesn't announce everything it held.
+    private func announceFinished(old: [ArrDownload], new: [ArrDownload], unreachable: Set<UUID>) {
+        let stillThere = Set(new.map(\.id))
+        var announced: Set<String> = []
+        for download in old where !stillThere.contains(download.id) && !unreachable.contains(download.serviceID) {
+            if userRemoved.remove(download.id) != nil { continue }
+            guard download.progress >= 0.9 || download.phase == .importing, download.tmdbId != nil else { continue }
+            // One banner per title and episode, even if two services held it.
+            guard announced.insert("\(download.tmdbId ?? 0)-\(download.episodeLabel ?? "")").inserted else { continue }
+            guard DownloadNotifications.isEnabled else { continue }
+            bannerQueue.append(FinishedDownload(title: download.title, episodeLabel: download.episodeLabel, route: download.route))
+        }
+        if banner == nil { dismissBanner() }
+    }
+
+    /// Takes the banner off the screen and shows the next waiting one.
+    func dismissBanner() {
+        banner = bannerQueue.isEmpty ? nil : bannerQueue.removeFirst()
     }
 
     // MARK: qBittorrent-only downloads

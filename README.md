@@ -66,6 +66,14 @@ Scroll down for the **Cast**, shown as round avatars with each actor's name and 
 
 Below that, **Recommended** and **Similar** rows suggest more to watch. They're ordinary poster cards, so each one carries its availability badge and any download progress bar, and selecting one opens its own detail page. It's an easy way to find the next thing to request without going back to search.
 
+### Download finished notification
+
+![A "Download finished" banner for Hollow Crown Road over the Discover screen](docs/screenshots/download-finished-banner.png)
+
+When a download for one of your requests finishes, a **Download finished** banner slides in at the top right with the title's poster, its name and, for a series, the season and episode. It appears over whichever screen you're on, stays for a few seconds, and never takes the remote's focus. If several finish together they show one after another. Downloads you cancel yourself don't count, and neither do failed ones. A download counts as finished when it leaves the queue nearly done or importing.
+
+tvOS doesn't allow banners from an app that isn't open, so this works while Mindseerr is running, on any tab. You can turn it off under **Settings → Notifications → Download Finished**.
+
 ### Discover: progress on posters
 
 ![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
@@ -103,6 +111,7 @@ Top Shelf is on by default. To change it, open **Settings** and select **Top She
 - **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
+- **Download finished banner** on any screen while the app is open, with a switch in Settings.
 - **Download controls**: connect qBittorrent, Deluge or Transmission to pause, resume or cancel a download right from Active Downloads on the Admin tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
 - **Admin tab** for admins and users with the Manage Requests permission: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
@@ -245,6 +254,7 @@ Done:
 - [x] Cast & crew and "Similar"/"Recommended" rows on detail pages
 - [x] Top Shelf extension showing trending titles, with an on/off switch in Settings
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB
+- [x] A banner when a download finishes, on any screen (tvOS can't show banners while the app is closed)
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] Themes, including a light one
 
@@ -252,7 +262,6 @@ Still to do:
 
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
-- A notification or banner when a request you made finishes downloading
 - Browse Discover by genre, studio or network, and filter or sort search results
 - Choose seasons for a series when requesting from a watchlist, instead of requesting every missing season
 - Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
