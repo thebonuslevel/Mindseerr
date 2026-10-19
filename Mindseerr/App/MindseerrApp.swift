@@ -43,6 +43,7 @@ struct MainTabView: View {
     @State private var section = AppSection.discover
     /// Changing this rebuilds Settings, so coming back to it shows its top level, scrolled to the top.
     @State private var settingsResetID = UUID()
+    @Namespace private var focusSpace
 
     var body: some View {
         // The menu runs down the left edge, collapsed to logos and opening over the content while it has focus.
@@ -64,9 +65,12 @@ struct MainTabView: View {
                 }
             }
             .padding(.leading, 24)
+            // Start on the page, not in the menu, so the menu stays collapsed until you move into it.
+            .prefersDefaultFocus(true, in: focusSpace)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .themedBackground()
         }
+        .focusScope(focusSpace)
         // The menu hugs the left edge of the screen instead of sitting inside the TV's safe-area margin.
         .ignoresSafeArea(.container, edges: .leading)
         .onChange(of: section) { oldSection, _ in

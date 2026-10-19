@@ -72,7 +72,7 @@ struct SideMenu: View {
                     Text("Mindseerr").font(.title3).fontWeight(.bold).lineLimit(1)
                 }
             }
-            .padding(.leading, 12)
+            .padding(.leading, 20)   // the same distance from the edge as the rows' logos (8 outside + 12 inside)
             .padding(.bottom, 24)
             .accessibilityHidden(true)
 
