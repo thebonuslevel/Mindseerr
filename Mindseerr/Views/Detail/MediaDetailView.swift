@@ -278,11 +278,12 @@ struct MediaDetailView: View {
     /// Hands the movie to the player chosen in Settings, and says so if that isn't possible or the app isn't installed.
     private func play(_ detail: MediaDetail) {
         guard let url = player.playURL(tmdbId: route.tmdbId, info: detail.mediaInfo) else {
-            notice = Notice(title: "Can't Open in \(player.name)",
-                            message: "Seerr didn't give a link to this movie on your \(player.name) server.")
+            notice = Notice(title: "Can't Open in \(player.name)", message: "\(player.name) couldn't be opened.")
             return
         }
+        NSLog("Mindseerr play: opening %@", url.absoluteString)
         UIApplication.shared.open(url, options: [:]) { opened in
+            NSLog("Mindseerr play: %@ -> %@", url.absoluteString, opened ? "opened" : "refused")
             guard !opened else { return }
             Task { @MainActor in
                 notice = Notice(title: "Can't Open \(player.name)",

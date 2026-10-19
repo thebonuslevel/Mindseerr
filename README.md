@@ -65,10 +65,10 @@ Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: t
 On a movie that's available on your server, a **Play in …** button sits first among the actions and opens the movie in the app you choose under **Settings → External Player**: **Infuse** (the default), **Plex** or **Swiftfin**.
 
 - **Infuse** opens the movie by its TMDB id and starts playing it; Infuse has to have the title in its library.
-- **Plex** opens the movie on your Plex server, using the link Seerr keeps for it, so it needs a Plex server in Seerr.
+- **Plex** only opens the Plex app. Its Apple TV app ignores links to a single movie (I tried both its play and page links, with Plex open and closed, on a real Apple TV), so you pick the movie there. If you use Plex, Infuse can play from your Plex library directly.
 - **Swiftfin** doesn't publish a link to a single title, so Mindseerr can only open the app, and you pick the movie there.
 
-If the app isn't installed, a message says so and points to the setting. Mindseerr only hands the movie over: it doesn't play anything itself. These links come from each player's documentation or Seerr's data, and I've tested Mindseerr's side, not each player on a real Apple TV, so tell me if one doesn't land on the movie.
+If the app isn't installed, a message says so and points to the setting. Mindseerr only hands the movie over: it doesn't play anything itself. Infuse's link comes from its documentation and I haven't tried it on a real Apple TV yet; Plex's was tried on one, as above.
 
 ### Detail page: cast, crew and suggestions
 
