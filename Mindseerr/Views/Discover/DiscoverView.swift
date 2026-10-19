@@ -57,13 +57,18 @@ struct DiscoverView: View {
     @Environment(AppState.self) private var app
     @State private var rows = DiscoverSection.allCases.map { MediaRowModel(section: $0) }
     @State private var path = NavigationPath()
+    @AppStorage(DiscoverLayout.storageKey) private var hiddenStored = ""
+
+    private var hidden: Set<String> { DiscoverLayout.hidden(hiddenStored) }
 
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 40) {
-                    SuggestionsRowView(model: app.suggestions)
-                    ForEach(rows) { row in
+                    if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
+                        SuggestionsRowView(model: app.suggestions)
+                    }
+                    ForEach(rows.filter { !hidden.contains($0.section.rawValue) }) { row in
                         MediaRowView(model: row)
                     }
                 }
@@ -72,7 +77,12 @@ struct DiscoverView: View {
             .themedBackground()
             .mediaDestinations()
         }
-        .task { await app.suggestions.refresh(api: app.api, userId: app.user?.id) }
+        .task(id: hiddenStored) {
+            // The suggestions are only worked out while their row is shown.
+            if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
+                await app.suggestions.refresh(api: app.api, userId: app.user?.id)
+            }
+        }
         // Pop back to the rows when leaving the tab, so returning always shows the top level.
         .onDisappear { path = NavigationPath() }
         // A title opened from the Top Shelf: show it on top of the rows.

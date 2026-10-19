@@ -26,13 +26,14 @@ enum TopShelfCache {
     /// What the Top Shelf can show: any Discover section, or the suggestions row. The raw values match
     /// the app's `DiscoverSection`, so a Discover row saves under its own id.
     enum Section: String, CaseIterable, Identifiable {
-        case suggested, trending, popularMovies, upcomingMovies, popularTV, upcomingTV
+        case suggested, recentlyAdded, trending, popularMovies, upcomingMovies, popularTV, upcomingTV
 
         var id: String { rawValue }
 
         var title: String {
             switch self {
             case .suggested: return "Suggested for You"
+            case .recentlyAdded: return "Recently Added"
             case .trending: return "Trending"
             case .popularMovies: return "Popular Movies"
             case .upcomingMovies: return "Upcoming Movies"

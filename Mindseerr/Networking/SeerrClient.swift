@@ -7,12 +7,13 @@ struct APIError: LocalizedError, Sendable {
 }
 
 enum DiscoverSection: String, CaseIterable, Identifiable, Sendable {
-    case trending, popularMovies, upcomingMovies, popularTV, upcomingTV
+    case recentlyAdded, trending, popularMovies, upcomingMovies, popularTV, upcomingTV
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
+        case .recentlyAdded: return "Recently Added"
         case .trending: return "Trending"
         case .popularMovies: return "Popular Movies"
         case .upcomingMovies: return "Upcoming Movies"
@@ -23,6 +24,7 @@ enum DiscoverSection: String, CaseIterable, Identifiable, Sendable {
 
     var path: String {
         switch self {
+        case .recentlyAdded: return "media"   // not a discover list: see SeerrClient.recentlyAdded
         case .trending: return "discover/trending"
         case .popularMovies: return "discover/movies"
         case .upcomingMovies: return "discover/movies/upcoming"
@@ -114,7 +116,32 @@ actor SeerrClient {
     }
 
     func discover(_ section: DiscoverSection, page: Int) async throws -> PagedResponse<MediaResult> {
-        try await send(section.path, query: ["page": "\(page)"])
+        if section == .recentlyAdded { return try await recentlyAdded(page: page) }
+        return try await send(section.path, query: ["page": "\(page)"])
+    }
+
+    /// The newest titles on the server (available or partly available), newest first. Seerr lists them as bare
+    /// media records, so each one's details are looked up (and cached) to get its title and poster.
+    func recentlyAdded(page: Int) async throws -> PagedResponse<MediaResult> {
+        struct Item: Decodable { let tmdbId: Int?; let mediaType: MediaType? }
+        struct Page: Decodable {
+            struct Info: Decodable { let pages: Int }
+            let pageInfo: Info
+            let results: [Item]
+        }
+        let take = 20
+        let list: Page = try await send("media", query: ["filter": "allavailable", "sort": "added",
+                                                        "take": "\(take)", "skip": "\((page - 1) * take)"])
+        let routes = list.results.compactMap { item -> MediaRoute? in
+            guard let id = item.tmdbId, let type = item.mediaType, type == .movie || type == .tv else { return nil }
+            return MediaRoute(type: type, tmdbId: id)
+        }
+        let api = self
+        let results = await boundedMap(routes, limit: 6) { route -> MediaResult? in
+            guard let detail = try? await api.detail(for: route) else { return nil }
+            return MediaResult.make(from: detail, route: route)
+        }
+        return PagedResponse(page: page, totalPages: max(list.pageInfo.pages, 1), totalResults: results.count, results: results.compactMap { $0 })
     }
 
     func search(_ query: String, page: Int = 1) async throws -> PagedResponse<MediaResult> {

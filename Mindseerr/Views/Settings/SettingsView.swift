@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var showAbout = false
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .gloam
     @State private var notifyOn = DownloadNotifications.isEnabled
+    @AppStorage(DiscoverLayout.storageKey) private var hiddenSections = ""
     @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
     /// What the Top Shelf shows: a Discover section, or nil when it's off.
     @State private var shelfChoice: TopShelfCache.Section? = TopShelfCache.isEnabled ? TopShelfCache.section : nil
@@ -29,6 +30,17 @@ struct SettingsView: View {
                     Text("Look and Feel")
                 } footer: {
                     Text("Shows titles from a section of Discover above the apps when Mindseerr is in the top row of the Home Screen. Choose the section, or Off to show the Mindseerr banner instead.")
+                }
+                Section {
+                    NavigationLink {
+                        DiscoverSectionsView()
+                    } label: {
+                        LabeledContent("Discover Sections", value: discoverSummary)
+                    }
+                } header: {
+                    Text("Discover")
+                } footer: {
+                    Text("Choose which sections appear on the Discover tab.")
                 }
                 Section {
                     NavigationLink {
@@ -94,6 +106,11 @@ struct SettingsView: View {
         }
         .task { await app.refreshServerVersion() }
         .onChange(of: notifyOn) { _, on in DownloadNotifications.isEnabled = on }
+    }
+
+    private var discoverSummary: String {
+        let shown = DiscoverLayout.Entry.allCases.count - DiscoverLayout.hidden(hiddenSections).intersection(DiscoverLayout.Entry.allCases.map(\.rawValue)).count
+        return "\(shown) of \(DiscoverLayout.Entry.allCases.count) on"
     }
 
     private func infoRow(_ title: String, _ value: String) -> some View {
@@ -272,5 +289,37 @@ struct ExternalPlayerView: View {
         }
         .themedBackground()
         .navigationTitle("External Player")
+    }
+}
+
+/// Its own page for switching each section of Discover on or off.
+struct DiscoverSectionsView: View {
+    @AppStorage(DiscoverLayout.storageKey) private var hiddenStored = ""
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(DiscoverLayout.Entry.allCases) { entry in
+                    // Selecting the row flips it, like a switch.
+                    Button { toggle(entry) } label: {
+                        LabeledContent(entry.title, value: isHidden(entry) ? "Off" : "On")
+                    }
+                }
+            } footer: {
+                Text("Sections that are off are hidden from Discover. Their titles can still be used for the Top Shelf.")
+            }
+        }
+        .themedBackground()
+        .navigationTitle("Discover Sections")
+    }
+
+    private func isHidden(_ entry: DiscoverLayout.Entry) -> Bool {
+        DiscoverLayout.hidden(hiddenStored).contains(entry.rawValue)
+    }
+
+    private func toggle(_ entry: DiscoverLayout.Entry) {
+        var hidden = DiscoverLayout.hidden(hiddenStored)
+        if hidden.contains(entry.rawValue) { hidden.remove(entry.rawValue) } else { hidden.insert(entry.rawValue) }
+        hiddenStored = DiscoverLayout.store(hidden)
     }
 }

@@ -149,6 +149,24 @@ struct RottenTomatoesRating: Decodable, Sendable {
     var hasScore: Bool { criticsScore != nil || audienceScore != nil }
 }
 
+extension MediaResult {
+    /// A result built from a title's details, for lists Seerr only gives as bare ids (like Recently Added).
+    static func make(from detail: MediaDetail, route: MediaRoute) -> MediaResult? {
+        var json: [String: Any] = ["id": route.tmdbId, "mediaType": route.type.rawValue]
+        json[route.type == .tv ? "name" : "title"] = detail.displayTitle
+        json["posterPath"] = detail.posterPath
+        json["backdropPath"] = detail.backdropPath
+        json["overview"] = detail.overview
+        json[route.type == .tv ? "firstAirDate" : "releaseDate"] = detail.releaseDate ?? detail.firstAirDate
+        json["voteAverage"] = detail.voteAverage
+        // The details say how available it is, so the poster gets the same badge as elsewhere.
+        json["mediaInfo"] = ["status": detail.mediaInfo?.status?.rawValue ?? MediaStatus.available.rawValue]
+        let clean = json.compactMapValues { $0 is NSNull ? nil : $0 }
+        guard let data = try? JSONSerialization.data(withJSONObject: clean) else { return nil }
+        return try? JSONDecoder().decode(MediaResult.self, from: data)
+    }
+}
+
 // MARK: - Movie / series detail
 
 /// Cast and crew as TMDB lists them, passed along by Seerr.

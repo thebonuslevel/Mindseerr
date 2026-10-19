@@ -109,6 +109,12 @@ Mindseerr builds it from Seerr's own data and balances four things:
 
 Anything already available, being downloaded or requested is dropped, and clearly poorly rated titles are left out as long as enough good ones remain. The row is worked out when you open Discover and kept for a few hours, and it stays hidden until there's something to show. On a non-admin account, "all available titles" may be limited to your own, because Seerr only shows regular users their own requests.
 
+### Discover: Recently Added and your own layout
+
+A **Recently Added** row lists the newest titles on your server (available or partly available), newest first, with their usual badges. Like the other rows it expands to a full-screen grid, and it's one of the choices for the Top Shelf.
+
+Every section of Discover can be switched off. Open **Settings → Discover → Discover Sections** and select a section to flip it between **On** and **Off**: Suggested for You, Recently Added, Trending, Popular Movies, Upcoming Movies, Popular Series and Upcoming Series. Everything is on by default, and a section that's off isn't loaded or shown.
+
 ### Discover: progress on posters
 
 ![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
@@ -157,7 +163,7 @@ Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look a
 - **Activity tab** for everyone. Admins and users with the Manage Requests permission get the full panel: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
-- **Discover**: Suggested for You, Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
+- **Discover**: Suggested for You, Recently Added, Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
 - **Search** across movies and series with the tvOS search keyboard. Results show availability badges and download progress like Discover.
 - **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.

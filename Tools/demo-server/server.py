@@ -416,6 +416,13 @@ class Handler(BaseHTTPRequestHandler):
             if p.startswith(f"/{kind}/"):
                 t = TITLES.get(int(p.split("/")[2]))
                 return self.send_json(detail(t)) if t and t["type"] == kind else self.send_json({"message": "not found"}, 404)
+        if p == "/media":
+            avail = [t for t in CATALOG["titles"] if t.get("status") == "available"] + \
+                    [t for t in CATALOG["titles"] if t.get("status") == "processing" and t["type"] == "tv"][:1]
+            take, skip = int(q.get("take", 20)), int(q.get("skip", 0))
+            items = [{"id": t["id"], "tmdbId": t["id"], "mediaType": t["type"], "status": 5} for t in avail[skip:skip + take]]
+            return self.send_json({"pageInfo": {"pages": max(1, -(-len(avail) // take)), "pageSize": take, "results": len(avail),
+                                                "page": skip // take + 1}, "results": items})
         if p == "/request/count":
             reqs = requests()
             count = lambda f: sum(request_filter(r, f) for r in reqs)
