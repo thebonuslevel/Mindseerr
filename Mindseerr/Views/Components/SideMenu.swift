@@ -58,8 +58,6 @@ struct SideMenu: View {
     var onLeave: () -> Void = {}
     /// Set while focus is anywhere in the menu, so the content can lean on it.
     @FocusState private var focused: AppSection?
-    @State private var pendingSwitch: Task<Void, Never>?
-    @State private var lastSwitch = Date.distantPast
 
     static let collapsedWidth: CGFloat = 108
     private let expandedWidth: CGFloat = 400
@@ -81,16 +79,7 @@ struct SideMenu: View {
             .accessibilityHidden(true)
 
             ForEach(AppSection.allCases) { section in
-                Button {
-                    // Clicking opens the section and takes the cursor straight to its first item.
-                    pendingSwitch?.cancel()
-                    lastSwitch = .distantPast
-                    selection = section
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(200))   // let the page build first
-                        onLeave()
-                    }
-                } label: {
+                Button { selection = section } label: {
                     MenuRowLabel(section: section, selected: section == selection, expanded: expanded)
                 }
                 .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded))
@@ -111,29 +100,12 @@ struct SideMenu: View {
                 .ignoresSafeArea()
         }
         .animation(.easeOut(duration: 0.22), value: expanded)
-        // Resting on a section for a moment switches to it (so moving quickly past one doesn't rebuild its page).
-        // Moving out into the page sends the cursor to its first item.
+        // Moving over a section switches to it right away; moving out into the page sends the cursor to its first item.
         .onChange(of: focused) { old, new in
-            pendingSwitch?.cancel()
             if let new {
-                guard new != selection else { return }
-                pendingSwitch = Task {
-                    try? await Task.sleep(for: .milliseconds(250))
-                    guard !Task.isCancelled, focused == new else { return }
-                    lastSwitch = Date()
-                    selection = new
-                }
+                if new != selection { selection = new }
             } else if old != nil {
-                // A page that has just appeared can grab focus for itself (Search's keyboard does). That isn't the user
-                // moving right, so give the cursor back to the menu instead of stranding it in the new page.
-                if Date().timeIntervalSince(lastSwitch) < 0.8 {
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(60))
-                        focused = selection
-                    }
-                } else {
-                    onLeave()
-                }
+                onLeave()
             }
         }
         .focusSection()
