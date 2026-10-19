@@ -108,6 +108,10 @@ struct SideMenu: View {
                 onLeave()
             }
         }
+        // Right does what select does: sends the cursor to the page's first item.
+        .onMoveCommand { direction in
+            if direction == .right { onLeave() }
+        }
         .focusSection()
     }
 }
