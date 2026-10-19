@@ -71,7 +71,9 @@ struct SideMenu: View {
                     .resizable().scaledToFit()
                     .frame(width: 64, height: 64)
                 if expanded {
-                    Text("Mindseerr").font(.title3).fontWeight(.bold).lineLimit(1)
+                    Image("MindseerrWordmark")
+                        .resizable().scaledToFit()
+                        .frame(height: 60)
                 }
             }
             .padding(.leading, 20)   // the same distance from the edge as the rows' logos (8 outside + 12 inside)
