@@ -10,6 +10,7 @@ struct WatchlistsView: View {
     @State private var confirmDisconnect = false
     @State private var summary: String?
     @State private var path = NavigationPath()
+    @Environment(\.pageFocusSpace) private var pageFocusSpace
 
     private static let topID = "watchlists-top"
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
@@ -26,6 +27,8 @@ struct WatchlistsView: View {
                     }
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 1300)
+                    // Coming in from the menu, the cursor starts on the source picker.
+                    .modifier(DefaultFocus(space: pageFocusSpace))
 
                     if store.isConnected(store.source) {
                         header
@@ -253,6 +256,19 @@ struct WatchlistBadge: View {
         case .requested: Pill(text: "Requested", color: .indigo)
         case .notFound: Pill(text: "No Match", color: .gray)
         case .matching, .unchecked, .missing: EmptyView()
+        }
+    }
+}
+
+/// Marks a control as the page's default focus, when the page was given a focus namespace.
+private struct DefaultFocus: ViewModifier {
+    let space: Namespace.ID?
+
+    func body(content: Content) -> some View {
+        if let space {
+            content.prefersDefaultFocus(true, in: space)
+        } else {
+            content
         }
     }
 }

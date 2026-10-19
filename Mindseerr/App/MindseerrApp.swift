@@ -38,6 +38,18 @@ struct RootView: View {
     }
 }
 
+private struct PageFocusSpaceKey: EnvironmentKey {
+    static let defaultValue: Namespace.ID? = nil
+}
+
+extension EnvironmentValues {
+    /// The focus namespace the menu resets into, so a page can name the control that should take the cursor.
+    var pageFocusSpace: Namespace.ID? {
+        get { self[PageFocusSpaceKey.self] }
+        set { self[PageFocusSpaceKey.self] = newValue }
+    }
+}
+
 struct MainTabView: View {
     @Environment(AppState.self) private var app
     @State private var section = AppSection.discover
@@ -65,6 +77,7 @@ struct MainTabView: View {
             .contentMargins(.leading, SideMenu.collapsedWidth + 48, for: .scrollContent)
             // Start on the page, not in the menu, so the menu stays collapsed until you move into it.
             .prefersDefaultFocus(true, in: focusSpace)
+            .environment(\.pageFocusSpace, focusSpace)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .themedBackground()
 
