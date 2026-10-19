@@ -57,7 +57,7 @@ struct SideMenu: View {
     /// Set while focus is anywhere in the menu, so the content can lean on it.
     @FocusState private var focused: AppSection?
 
-    static let collapsedWidth: CGFloat = 120
+    static let collapsedWidth: CGFloat = 108
     private let expandedWidth: CGFloat = 400
 
     private var expanded: Bool { focused != nil }
@@ -72,7 +72,7 @@ struct SideMenu: View {
                     Text("Mindseerr").font(.title3).fontWeight(.bold).lineLimit(1)
                 }
             }
-            .padding(.leading, 28)
+            .padding(.leading, 12)
             .padding(.bottom, 24)
             .accessibilityHidden(true)
 
@@ -120,7 +120,7 @@ private struct MenuRowStyle: ButtonStyle {
                                   : (selected && expanded ? Color.primary.opacity(0.12) : .clear))
             )
             .scaleEffect(focused ? 1.04 : 1)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 8)
             .animation(.easeOut(duration: 0.15), value: focused)
     }
 }

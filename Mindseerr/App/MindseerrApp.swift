@@ -63,9 +63,12 @@ struct MainTabView: View {
                 case .settings: SettingsView().id(settingsResetID)
                 }
             }
+            .padding(.leading, 24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .themedBackground()
         }
+        // The menu hugs the left edge of the screen instead of sitting inside the TV's safe-area margin.
+        .ignoresSafeArea(.container, edges: .leading)
         .onChange(of: section) { oldSection, _ in
             if oldSection == .settings { settingsResetID = UUID() }
         }
