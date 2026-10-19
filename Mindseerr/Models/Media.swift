@@ -42,9 +42,6 @@ struct MediaInfo: Decodable, Sendable {
     let status4k: MediaStatus?
     let seasons: [SeasonAvailability]?
     let requests: [MediaRequest]?
-    /// Where the title lives on the Plex server, as Seerr reports it (a web link and an app link).
-    let plexUrl: String?
-    let iOSPlexUrl: String?
 }
 
 struct SeasonAvailability: Decodable, Sendable {

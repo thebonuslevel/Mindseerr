@@ -60,15 +60,11 @@ Every title opens to a page with its poster, tagline, year, runtime or season co
 
 Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: the critics' **Tomatometer** with its label (Certified Fresh, Fresh or Rotten) and, for movies, the **Audience** score (Upright or Spilled). Series show the critics' score only. The scores come from Seerr, so they appear when your Seerr server can look them up and are simply left out when it can't.
 
-### Detail page: play in your player
+### Detail page: play in Infuse
 
-On a movie that's available on your server, a **Play in …** button sits first among the actions and opens the movie in the app you choose under **Settings → External Player**: **Infuse** (the default), **Plex** or **Swiftfin**.
+On a movie that's available on your server, a **Play in Infuse** button sits first among the actions. It opens the movie in Infuse by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed on the Apple TV and have the title in its library (it can read Plex, Jellyfin and Emby). **Settings → External Player** shows the player in use.
 
-- **Infuse** opens the movie by its TMDB id and starts playing it; Infuse has to have the title in its library.
-- **Plex** only opens the Plex app. Its Apple TV app ignores links to a single movie (I tried both its play and page links, with Plex open and closed, on a real Apple TV), so you pick the movie there. If you use Plex, Infuse can play from your Plex library directly.
-- **Swiftfin** doesn't publish a link to a single title, so Mindseerr can only open the app, and you pick the movie there.
-
-If the app isn't installed, a message says so and points to the setting. Mindseerr only hands the movie over: it doesn't play anything itself. Infuse's link comes from its documentation and I haven't tried it on a real Apple TV yet; Plex's was tried on one, as above.
+If Infuse isn't installed, a message says so. Mindseerr only hands the movie over; it doesn't play anything itself. Plex and Swiftfin aren't offered: Plex's Apple TV app ignores links to a single movie (I tried its play and page links, with Plex open and closed, on a real Apple TV), and Swiftfin doesn't publish one.
 
 ### Detail page: cast, crew and suggestions
 
@@ -303,13 +299,13 @@ Done:
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] A banner when a download finishes, on any screen, including ones that finished while the app was closed (shown when it's reopened)
 - [x] An Activity tab for everyone: the admin panel for admins, a user's own requests for everyone else
-- [x] A Play button on available movies that opens them in Infuse, Plex or Swiftfin, chosen in Settings
+- [x] A Play button on available movies that opens them in Infuse
 - [x] Themes, including a light one
 - [x] Tabs that return to their top level when you leave them
 
 Still to do:
 
-- Open series and individual episodes in the external player, and more players
+- Open series and individual episodes in Infuse, and add other players if they gain links to a single title
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - Show download progress to non-admin users without every Apple TV needing the download services set up
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password

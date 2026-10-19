@@ -277,7 +277,7 @@ struct MediaDetailView: View {
 
     /// Hands the movie to the player chosen in Settings, and says so if that isn't possible or the app isn't installed.
     private func play(_ detail: MediaDetail) {
-        guard let url = player.playURL(tmdbId: route.tmdbId, info: detail.mediaInfo) else {
+        guard let url = player.playURL(tmdbId: route.tmdbId) else {
             notice = Notice(title: "Can't Open in \(player.name)", message: "\(player.name) couldn't be opened.")
             return
         }
