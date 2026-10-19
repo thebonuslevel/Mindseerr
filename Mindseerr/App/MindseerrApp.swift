@@ -40,50 +40,39 @@ struct RootView: View {
 
 struct MainTabView: View {
     @Environment(AppState.self) private var app
-    @State private var tab = Tab.discover
-    /// Changing this rebuilds Settings, so coming back to the tab shows its top level, scrolled to the top.
+    @State private var section = AppSection.discover
+    /// Changing this rebuilds Settings, so coming back to it shows its top level, scrolled to the top.
     @State private var settingsResetID = UUID()
 
-    private enum Tab: Hashable { case discover, search, watchlists, activity, settings }
-
-    // The Settings page shows the logo itself (it opens the About page), so the tab bar's stays hidden.
-    private var showsLogo: Bool { false }
-
     var body: some View {
-        // Text-only titles so tvOS shows every section's name instead of condensing tabs to icons.
-        // Each tab installs the logo in the tab bar's trailing edge, so it slides away with the bar
-        // instead of floating over scrolled content. It's only shown on the Settings tab.
-        TabView(selection: $tab) {
-            DiscoverView()
-                .tabBarLogo(visible: showsLogo)
-                .tabItem { Text("Discover") }
-                .tag(Tab.discover)
-            SearchView()
-                .tabBarLogo(visible: showsLogo)
-                .tabItem { Text("Search") }
-                .tag(Tab.search)
-            WatchlistsView()
-                .tabBarLogo(visible: showsLogo)
-                .tabItem { Text("Watchlists") }
-                .tag(Tab.watchlists)
-            ActivityView()
-                .tabBarLogo(visible: showsLogo)
-                .tabItem { Text("Activity") }
-                .tag(Tab.activity)
-            SettingsView()
-                .id(settingsResetID)
-                .tabBarLogo(visible: showsLogo)
-                .tabItem { Text("Settings") }
-                .tag(Tab.settings)
+        // The menu runs down the left edge, collapsed to logos and opening over the content while it has focus.
+        // Only the selected section is built, so leaving one always returns to its top level.
+        HStack(spacing: 0) {
+            // The menu's column is always this wide; when it opens, the panel grows over the content beside it.
+            Color.clear
+                .frame(width: SideMenu.collapsedWidth)
+                .overlay(alignment: .leading) { SideMenu(selection: $section) }
+                .zIndex(1)
+
+            Group {
+                switch section {
+                case .discover: DiscoverView()
+                case .search: SearchView()
+                case .watchlists: WatchlistsView()
+                case .activity: ActivityView()
+                case .settings: SettingsView().id(settingsResetID)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .themedBackground()
         }
-        // Leaving Settings resets it, so it's back at its top level when you return.
-        .onChange(of: tab) { oldTab, _ in
-            if oldTab == .settings { settingsResetID = UUID() }
+        .onChange(of: section) { oldSection, _ in
+            if oldSection == .settings { settingsResetID = UUID() }
         }
         // Top Shelf links (mindseerr://media/movie/123) open the title on Discover.
         .onOpenURL { url in
             guard let link = TopShelfCache.parse(url), let type = MediaType(rawValue: link.type) else { return }
-            tab = .discover
+            section = .discover
             app.deepLinkRoute = MediaRoute(type: type, tmdbId: link.tmdbId)
         }
         // A finished download announces itself over whichever tab is showing, for a few seconds.
