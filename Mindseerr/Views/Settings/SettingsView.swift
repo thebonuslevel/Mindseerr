@@ -39,7 +39,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Playback")
                 } footer: {
-                    Text("The Play button on an available movie's page opens it in this app.")
+                    Text("Shows a Play button on an available movie's page that opens it in Infuse. Choose Off to hide the button.")
                 }
                 Section {
                     // Selecting the row flips it, like a switch.
@@ -267,7 +267,7 @@ struct ExternalPlayerView: View {
                     }
                 }
             } footer: {
-                Text("Mindseerr only hands the movie over; the player has to be installed on this Apple TV and connected to your library.")
+                Text("Mindseerr only hands the movie over; Infuse has to be installed on this Apple TV and connected to your library.")
             }
         }
         .themedBackground()

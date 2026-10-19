@@ -62,7 +62,7 @@ Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: t
 
 ### Detail page: play in Infuse
 
-On a movie that's available on your server, a **Play in Infuse** button sits first among the actions. It opens the movie in Infuse by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed on the Apple TV and have the title in its library (it can read Plex, Jellyfin and Emby). **Settings → External Player** shows the player in use.
+On a movie that's available on your server, a **Play in Infuse** button sits first among the actions. It opens the movie in Infuse by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed on the Apple TV and have the title in its library (it can read Plex, Jellyfin and Emby). **Settings → External Player** chooses **Infuse** or **Off**; with Off, the Play button isn't shown.
 
 If Infuse isn't installed, a message says so. Mindseerr only hands the movie over; it doesn't play anything itself. Plex and Swiftfin aren't offered: Plex's Apple TV app ignores links to a single movie (I tried its play and page links, with Plex open and closed, on a real Apple TV), and Swiftfin doesn't publish one.
 

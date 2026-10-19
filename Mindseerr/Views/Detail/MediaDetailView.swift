@@ -211,7 +211,7 @@ struct MediaDetailView: View {
     private func actions(_ detail: MediaDetail) -> some View {
         HStack(spacing: 30) {
             // Available movies can be played in the chosen external player.
-            if route.type == .movie, detail.mediaInfo?.status == .available {
+            if route.type == .movie, player.isOn, detail.mediaInfo?.status == .available {
                 Button { play(detail) } label: {
                     Label("Play in \(player.name)", systemImage: "play.circle.fill")
                 }
@@ -287,7 +287,7 @@ struct MediaDetailView: View {
             guard !opened else { return }
             Task { @MainActor in
                 notice = Notice(title: "Can't Open \(player.name)",
-                                message: "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or choose another player in Settings → External Player.")
+                                message: "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or turn the Play button off in Settings → External Player.")
             }
         }
     }
