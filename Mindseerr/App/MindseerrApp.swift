@@ -49,15 +49,10 @@ struct MainTabView: View {
     var body: some View {
         // The menu runs down the left edge, collapsed to logos and opening over the content while it has focus.
         // Only the selected section is built, so leaving one always returns to its top level.
-        HStack(spacing: 0) {
-            // The menu's column is always this wide; when it opens, the panel grows over the content beside it.
-            Color.clear
-                .frame(width: SideMenu.collapsedWidth)
-                .overlay(alignment: .leading) {
-                    SideMenu(selection: $section, onLeave: { resetFocus(in: focusSpace) })
-                }
-                .zIndex(1)
-
+        ZStack(alignment: .leading) {
+            // Each page runs the full width, underneath the (transparent) collapsed menu, with only its scrolling
+            // content inset to clear the menu. That way a focused row or title that reaches past the page's margin
+            // isn't cut off at a column edge.
             Group {
                 switch section {
                 case .discover: DiscoverView()
@@ -67,11 +62,13 @@ struct MainTabView: View {
                 case .settings: SettingsView().id(settingsResetID)
                 }
             }
-            .padding(.leading, 24)
+            .contentMargins(.leading, SideMenu.collapsedWidth + 48, for: .scrollContent)
             // Start on the page, not in the menu, so the menu stays collapsed until you move into it.
             .prefersDefaultFocus(true, in: focusSpace)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .themedBackground()
+
+            SideMenu(selection: $section, onLeave: { resetFocus(in: focusSpace) })
         }
         .focusScope(focusSpace)
         // The menu hugs the left edge of the screen instead of sitting inside the TV's safe-area margin.

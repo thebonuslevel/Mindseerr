@@ -73,7 +73,6 @@ struct DiscoverView: View {
                     }
                 }
                 .padding(.vertical, 30)
-                .padding(.leading, 56)   // room for a row title's highlight, which reaches left of its text
             }
             .themedBackground()
             .mediaDestinations()
