@@ -150,7 +150,9 @@ private struct ThemedButtonBody: View {
             )
             // Text-only buttons keep their text aligned with the content around them.
             .padding(.leading, idleFill ? 0 : -horizontalPadding)
-            .scaleEffect(configuration.isPressed && pressable ? 0.97 : focused ? 1.06 : 1)
+            .scaleEffect(configuration.isPressed && pressable ? 0.97 : focused ? 1.06 : 1,
+                         // Text-only buttons (section titles) grow from their left edge, so the text stays lined up with what's below.
+                         anchor: idleFill ? .center : .leading)
             .shadow(color: .black.opacity(focused ? 0.35 : 0), radius: 18, y: 10)
             .opacity(enabled ? 1 : 0.45)
             .animation(.easeOut(duration: 0.15), value: focused)

@@ -44,6 +44,7 @@ struct MainTabView: View {
     /// Changing this rebuilds Settings, so coming back to it shows its top level, scrolled to the top.
     @State private var settingsResetID = UUID()
     @Namespace private var focusSpace
+    @Environment(\.resetFocus) private var resetFocus
 
     var body: some View {
         // The menu runs down the left edge, collapsed to logos and opening over the content while it has focus.
@@ -52,7 +53,9 @@ struct MainTabView: View {
             // The menu's column is always this wide; when it opens, the panel grows over the content beside it.
             Color.clear
                 .frame(width: SideMenu.collapsedWidth)
-                .overlay(alignment: .leading) { SideMenu(selection: $section) }
+                .overlay(alignment: .leading) {
+                    SideMenu(selection: $section, onLeave: { resetFocus(in: focusSpace) })
+                }
                 .zIndex(1)
 
             Group {

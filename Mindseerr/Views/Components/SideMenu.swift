@@ -54,6 +54,8 @@ struct SectionLogo: View {
 struct SideMenu: View {
     @Environment(\.appTheme) private var theme
     @Binding var selection: AppSection
+    /// Called when focus moves out of the menu into the page.
+    var onLeave: () -> Void = {}
     /// Set while focus is anywhere in the menu, so the content can lean on it.
     @FocusState private var focused: AppSection?
 
@@ -90,14 +92,22 @@ struct SideMenu: View {
         .frame(width: expanded ? expandedWidth : Self.collapsedWidth, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
         .background {
-            // Opens over the content with a soft panel, and disappears again when collapsed.
+            // Fully clear while collapsed. Opened, it's a blurred panel with only a light tint of the theme color.
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .overlay(theme.background.opacity(0.55))
+                .overlay(theme.background.opacity(0.3))
                 .opacity(expanded ? 1 : 0)
                 .ignoresSafeArea()
         }
         .animation(.easeOut(duration: 0.22), value: expanded)
+        // Moving over a section switches to it right away; moving out into the page sends the cursor to its first item.
+        .onChange(of: focused) { old, new in
+            if let new {
+                if new != selection { selection = new }
+            } else if old != nil {
+                onLeave()
+            }
+        }
         .focusSection()
     }
 }

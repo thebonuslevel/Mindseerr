@@ -171,7 +171,7 @@ Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look a
 - **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
 - **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest. Pick which titles, and which seasons of each series, to send.
 - **Tabs that reset**: Discover, Search, Watchlists, Activity and Settings each return to their top level when you leave them and come back, and Search clears its box.
-- **A side menu** instead of a top tab bar: Discover, Search, Watchlists, Activity and Settings, each with its own logo. It shows the logos and names while you're on the menu and shrinks to just the logos when you move into a page. The Activity section changes with who's signed in: admins see every request with approvals and download controls, and everyone else sees their own unfinished requests and where each one stands.
+- **A side menu** instead of a top tab bar: Discover, Search, Watchlists, Activity and Settings, each with its own logo. It shows the logos and names over a blurred, see-through panel while you're on the menu, and shrinks to just the logos, with no background at all, when you move into a page. Highlighting a section switches to it straight away, and moving back into the page puts the cursor on its first item. The Activity section changes with who's signed in: admins see every request with approvals and download controls, and everyone else sees their own unfinished requests and where each one stands.
 - Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
 
 ## Requirements
