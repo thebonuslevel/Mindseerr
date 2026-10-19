@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var showAbout = false
     @AppStorage(AppTheme.storageKey) private var theme: AppTheme = .gloam
     @State private var notifyOn = DownloadNotifications.isEnabled
+    @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
     /// What the Top Shelf shows: a Discover section, or nil when it's off.
     @State private var shelfChoice: TopShelfCache.Section? = TopShelfCache.isEnabled ? TopShelfCache.section : nil
 
@@ -28,6 +29,17 @@ struct SettingsView: View {
                     Text("Look and Feel")
                 } footer: {
                     Text("Shows titles from a section of Discover above the apps when Mindseerr is in the top row of the Home Screen. Choose the section, or Off to show the Mindseerr banner instead.")
+                }
+                Section {
+                    NavigationLink {
+                        ExternalPlayerView()
+                    } label: {
+                        LabeledContent("External Player", value: player.name)
+                    }
+                } header: {
+                    Text("Playback")
+                } footer: {
+                    Text("The Play button on an available movie's page opens it in this app.")
                 }
                 Section {
                     // Selecting the row flips it, like a switch.
@@ -232,5 +244,33 @@ struct TopShelfSectionView: View {
             }
             TVTopShelfContentProvider.topShelfContentDidChange()
         }
+    }
+}
+
+/// Its own page for choosing the app the Play button opens movies in.
+struct ExternalPlayerView: View {
+    @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(ExternalPlayer.allCases) { option in
+                    Button { player = option } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(option.name)
+                                Text(option.note).font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if option == player { Image(systemName: "checkmark") }
+                        }
+                    }
+                }
+            } footer: {
+                Text("Mindseerr only hands the movie over; the player has to be installed on this Apple TV and connected to your library.")
+            }
+        }
+        .themedBackground()
+        .navigationTitle("External Player")
     }
 }

@@ -60,6 +60,16 @@ Every title opens to a page with its poster, tagline, year, runtime or season co
 
 Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: the critics' **Tomatometer** with its label (Certified Fresh, Fresh or Rotten) and, for movies, the **Audience** score (Upright or Spilled). Series show the critics' score only. The scores come from Seerr, so they appear when your Seerr server can look them up and are simply left out when it can't.
 
+### Detail page: play in your player
+
+On a movie that's available on your server, a **Play in …** button sits first among the actions and opens the movie in the app you choose under **Settings → External Player**: **Infuse** (the default), **Plex** or **Swiftfin**.
+
+- **Infuse** opens the movie by its TMDB id and starts playing it; Infuse has to have the title in its library.
+- **Plex** opens the movie on your Plex server, using the link Seerr keeps for it, so it needs a Plex server in Seerr.
+- **Swiftfin** doesn't publish a link to a single title, so Mindseerr can only open the app, and you pick the movie there.
+
+If the app isn't installed, a message says so and points to the setting. Mindseerr only hands the movie over: it doesn't play anything itself. These links come from each player's documentation or Seerr's data, and I've tested Mindseerr's side, not each player on a real Apple TV, so tell me if one doesn't land on the movie.
+
 ### Detail page: cast, crew and suggestions
 
 ![Detail page scrolled to the Cast row, with round avatars and each actor's name and character](docs/screenshots/detail-cast.png)
@@ -293,12 +303,13 @@ Done:
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] A banner when a download finishes, on any screen, including ones that finished while the app was closed (shown when it's reopened)
 - [x] An Activity tab for everyone: the admin panel for admins, a user's own requests for everyone else
+- [x] A Play button on available movies that opens them in Infuse, Plex or Swiftfin, chosen in Settings
 - [x] Themes, including a light one
 - [x] Tabs that return to their top level when you leave them
 
 Still to do:
 
-- A play button that opens an available title in Plex, Infuse, Swiftfin or another player
+- Open series and individual episodes in the external player, and more players
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - Show download progress to non-admin users without every Apple TV needing the download services set up
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password

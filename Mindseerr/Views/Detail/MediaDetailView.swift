@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct MediaDetailView: View {
     @Environment(AppState.self) private var app
@@ -8,6 +9,7 @@ struct MediaDetailView: View {
 
     @State private var detail: MediaDetail?
     @State private var tomatoes: RottenTomatoesRating?
+    @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
     @State private var loadError: String?
     /// The Radarr (movie) or Sonarr (series) servers in Seerr; decides whether 4K is offered.
     @State private var servers: [RequestServer] = []
@@ -208,6 +210,12 @@ struct MediaDetailView: View {
     @ViewBuilder
     private func actions(_ detail: MediaDetail) -> some View {
         HStack(spacing: 30) {
+            // Available movies can be played in the chosen external player.
+            if route.type == .movie, detail.mediaInfo?.status == .available {
+                Button { play(detail) } label: {
+                    Label("Play in \(player.name)", systemImage: "play.circle.fill")
+                }
+            }
             requestButton(detail, is4k: false)
             if offers4K {
                 requestButton(detail, is4k: true)
@@ -264,6 +272,22 @@ struct MediaDetailView: View {
             requestTarget = target
         } else {
             confirmMovieRequest = target
+        }
+    }
+
+    /// Hands the movie to the player chosen in Settings, and says so if that isn't possible or the app isn't installed.
+    private func play(_ detail: MediaDetail) {
+        guard let url = player.playURL(tmdbId: route.tmdbId, info: detail.mediaInfo) else {
+            notice = Notice(title: "Can't Open in \(player.name)",
+                            message: "Seerr didn't give a link to this movie on your \(player.name) server.")
+            return
+        }
+        UIApplication.shared.open(url, options: [:]) { opened in
+            guard !opened else { return }
+            Task { @MainActor in
+                notice = Notice(title: "Can't Open \(player.name)",
+                                message: "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or choose another player in Settings → External Player.")
+            }
         }
     }
 
