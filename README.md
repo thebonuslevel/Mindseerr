@@ -149,7 +149,7 @@ Put Mindseerr in the top row of your Home Screen and the **Top Shelf**, the area
 
 ![Settings with the Look and Feel section: Appearance set to Gloam and Top Shelf set to a section of Discover](docs/screenshots/settings-top-shelf.png)
 
-Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look and Feel** to pick what it shows: **Suggested for You**, **Trending** (the default), **Popular Movies**, **Upcoming Movies**, **Popular Series** or **Upcoming Series**. Choose **Off** at the top of that list to turn it off, and the Home Screen shows the Mindseerr banner instead. The change applies right away. The same section holds **Appearance**, where you pick the app's theme.
+Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look and Feel** to pick what it shows: **Suggested for You**, **Recently Added**, **Trending** (the default), **Popular Movies**, **Upcoming Movies**, **Popular Series** or **Upcoming Series**. Choose **Off** at the top of that list to turn it off, and the Home Screen shows the Mindseerr banner instead. The change applies right away. The same section holds **Appearance**, where you pick the app's theme.
 
 ![The Top Shelf menu listing Off and every Discover section, with a tick on the current choice](docs/screenshots/top-shelf-menu.png)
 
@@ -300,6 +300,7 @@ Done:
 - [x] Cast & crew and "Similar"/"Recommended" rows on detail pages, with a page for each person's other work sorted by Rotten Tomatoes
 - [x] Rotten Tomatoes scores on detail pages
 - [x] Top Shelf showing any Discover section, switched on, off or between sections from one menu in Settings
+- [x] A Recently Added row, and Settings to switch each Discover section on or off
 - [x] A personalised, expandable "Suggested for You" row balancing taste, Rotten Tomatoes, trending and new releases
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB, with a picker for titles and seasons
 - [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
