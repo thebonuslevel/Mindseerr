@@ -27,6 +27,14 @@ enum ExternalPlayer: String, CaseIterable, Identifiable {
     /// Whether movie pages show a Play button.
     var isOn: Bool { self != .off }
 
+    /// The link that plays one episode of a series, by the series' TMDB id.
+    func episodeURL(seriesTmdbId: Int, season: Int, episode: Int) -> URL? {
+        switch self {
+        case .infuse: return URL(string: "infuse://series/\(seriesTmdbId)-\(season)-\(episode)?play")
+        case .off: return nil
+        }
+    }
+
     /// The link that plays this movie in the player, or nil when it's off.
     func playURL(tmdbId: Int) -> URL? {
         switch self {

@@ -9,6 +9,7 @@ struct MediaDetailView: View {
 
     @State private var detail: MediaDetail?
     @State private var tomatoes: RottenTomatoesRating?
+    @State private var showEpisodes = false
     @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
     @State private var loadError: String?
     /// The Radarr (movie) or Sonarr (series) servers in Seerr; decides whether 4K is offered.
@@ -49,6 +50,9 @@ struct MediaDetailView: View {
             }
         }
         .task { await load() }
+        .fullScreenCover(isPresented: $showEpisodes) {
+            if let detail { EpisodeListView(detail: detail, tmdbId: route.tmdbId) }
+        }
         .task { tomatoes = await app.api.rottenTomatoes(for: route) }
         .task { servers = (try? await app.api.requestServers(for: route.type)) ?? [] }
         // Full screen: as a sheet, tvOS sizes it to its content and the season list collapses.
@@ -213,6 +217,13 @@ struct MediaDetailView: View {
             // Available movies can be played in the chosen external player.
             if route.type == .movie, player.isOn, detail.mediaInfo?.status == .available {
                 Button { play(detail) } label: {
+                    Label("Play in \(player.name)", systemImage: "play.circle.fill")
+                }
+            }
+            // Series with something on the server open an episode list, each episode playing in the external player.
+            if route.type == .tv, player.isOn,
+               detail.mediaInfo?.status == .available || detail.mediaInfo?.status == .partiallyAvailable {
+                Button { showEpisodes = true } label: {
                     Label("Play in \(player.name)", systemImage: "play.circle.fill")
                 }
             }

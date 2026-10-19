@@ -156,6 +156,10 @@ actor SeerrClient {
         return detail
     }
 
+    func season(_ number: Int, ofSeries tmdbId: Int) async throws -> SeasonDetail {
+        try await send("tv/\(tmdbId)/season/\(number)")
+    }
+
     func person(_ id: Int) async throws -> PersonDetail {
         try await send("person/\(id)")
     }

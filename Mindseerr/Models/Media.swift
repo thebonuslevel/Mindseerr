@@ -107,6 +107,24 @@ struct MediaResult: Decodable, Sendable {
     }
 }
 
+// MARK: - Episodes
+
+/// A season with its episodes (`/tv/{id}/season/{n}`).
+struct SeasonDetail: Decodable, Sendable {
+    let seasonNumber: Int?
+    let name: String?
+    let episodes: [Episode]?
+}
+
+struct Episode: Decodable, Identifiable, Sendable {
+    let id: Int
+    let name: String?
+    let overview: String?
+    let episodeNumber: Int
+    let seasonNumber: Int
+    let runtime: Int?
+}
+
 // MARK: - People
 
 /// A cast or crew member, as a place to navigate to.

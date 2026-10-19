@@ -64,6 +64,8 @@ Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: t
 
 On a movie that's available on your server, a **Play in Infuse** button sits first among the actions. It opens the movie in Infuse by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed on the Apple TV and have the title in its library (it can read Plex, Jellyfin and Emby). **Settings → External Player** chooses **Infuse** or **Off**; with Off, the Play button isn't shown.
 
+On a **series** that has something on your server, the same button opens an episode list: every season on the server, with each episode's number, title, runtime and a short summary. Select an episode to play it in Infuse. Infuse needs the series in its library, and its episode link is as documented but untried on a real Apple TV.
+
 If Infuse isn't installed, a message says so. Mindseerr only hands the movie over; it doesn't play anything itself. Plex and Swiftfin aren't offered: Plex's Apple TV app ignores links to a single movie (I tried its play and page links, with Plex open and closed, on a real Apple TV), and Swiftfin doesn't publish one.
 
 ### Detail page: cast, crew and suggestions
@@ -312,7 +314,7 @@ Done:
 
 Still to do:
 
-- Open series and individual episodes in Infuse, and add other players if they gain links to a single title
+- Add other players if they gain links to a single title
 - Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
 - Show download progress to non-admin users without every Apple TV needing the download services set up
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password

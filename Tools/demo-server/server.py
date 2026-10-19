@@ -392,6 +392,18 @@ class Handler(BaseHTTPRequestHandler):
                     picks = (same[shift:] + same[:shift])[:7]
                     return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(picks),
                                            "results": [result(x) for x in picks]})
+        if p.startswith("/tv/") and "/season/" in p:
+            parts = p.split("/")
+            t, n = TITLES.get(int(parts[2])), int(parts[4])
+            if not t or n < 1 or n > len(t["seasons"]):
+                return self.send_json({"message": "not found"}, 404)
+            words = ["The Signal", "Low Tide", "Dead Reckoning", "Salt and Rust", "What the Lamp Saw", "Undertow", "The Long Quiet", "Last Light"]
+            eps = [{"id": t["id"] * 1000 + n * 100 + e, "name": words[(e + n) % len(words)], "episodeNumber": e, "seasonNumber": n,
+                    "runtime": 41 + e % 7,
+                    "overview": f"Episode {e} of season {n}. A short demo summary that runs long enough to need a second line so the "
+                                "list shows how overviews are trimmed when they are longer than the row can hold."}
+                   for e in range(1, t["seasons"][n - 1] + 1)]
+            return self.send_json({"id": t["id"] * 10 + n, "seasonNumber": n, "name": f"Season {n}", "episodes": eps})
         if p.startswith("/person/"):
             pid = int(p.split("/")[2])
             if p.endswith("/combined_credits"):
