@@ -56,13 +56,19 @@ struct SideMenu: View {
     @Binding var selection: AppSection
     /// Called when focus moves out of the menu into the page.
     var onLeave: () -> Void = {}
+    /// Called when the section that's already showing is selected again, to send it back to its top level.
+    var onReselect: () -> Void = {}
     /// Set while focus is anywhere in the menu, so the content can lean on it.
     @FocusState private var focused: AppSection?
 
     static let collapsedWidth: CGFloat = 108
     private let expandedWidth: CGFloat = 400
 
-    private var expanded: Bool { focused != nil }
+    /// Settings > Look and Feel > Menu. Off keeps the menu as logos only, even while it has focus.
+    static let expandsKey = "menuExpandsOnFocus"
+    @AppStorage(SideMenu.expandsKey) private var expandsOnFocus = true
+
+    private var expanded: Bool { focused != nil && expandsOnFocus }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -81,7 +87,9 @@ struct SideMenu: View {
             .accessibilityHidden(true)
 
             ForEach(AppSection.allCases) { section in
-                Button { selection = section } label: {
+                Button {
+                    if section == selection { onReselect() } else { selection = section }
+                } label: {
                     MenuRowLabel(section: section, selected: section == selection, expanded: expanded)
                 }
                 .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded))
@@ -102,13 +110,9 @@ struct SideMenu: View {
                 .ignoresSafeArea()
         }
         .animation(.easeOut(duration: 0.22), value: expanded)
-        // Moving over a section switches to it right away; moving out into the page sends the cursor to its first item.
+        // A section opens only when it's selected. Moving out of the menu into the page sends the cursor to its first item.
         .onChange(of: focused) { old, new in
-            if let new {
-                if new != selection { selection = new }
-            } else if old != nil {
-                onLeave()
-            }
+            if new == nil, old != nil { onLeave() }
         }
         // Right does what select does: sends the cursor to the page's first item.
         .onMoveCommand { direction in
@@ -155,5 +159,15 @@ private struct MenuRowLabel: View {
                 Spacer(minLength: 0)
             }
         }
+    }
+}
+
+extension View {
+    /// For pages built on a `List`, which ignores the content margin the other pages use to clear the collapsed menu
+    /// (it applies it only some of the time, so its rows jump and its section headers come and go). The page is pushed
+    /// clear with padding instead, so a focused row's highlight doesn't run over the menu's icons.
+    func clearsSideMenu() -> some View {
+        padding(.leading, SideMenu.collapsedWidth - 40)
+            .scrollClipDisabled()   // the focused row's highlight grows past the list's edge, into the padding
     }
 }

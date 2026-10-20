@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var notifyOn = DownloadNotifications.isEnabled
     @AppStorage(DiscoverLayout.storageKey) private var hiddenSections = ""
     @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
+    @AppStorage(SideMenu.expandsKey) private var menuExpands = true
     /// What the Top Shelf shows: a Discover section, or nil when it's off.
     @State private var shelfChoice: TopShelfCache.Section? = TopShelfCache.isEnabled ? TopShelfCache.section : nil
 
@@ -20,6 +21,12 @@ struct SettingsView: View {
                         AppearanceView()
                     } label: {
                         LabeledContent("Appearance", value: theme.name)
+                    }
+                    // Selecting the row flips it, like a switch.
+                    Button {
+                        menuExpands.toggle()
+                    } label: {
+                        LabeledContent("Side Menu", value: menuExpands ? "Expands" : "Always Collapsed")
                     }
                     NavigationLink {
                         TopShelfSectionView()
@@ -96,6 +103,7 @@ struct SettingsView: View {
                 }
             }
             .themedBackground()
+            .clearsSideMenu()
             // The choice is made on a pushed page; pick it up when coming back.
             .onAppear { shelfChoice = TopShelfCache.isEnabled ? TopShelfCache.section : nil }
             .navigationDestination(isPresented: $showAbout) { AboutView() }
@@ -147,6 +155,7 @@ struct AppearanceView: View {
             }
         }
         .themedBackground()
+        .clearsSideMenu()
         .navigationTitle("Appearance")
         // Preview whichever theme is highlighted; selecting one saves it.
         .onChange(of: highlighted) { _, option in app.previewTheme = option }
@@ -222,6 +231,7 @@ struct TopShelfSectionView: View {
             }
         }
         .themedBackground()
+        .clearsSideMenu()
         .navigationTitle("Top Shelf")
     }
 
@@ -288,6 +298,7 @@ struct ExternalPlayerView: View {
             }
         }
         .themedBackground()
+        .clearsSideMenu()
         .navigationTitle("External Player")
     }
 }
@@ -310,6 +321,7 @@ struct DiscoverSectionsView: View {
             }
         }
         .themedBackground()
+        .clearsSideMenu()
         .navigationTitle("Discover Sections")
     }
 

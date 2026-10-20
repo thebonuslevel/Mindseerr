@@ -54,6 +54,7 @@ struct AboutView: View {
             }
         }
         .themedBackground()
+        .clearsSideMenu()
         .navigationTitle("About")
     }
 
