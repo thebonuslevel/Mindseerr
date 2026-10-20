@@ -17,6 +17,8 @@ struct MediaDetailView: View {
     /// Set when the server list couldn't be read (an account without the rights to list servers can still have the
     /// 4K permission). 4K is then offered on the permission alone, and Seerr decides when the request is sent.
     @State private var serversUnreadable = false
+    /// What this user may still request of this kind of title; nil until read, or if Seerr doesn't say.
+    @State private var quota: RequestQuota.Limit?
     @State private var requestTarget: RequestTarget?
     @State private var confirmMovieRequest: RequestTarget?
     @State private var isRequesting = false
@@ -57,6 +59,7 @@ struct MediaDetailView: View {
             if let detail { EpisodeListView(detail: detail, tmdbId: route.tmdbId) }
         }
         .task { tomatoes = await app.api.rottenTomatoes(for: route) }
+        .task { await loadQuota() }
         .task {
             do { servers = try await app.api.requestServers(for: route.type) } catch { serversUnreadable = true }
         }
@@ -161,6 +164,11 @@ struct MediaDetailView: View {
                 }
                 actions(detail)
                     .padding(.top, 20)
+                if let note = quota?.summary(noun: route.type == .tv ? "series" : "movie") {
+                    Label(note, systemImage: quota?.isExhausted == true ? "exclamationmark.circle" : "ticket")
+                        .font(.callout)
+                        .foregroundStyle(quota?.isExhausted == true ? Color.orange : Color.secondary)
+                }
             }
         }
         .focusSection()
@@ -219,11 +227,13 @@ struct MediaDetailView: View {
 
     @ViewBuilder
     private func actions(_ detail: MediaDetail) -> some View {
-        HStack(spacing: 30) {
+        HStack(spacing: 24) {
             // Available movies can be played in the chosen external player.
             if route.type == .movie, player.isOn, detail.mediaInfo?.status == .available {
                 Button { play(detail) } label: {
                     Label("Play in \(player.name)", systemImage: "play.circle.fill")
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
             // Series with something on the server open an episode list, each episode playing in the external player.
@@ -231,6 +241,8 @@ struct MediaDetailView: View {
                detail.mediaInfo?.status == .available || detail.mediaInfo?.status == .partiallyAvailable {
                 Button { showEpisodes = true } label: {
                     Label("Play in \(player.name)", systemImage: "play.circle.fill")
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
             requestButton(detail, is4k: false)
@@ -242,6 +254,8 @@ struct MediaDetailView: View {
                     playTrailer(trailer)
                 } label: {
                     Label("Trailer", systemImage: "play.fill")
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
             if isRequesting { ProgressView() }
@@ -259,23 +273,27 @@ struct MediaDetailView: View {
             } label: {
                 Label(route.type == .tv ? "Request Series\(suffix)" : "Request Movie\(suffix)",
                       systemImage: "plus.circle.fill")
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)   // stays on one line next to Play, Available and Trailer
             }
-            .disabled(isRequesting)
+            .disabled(isRequesting || quota?.isExhausted == true)
         case .partiallyRequestable:
             Button {
                 startRequest(is4k: is4k)
             } label: {
                 Label("Request More Seasons\(suffix)", systemImage: "plus.circle")
             }
-            .disabled(isRequesting)
+            .disabled(isRequesting || quota?.isExhausted == true)
         case .requested:
-            FocusableStatus { Label(is4k ? "4K Requested" : "Requested", systemImage: "clock.fill") }
+            FocusableStatus { Label(is4k ? "4K Requested" : "Requested", systemImage: "clock.fill").lineLimit(1).fixedSize(horizontal: true, vertical: false) }
         case .available:
             // Only the checkmark is green; the text follows the button colors so it stays readable when focused.
             FocusableStatus {
                 Label { Text(is4k ? "4K Available" : "Available") } icon: {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                 }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
             }
         }
     }
@@ -319,6 +337,11 @@ struct MediaDetailView: View {
         }
     }
 
+    private func loadQuota() async {
+        guard let id = app.user?.id else { return }
+        quota = (try? await app.api.quota(forUser: id))?.limit(for: route.type)
+    }
+
     private func load() async {
         do {
             detail = try await app.api.detail(for: route, useCache: false)
@@ -339,6 +362,7 @@ struct MediaDetailView: View {
                 : "\(title) was sent and is waiting for approval."
             notice = Notice(title: "Requested", message: message)
             await load()
+            await loadQuota()
         } catch {
             notice = Notice(title: "Request Failed", message: AppState.friendly(error))
         }

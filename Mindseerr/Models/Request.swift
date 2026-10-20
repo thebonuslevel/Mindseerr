@@ -111,3 +111,40 @@ struct RequestPage: Decodable, Sendable {
     let pageInfo: PageInfo
     let results: [MediaRequest]
 }
+
+/// How many requests a user may still make. Seerr limits regular users to some number of movie and series requests
+/// per period; a limit of 0 (or none) means unlimited.
+struct RequestQuota: Decodable, Sendable {
+    struct Limit: Decodable, Sendable {
+        let days: Int?
+        let limit: Int?
+        let used: Int?
+        let remaining: Int?
+        let restricted: Bool?
+
+        var isLimited: Bool { (limit ?? 0) > 0 }
+        /// Every request for the period is used up.
+        var isExhausted: Bool { isLimited && ((remaining ?? 0) <= 0 || restricted == true) }
+
+        /// "2 of 5 movie requests left this week", or nil when there's no limit.
+        func summary(noun: String) -> String? {
+            guard isLimited, let limit else { return nil }
+            let left = max(remaining ?? 0, 0)
+            let period: String
+            switch days ?? 0 {
+            case 0: period = ""
+            case 1: period = " today"
+            case 7: period = " this week"
+            case 30...31: period = " this month"
+            case let n: period = " in \(n) days"
+            }
+            if isExhausted { return "You've used all \(limit) \(noun) requests allowed\(period)." }
+            return "\(left) of \(limit) \(noun) requests left\(period)"
+        }
+    }
+
+    let movie: Limit
+    let tv: Limit
+
+    func limit(for type: MediaType) -> Limit { type == .tv ? tv : movie }
+}

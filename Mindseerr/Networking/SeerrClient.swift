@@ -217,6 +217,11 @@ actor SeerrClient {
         return created
     }
 
+    /// What the signed-in user may still request. Throws if Seerr doesn't offer it (older versions), which callers ignore.
+    func quota(forUser userId: Int) async throws -> RequestQuota {
+        try await send("user/\(userId)/quota")
+    }
+
     // MARK: - Request options
 
     /// The Radarr (movies) or Sonarr (series) servers set up in Seerr, standard and 4K.
