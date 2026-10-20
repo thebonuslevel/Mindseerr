@@ -145,6 +145,14 @@ extension View {
             MediaDetailView(route: route)
                 .themedBackground()
         }
+        .navigationDestination(for: BrowseKind.self) { kind in
+            BrowseListView(kind: kind)
+                .themedBackground()
+        }
+        .navigationDestination(for: BrowseTarget.self) { target in
+            BrowseResultsView(target: target)
+                .themedBackground()
+        }
         .navigationDestination(for: PersonRoute.self) { person in
             PersonView(person: person)
                 .themedBackground()

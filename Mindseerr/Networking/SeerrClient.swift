@@ -139,6 +139,26 @@ actor SeerrClient {
         return try await send(section.path, query: ["page": "\(page)"])
     }
 
+    /// The genres Seerr offers for movies or series.
+    func genres(for type: MediaType) async throws -> [Genre] {
+        try await send(type == .tv ? "discover/genreslider/tv" : "discover/genreslider/movie")
+    }
+
+    /// One page of the titles in a genre, studio or network, in the chosen order. Newest leaves out what isn't out
+    /// yet, and Top Rated what hardly anyone has rated, so neither starts with noise.
+    func browse(_ target: BrowseTarget, sort: BrowseSort, page: Int) async throws -> PagedResponse<MediaResult> {
+        var query = ["page": "\(page)", "sortBy": sort.sortBy(for: target.type)]
+        query[target.filter.rawValue] = "\(target.id)"
+        switch sort {
+        case .popular: break
+        case .topRated: query["voteCountGte"] = "200"
+        case .newest:
+            let today = ISO8601DateFormatter().string(from: Date()).prefix(10)
+            query[target.type == .tv ? "firstAirDateLte" : "primaryReleaseDateLte"] = String(today)
+        }
+        return try await send(target.type == .tv ? "discover/tv" : "discover/movies", query: query)
+    }
+
     /// The newest titles on the server (available or partly available), newest first. Seerr lists them as bare
     /// media records, so each one's details are looked up (and cached) to get its title and poster.
     func recentlyAdded(page: Int) async throws -> PagedResponse<MediaResult> {

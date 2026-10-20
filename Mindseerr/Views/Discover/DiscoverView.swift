@@ -68,6 +68,9 @@ struct DiscoverView: View {
                     if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
                         SuggestionsRowView(model: app.suggestions)
                     }
+                    if !hidden.contains(DiscoverLayout.Entry.browse.rawValue) {
+                        BrowseRowView()
+                    }
                     ForEach(rows.filter { !hidden.contains($0.section.rawValue) }) { row in
                         MediaRowView(model: row)
                     }

@@ -7,6 +7,46 @@ struct SearchView: View {
     @State private var loading = false
     @State private var error: String?
     @State private var path = NavigationPath()
+    @State private var typeFilter: TypeFilter = .all
+    @State private var sort: ResultSort = .bestMatch
+
+    private enum TypeFilter: String, CaseIterable, Identifiable {
+        case all = "All", movies = "Movies", series = "Series"
+        var id: String { rawValue }
+    }
+
+    private enum ResultSort: String, CaseIterable {
+        case bestMatch = "Best Match", topRated = "Top Rated", newest = "Newest"
+        var next: ResultSort { Self.allCases[(Self.allCases.firstIndex(of: self)! + 1) % Self.allCases.count] }
+    }
+
+    /// The results as the filter and order ask. Best Match keeps Seerr's own order; the others are stable, so titles
+    /// that tie (or have no rating or date) stay in that order. Undated titles go last under Newest.
+    private var shown: [MediaResult] {
+        let filtered = results.filter {
+            switch typeFilter {
+            case .all: return true
+            case .movies: return $0.type == .movie
+            case .series: return $0.type == .tv
+            }
+        }
+        switch sort {
+        case .bestMatch: return filtered
+        case .topRated:
+            return filtered.enumerated().sorted { a, b in
+                let (x, y) = (a.element.voteAverage ?? 0, b.element.voteAverage ?? 0)
+                return x != y ? x > y : a.offset < b.offset
+            }.map(\.element)
+        case .newest:
+            return filtered.enumerated().sorted { a, b in
+                let (x, y) = (a.element.releaseDate ?? a.element.firstAirDate ?? "", b.element.releaseDate ?? b.element.firstAirDate ?? "")
+                if x == y { return a.offset < b.offset }
+                if x.isEmpty { return false }
+                if y.isEmpty { return true }
+                return x > y
+            }.map(\.element)
+        }
+    }
 
     private static let topID = "search-top"
 
@@ -30,6 +70,8 @@ struct SearchView: View {
         .onDisappear {
             path = NavigationPath()
             query = ""
+            typeFilter = .all
+            sort = .bestMatch
             scroll.scrollTo(Self.topID, anchor: .top)
         }
         }
@@ -52,9 +94,29 @@ struct SearchView: View {
                 ContentUnavailableView.search(text: query).padding(.top, 80)
             }
         } else {
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
-                ForEach(results, id: \.uid) { item in
-                    PosterCard(item: item)
+            VStack(alignment: .leading, spacing: 30) {
+                HStack(spacing: 30) {
+                    Picker("Show", selection: $typeFilter) {
+                        ForEach(TypeFilter.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 700)
+                    Button { sort = sort.next } label: {
+                        Label(sort.rawValue, systemImage: "arrow.up.arrow.down")
+                    }
+                }
+                .focusSection()
+
+                if shown.isEmpty {
+                    ContentUnavailableView("No \(typeFilter.rawValue) Found", systemImage: "line.3.horizontal.decrease.circle",
+                                           description: Text("Nothing in these results matches. Choose All to see everything."))
+                        .frame(maxWidth: .infinity)
+                } else {
+                    LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
+                        ForEach(shown, id: \.uid) { item in
+                            PosterCard(item: item)
+                        }
+                    }
                 }
             }
             .padding(.vertical, 40)
@@ -79,6 +141,12 @@ struct SearchView: View {
             guard !Task.isCancelled else { return }
             results = response.results.filter { $0.route != nil }
             error = nil
+            // A page holds only about 20 results, which a Movies or Series filter would thin out. Read two more.
+            var seen = Set(results.map(\.uid))
+            for page in 2...max(2, min(3, response.totalPages)) where page <= response.totalPages {
+                guard let more = try? await app.api.search(text, page: page), !Task.isCancelled else { break }
+                results += more.results.filter { $0.route != nil && seen.insert($0.uid).inserted }
+            }
         } catch {
             guard !Task.isCancelled else { return }
             self.error = AppState.friendly(error)

@@ -383,6 +383,24 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"movie": {"days": 7, "limit": 5, "used": 3, "remaining": 2, "restricted": False},
                                    "tv": {"days": 7, "limit": 2, "used": 2, "remaining": 0, "restricted": True}})
         if p == "/auth/me": return self.send_json(user(int(os.environ.get("DEMO_USER", 1))))
+        if p in ("/discover/genreslider/movie", "/discover/genreslider/tv"):
+            kind = "movie" if p.endswith("movie") else "tv"
+            names = sorted({g for t in CATALOG["titles"] if t["type"] == kind for g in t["genres"]})
+            return self.send_json([{"id": 100 + i, "name": n, "backdrops": []} for i, n in enumerate(names)])
+        if p in ("/discover/movies", "/discover/tv") and any(k in q for k in ("genre", "studio", "network", "sortBy")):
+            kind = "movie" if p.endswith("movies") else "tv"
+            pool = [t for t in CATALOG["titles"] if t["type"] == kind]
+            if "genre" in q:
+                names = sorted({g for t in pool for g in t["genres"]})
+                wanted = names[int(q["genre"]) - 100] if 0 <= int(q["genre"]) - 100 < len(names) else None
+                pool = [t for t in pool if wanted in t["genres"]]
+            elif "studio" in q or "network" in q:
+                pool = [t for i, t in enumerate(pool) if (i + int(q.get("studio") or q.get("network"))) % 2 == 0]
+            sort = q.get("sortBy", "popularity.desc")
+            if sort.startswith("vote_average"): pool.sort(key=lambda t: -t["vote"])
+            elif "date" in sort: pool.sort(key=lambda t: -t["year"])
+            return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(pool),
+                                   "results": [result(t) for t in pool]})
         if p.lstrip("/") in CATALOG["sections"]:
             items = [result(TITLES[i]) for i in CATALOG["sections"][p.lstrip("/")]]
             page = int(q.get("page", 1))
