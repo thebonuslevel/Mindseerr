@@ -17,6 +17,8 @@ struct PersonView: View {
     @State private var detail: PersonDetail?
     @State private var works: [Work] = []
     @State private var loading = true
+    @State private var newestFirst = false
+    @FocusState private var sortFocused: Bool
 
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
     /// How many of a person's titles get a Rotten Tomatoes lookup; the rest follow, ordered by TMDB's rating.
@@ -33,10 +35,23 @@ struct PersonView: View {
                                            description: Text("There's nothing else listed for \(person.name)."))
                         .frame(maxWidth: .infinity)
                 } else {
-                    Text("Best Rated First")
-                        .font(.title3).fontWeight(.semibold)
+                    // The title is the control: selecting it flips between best rated and newest.
+                    Button { newestFirst.toggle() } label: {
+                        HStack(spacing: 16) {
+                            Text(newestFirst ? "Newest First" : "Best Rated First")
+                                .font(.title3).fontWeight(.semibold)
+                            if sortFocused {
+                                Label(newestFirst ? "Show best rated" : "Show newest", systemImage: "arrow.up.arrow.down")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .buttonStyle(ThemedButtonStyle(idleFill: false))
+                    .focused($sortFocused)
+                    .animation(.easeOut(duration: 0.15), value: sortFocused)
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
-                        ForEach(works) { work in
+                        ForEach(ordered) { work in
                             VStack(alignment: .leading, spacing: 8) {
                                 PosterCard(item: work.item)
                                 scoreLine(for: work)
@@ -51,6 +66,22 @@ struct PersonView: View {
         }
         .scrollClipDisabled()
         .task { await load() }
+    }
+
+    /// The works in the chosen order. Newest first uses the release or first-air date; titles with no date go last,
+    /// and the sort is stable, so ties keep the best-rated order.
+    private var ordered: [Work] {
+        guard newestFirst else { return works }
+        return works.enumerated().sorted { a, b in
+            let da = a.element.item.releaseDate ?? a.element.item.firstAirDate ?? ""
+            let db = b.element.item.releaseDate ?? b.element.item.firstAirDate ?? ""
+            if da != db {
+                if da.isEmpty { return false }
+                if db.isEmpty { return true }
+                return da > db
+            }
+            return a.offset < b.offset
+        }.map(\.element)
     }
 
     // MARK: - Pieces
