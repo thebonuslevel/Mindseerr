@@ -147,7 +147,8 @@ struct MediaRowView: View {
         .task {
             if model.items.isEmpty { await model.loadMore(using: app.api) }
         }
-        .fullScreenCover(isPresented: $expanded) {
+        // Pushed inside Discover's stack (not a full-screen cover), so the side menu stays on screen.
+        .navigationDestination(isPresented: $expanded) {
             ExpandedSectionView(model: model)
         }
     }
@@ -161,35 +162,31 @@ struct ExpandedSectionView: View {
     private let columns = [GridItem(.adaptive(minimum: 240), spacing: 40)]
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let error = model.error, model.items.isEmpty {
-                    ContentUnavailableView("Couldn't Load \(model.section.title)", systemImage: "exclamationmark.triangle",
-                                           description: Text(error))
-                } else if model.items.isEmpty {
-                    ProgressView()
-                } else {
-                    ScrollView(.vertical) {
-                        LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
-                            ForEach(model.items, id: \.uid) { item in
-                                PosterCard(item: item)
-                                    .onAppear {
-                                        if item.uid == model.items.last?.uid {
-                                            Task { await model.loadMore(using: app.api) }
-                                        }
+        Group {
+            if let error = model.error, model.items.isEmpty {
+                ContentUnavailableView("Couldn't Load \(model.section.title)", systemImage: "exclamationmark.triangle",
+                                       description: Text(error))
+            } else if model.items.isEmpty {
+                ProgressView()
+            } else {
+                ScrollView(.vertical) {
+                    LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
+                        ForEach(model.items, id: \.uid) { item in
+                            PosterCard(item: item)
+                                .onAppear {
+                                    if item.uid == model.items.last?.uid {
+                                        Task { await model.loadMore(using: app.api) }
                                     }
-                            }
+                                }
                         }
-                        .padding(.vertical, 30) // room for the focus lift
                     }
-                    .scrollClipDisabled()
+                    .padding(.vertical, 30) // room for the focus lift
                 }
+                .scrollClipDisabled()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .themedBackground()
-            .navigationTitle(model.section.title)
-            .mediaDestinations()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .themedBackground()
         .task {
             if model.items.isEmpty { await model.loadMore(using: app.api) }
         }
@@ -232,7 +229,7 @@ struct SuggestionsRowView: View {
             }
         }
         .focusSection()
-        .fullScreenCover(isPresented: $expanded) {
+        .navigationDestination(isPresented: $expanded) {
             ExpandedSuggestionsView(model: model)
         }
     }
@@ -245,18 +242,14 @@ struct ExpandedSuggestionsView: View {
     private let columns = [GridItem(.adaptive(minimum: 240), spacing: 40)]
 
     var body: some View {
-        NavigationStack {
-            ScrollView(.vertical) {
-                LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
-                    ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
-                }
-                .padding(.vertical, 30) // room for the focus lift
+        ScrollView(.vertical) {
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
+                ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
             }
-            .scrollClipDisabled()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .themedBackground()
-            .navigationTitle("Suggested for You")
-            .mediaDestinations()
+            .padding(.vertical, 30) // room for the focus lift
         }
+        .scrollClipDisabled()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .themedBackground()
     }
 }
