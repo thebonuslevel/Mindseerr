@@ -14,6 +14,9 @@ struct MediaDetailView: View {
     @State private var loadError: String?
     /// The Radarr (movie) or Sonarr (series) servers in Seerr; decides whether 4K is offered.
     @State private var servers: [RequestServer] = []
+    /// Set when the server list couldn't be read (an account without the rights to list servers can still have the
+    /// 4K permission). 4K is then offered on the permission alone, and Seerr decides when the request is sent.
+    @State private var serversUnreadable = false
     @State private var requestTarget: RequestTarget?
     @State private var confirmMovieRequest: RequestTarget?
     @State private var isRequesting = false
@@ -54,7 +57,9 @@ struct MediaDetailView: View {
             if let detail { EpisodeListView(detail: detail, tmdbId: route.tmdbId) }
         }
         .task { tomatoes = await app.api.rottenTomatoes(for: route) }
-        .task { servers = (try? await app.api.requestServers(for: route.type)) ?? [] }
+        .task {
+            do { servers = try await app.api.requestServers(for: route.type) } catch { serversUnreadable = true }
+        }
         // Full screen: as a sheet, tvOS sizes it to its content and the season list collapses.
         .fullScreenCover(item: $requestTarget) { target in
             if let detail {
@@ -92,7 +97,8 @@ struct MediaDetailView: View {
 
     /// 4K is offered when the user may request it and Seerr has a 4K server for this kind of title.
     private var offers4K: Bool {
-        app.user?.canRequest4K(route.type) == true && servers.contains(where: \.is4k)
+        guard app.user?.canRequest4K(route.type) == true else { return false }
+        return serversUnreadable || servers.contains(where: \.is4k)
     }
 
     // MARK: - Layout
@@ -188,7 +194,7 @@ struct MediaDetailView: View {
         .background(alignment: .top) {
             LinearGradient(colors: [theme.background.opacity(0), theme.background.opacity(0.92)],
                            startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.12))
-                .padding(.horizontal, -200)
+                .padding(.horizontal, -600)
                 .padding(.bottom, -400)
         }
     }
@@ -251,7 +257,7 @@ struct MediaDetailView: View {
             Button {
                 startRequest(is4k: is4k)
             } label: {
-                Label(route.type == .tv ? "Request Series\(suffix)" : (is4k ? "Request 4K" : "Request"),
+                Label(route.type == .tv ? "Request Series\(suffix)" : "Request Movie\(suffix)",
                       systemImage: "plus.circle.fill")
             }
             .disabled(isRequesting)
