@@ -327,8 +327,44 @@ struct PlexSignInView: View {
     @State private var error: String?
     @State private var signingIn = false
     @State private var attempt = 0
+    @State private var confirmed = false
+
+    /// What the task restarts on: a new code was asked for, or the server was confirmed.
+    private struct FlowKey: Hashable { let attempt: Int; let confirmed: Bool }
 
     var body: some View {
+        if confirmed || PlexHostTrust.isTrusted(app.serverURL) {
+            link.onAppear { confirmed = true }
+        } else {
+            hostConfirmation
+        }
+    }
+
+    /// Plex sign-in sends a token to the Seerr server, so the first time for each address the user sees which
+    /// one, and that an unencrypted one would send it unprotected.
+    private var hostConfirmation: some View {
+        VStack(spacing: 40) {
+            Text("Sign in with Plex")
+                .font(.largeTitle).bold()
+            Text("Your Plex sign-in will be sent to")
+                .foregroundStyle(.secondary)
+            Text(PlexHostTrust.label(for: app.serverURL))
+                .font(.title2).bold()
+            if PlexHostTrust.isUnencryptedRemote(app.serverURL) {
+                Text("This address isn't encrypted, and isn't on your home network. Anyone between your Apple TV and the server could read the sign-in. Use an https:// address if you can.")
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 1100)
+            }
+            Button("Continue") {
+                PlexHostTrust.trust(app.serverURL)
+                confirmed = true
+            }
+        }
+        .padding(80)
+    }
+
+    private var link: some View {
         VStack(spacing: 60) {
             Text("Sign in with Plex")
                 .font(.largeTitle).bold()
@@ -375,10 +411,11 @@ struct PlexSignInView: View {
             Button("Get a New Code") { attempt += 1 }
                 .disabled(signingIn)
         }
-        .task(id: attempt) { await runFlow() }
+        .task(id: FlowKey(attempt: attempt, confirmed: confirmed)) { await runFlow() }
     }
 
     private func runFlow() async {
+        guard confirmed else { return }
         error = nil
         pin = nil
         do {
@@ -404,6 +441,38 @@ struct PlexSignInView: View {
             pin = nil
             self.error = AppState.friendly(error)
         }
+    }
+}
+
+/// Which Seerr addresses the user has agreed to send a Plex sign-in to.
+enum PlexHostTrust {
+    private static let key = "trustedPlexHosts"
+
+    static func label(for url: URL?) -> String {
+        guard let url, let host = url.host else { return "this server" }
+        return (url.scheme ?? "http") + "://" + host + (url.port.map { ":\($0)" } ?? "")
+    }
+
+    static func isTrusted(_ url: URL?) -> Bool {
+        (UserDefaults.standard.stringArray(forKey: key) ?? []).contains(label(for: url))
+    }
+
+    static func trust(_ url: URL?) {
+        var all = UserDefaults.standard.stringArray(forKey: key) ?? []
+        if !all.contains(label(for: url)) { all.append(label(for: url)) }
+        UserDefaults.standard.set(all, forKey: key)
+    }
+
+    /// An http:// address that isn't a home-network one (a private IP address, localhost or a .local name).
+    static func isUnencryptedRemote(_ url: URL?) -> Bool {
+        guard let url, url.scheme == "http", let host = url.host?.lowercased() else { return false }
+        if host == "localhost" || host.hasSuffix(".local") || host.hasSuffix(".lan") || host.hasSuffix(".home") { return false }
+        let parts = host.split(separator: ".").compactMap { Int($0) }
+        if parts.count == 4 {
+            return !(parts[0] == 10 || parts[0] == 127 || (parts[0] == 192 && parts[1] == 168)
+                     || (parts[0] == 172 && (16...31).contains(parts[1])) || (parts[0] == 169 && parts[1] == 254))
+        }
+        return host.contains(".")   // a bare name (no dots) is a home-network one
     }
 }
 

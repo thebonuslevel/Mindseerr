@@ -76,17 +76,33 @@ final class AppState {
         #if DEBUG
         if DemoMode.seerrURL != nil { return } // never touch the real saved server or sign-in in demo mode
         #endif
-        guard let url = Self.normalize(input) else {
+        let candidates = Self.candidates(for: input)
+        guard !candidates.isEmpty else {
             throw APIError(status: 0, message: "That doesn't look like a valid address.")
         }
-        let probe = SeerrClient(baseURL: url, sessionCookie: nil, credentials: nil)
-        let status: ServerStatus
-        do {
-            status = try await probe.status()
-        } catch let error as APIError {
-            throw APIError(status: error.status,
-                           message: "That address responded, but it doesn't look like a Seerr server.")
+        // Without http:// or https:// typed, try HTTPS first and fall back to HTTP. The checks are short, so a
+        // server that only answers on one of them doesn't leave the user waiting.
+        var found: (url: URL, status: ServerStatus, probe: SeerrClient)?
+        var failure: Error?
+        for candidate in candidates {
+            let probe = SeerrClient(baseURL: candidate, sessionCookie: nil, credentials: nil,
+                                    timeout: candidates.count > 1 ? 6 : 20)
+            do {
+                found = (candidate, try await probe.status(), probe)
+                break
+            } catch {
+                // A server that answered but isn't Seerr is a better thing to report than one that didn't answer.
+                if failure == nil || (error as? APIError) != nil { failure = error }
+            }
         }
+        guard let found else {
+            if let api = failure as? APIError {
+                throw APIError(status: api.status, message: api.status >= 300 && api.status < 400
+                               ? api.message : "That address responded, but it doesn't look like a Seerr server.")
+            }
+            throw failure ?? APIError(status: 0, message: "Couldn't reach that address.")
+        }
+        let url = found.url, status = found.status, probe = found.probe
         serverVersion = status.version
         serverKind = MediaServerKind(code: (try? await probe.publicSettings())?.mediaServerType)
         serverURL = url
@@ -180,6 +196,15 @@ final class AppState {
         default:
             return error
         }
+    }
+
+    /// The addresses to try for what was typed: just that one when it starts with http:// or https://, otherwise
+    /// HTTPS first and then HTTP.
+    static func candidates(for input: String) -> [URL] {
+        let text = input.trimmed
+        let lower = text.lowercased()
+        if lower.hasPrefix("http://") || lower.hasPrefix("https://") { return normalize(text).map { [$0] } ?? [] }
+        return ["https://", "http://"].compactMap { normalize($0 + text) }
     }
 
     static func normalize(_ input: String) -> URL? {

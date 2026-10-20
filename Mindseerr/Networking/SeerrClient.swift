@@ -34,6 +34,24 @@ enum DiscoverSection: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// Follows a redirect only when it stays on the same server (or upgrades it from http to https). The session cookie
+/// and API key are added to each request by hand, and URLSession would carry them along to wherever a redirect
+/// pointed, so anything else is refused.
+final class SameOriginRedirects: NSObject, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        guard let from = task.originalRequest?.url, let to = request.url,
+              from.host?.lowercased() == to.host?.lowercased() else { return completionHandler(nil) }
+        let upgrade = from.scheme == "http" && to.scheme == "https"
+        let sameOrigin = from.scheme == to.scheme && effectivePort(from) == effectivePort(to)
+        completionHandler(sameOrigin || upgrade ? request : nil)
+    }
+
+    private func effectivePort(_ url: URL) -> Int? {
+        url.port ?? (url.scheme == "https" ? 443 : url.scheme == "http" ? 80 : nil)
+    }
+}
+
 /// Talks to the Seerr REST API (`/api/v1`).
 ///
 /// Seerr authenticates with an express session cookie (`connect.sid`). The cookie is managed by hand
@@ -55,6 +73,7 @@ actor SeerrClient {
         baseURL: URL,
         sessionCookie: String?,
         credentials: Credentials?,
+        timeout: TimeInterval = 20,
         onSessionChange: @escaping @Sendable (String?) -> Void = { _ in }
     ) {
         self.baseURL = baseURL
@@ -67,8 +86,8 @@ actor SeerrClient {
         config.httpCookieStorage = nil
         config.httpShouldSetCookies = false
         config.httpCookieAcceptPolicy = .never
-        config.timeoutIntervalForRequest = 20
-        self.session = URLSession(configuration: config)
+        config.timeoutIntervalForRequest = timeout
+        self.session = URLSession(configuration: config, delegate: SameOriginRedirects(), delegateQueue: nil)
     }
 
     // MARK: - Endpoints
@@ -358,6 +377,10 @@ actor SeerrClient {
                                      authenticated: authenticated, allowReauth: false)
         }
 
+        if (300..<400).contains(http.statusCode) {
+            throw APIError(status: http.statusCode,
+                           message: "The server redirected to a different address. Enter the address it redirects to instead.")
+        }
         guard (200..<300).contains(http.statusCode) else {
             let fallback = HTTPURLResponse.localizedString(forStatusCode: http.statusCode).capitalized
             throw APIError(status: http.statusCode, message: Self.message(from: data) ?? fallback)
