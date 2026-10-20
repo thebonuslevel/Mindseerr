@@ -35,13 +35,14 @@ struct PersonView: View {
                                            description: Text("There's nothing else listed for \(person.name)."))
                         .frame(maxWidth: .infinity)
                 } else {
-                    // The title is the control: selecting it flips between best rated and newest.
+                    // The heading is the control, as on the genre pages: selecting it changes the order.
                     Button { newestFirst.toggle() } label: {
                         HStack(spacing: 16) {
-                            Text(newestFirst ? "Newest First" : "Best Rated First")
-                                .font(.title3).fontWeight(.semibold)
+                            Text("Other Work").font(.title3).fontWeight(.semibold)
+                            Text("·").foregroundStyle(.secondary)
+                            Text(newestFirst ? "Newest" : "Best Rated").font(.title3).foregroundStyle(.secondary)
                             if sortFocused {
-                                Label(newestFirst ? "Show best rated" : "Show newest", systemImage: "arrow.up.arrow.down")
+                                Label("Change order", systemImage: "arrow.up.arrow.down")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
