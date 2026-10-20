@@ -144,6 +144,14 @@ actor SeerrClient {
         try await send(type == .tv ? "discover/genreslider/tv" : "discover/genreslider/movie")
     }
 
+    /// The logo of a studio or network (a TMDB image path), or nil when Seerr has none or doesn't offer the lookup.
+    func companyLogo(for target: BrowseTarget) async -> String? {
+        struct Company: Decodable { let logoPath: String? }
+        let path = target.filter == .network ? "network/\(target.id)" : "studio/\(target.id)"
+        let company: Company? = try? await send(path)
+        return company?.logoPath
+    }
+
     /// One page of the titles in a genre, studio or network, in the chosen order. Newest leaves out what isn't out
     /// yet, and Top Rated what hardly anyone has rated, so neither starts with noise.
     func browse(_ target: BrowseTarget, sort: BrowseSort, page: Int) async throws -> PagedResponse<MediaResult> {

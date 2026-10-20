@@ -383,6 +383,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"movie": {"days": 7, "limit": 5, "used": 3, "remaining": 2, "restricted": False},
                                    "tv": {"days": 7, "limit": 2, "used": 2, "remaining": 0, "restricted": True}})
         if p == "/auth/me": return self.send_json(user(int(os.environ.get("DEMO_USER", 1))))
+        if p.startswith("/studio/") or p.startswith("/network/"):
+            return self.send_json({"id": int(p.split("/")[2]), "name": "Demo", "logoPath": f"/logo{p.split('/')[2]}.png"})
         if p in ("/discover/genreslider/movie", "/discover/genreslider/tv"):
             kind = "movie" if p.endswith("movie") else "tv"
             names = sorted({g for t in CATALOG["titles"] if t["type"] == kind for g in t["genres"]})

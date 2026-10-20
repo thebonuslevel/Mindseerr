@@ -64,6 +64,7 @@ enum TMDBImage {
         case posterLarge = "w500"
         case backdrop = "w1280"
         case profile = "w185"
+        case logo = "w300"
     }
 
     static func url(_ path: String?, size: Size) -> URL? {

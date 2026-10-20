@@ -23,6 +23,8 @@ struct BrowseListView: View {
     @Environment(AppState.self) private var app
     let kind: BrowseKind
     @State private var targets: [BrowseTarget] = []
+    /// TMDB logo paths for studios and networks, by id, as they arrive.
+    @State private var logos: [Int: String] = [:]
     @State private var loading = true
     @State private var error: String?
 
@@ -41,10 +43,15 @@ struct BrowseListView: View {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 30) {
                         ForEach(targets, id: \.self) { target in
                             NavigationLink(value: target) {
-                                Text(target.name)
-                                    .lineLimit(1)
-                                    .frame(maxWidth: .infinity)
+                                if target.filter == .genre {
+                                    Text(target.name)
+                                        .lineLimit(1)
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    CompanyTile(name: target.name, logoPath: logos[target.id])
+                                }
                             }
+                            .accessibilityLabel(target.name)
                         }
                     }
                     .focusSection()
@@ -75,6 +82,41 @@ struct BrowseListView: View {
             }
         }
         loading = false
+        // Studios and networks show their logos, which Seerr hands over one company at a time.
+        if kind == .studios || kind == .networks {
+            let api = app.api
+            let found = await boundedMap(targets, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
+            for (id, path) in found { if let path { logos[id] = path } }
+        }
+    }
+}
+
+/// A studio or network as its logo in white (dark while focused, so it shows on the highlight), or its name until
+/// the logo arrives or if there isn't one.
+private struct CompanyTile: View {
+    @Environment(\.isFocused) private var focused
+    let name: String
+    let logoPath: String?
+
+    var body: some View {
+        Group {
+            if let url = TMDBImage.url(logoPath, size: .logo) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image {
+                        // Whatever colours the logo has, every visible pixel becomes white (or black when focused).
+                        image.resizable().scaledToFit()
+                            .saturation(0)
+                            .brightness(focused ? -1 : 1)
+                    } else {
+                        Text(name).lineLimit(1).opacity(phase.error == nil ? 0 : 1)
+                    }
+                }
+            } else {
+                Text(name).lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 64)
     }
 }
 
