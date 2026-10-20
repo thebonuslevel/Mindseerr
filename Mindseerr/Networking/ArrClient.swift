@@ -300,13 +300,14 @@ enum ArrClient {
 
     // MARK: Plumbing
 
-    /// Takes a download out of the queue and deletes it from the download client too, without
-    /// blocklisting the release. The Seerr request is left alone.
-    static func cancel(_ download: ArrDownload, on service: ArrService) async throws {
+    /// Takes a download out of the queue and deletes it from the download client too. With `blocklist`, the release
+    /// is also added to the blocklist so Sonarr/Radarr won't grab it again and looks for another. The Seerr request
+    /// is left alone.
+    static func cancel(_ download: ArrDownload, on service: ArrService, blocklist: Bool = false) async throws {
         struct Body: Encodable { let ids: [Int] }
         _ = try await send("queue/bulk", method: "DELETE", from: service, query: [
             .init(name: "removeFromClient", value: "true"),
-            .init(name: "blocklist", value: "false"),
+            .init(name: "blocklist", value: blocklist ? "true" : "false"),
         ], body: try JSONEncoder().encode(Body(ids: download.queueIds)))
     }
 

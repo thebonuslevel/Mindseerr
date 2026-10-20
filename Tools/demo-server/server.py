@@ -305,6 +305,7 @@ class Handler(BaseHTTPRequestHandler):
         # Taking a download out of a Sonarr/Radarr queue (what Cancel does).
         for service in ("sonarr", "radarr"):
             if p == f"/{service}/api/v3/queue/bulk" and self.command == "DELETE":
+                print("queue/bulk", self.path, flush=True)  # shows removeFromClient and blocklist
                 ids = set(json.loads(body or "{}").get("ids", []))
                 for record in queue(service)["records"]:
                     if record["id"] in ids:

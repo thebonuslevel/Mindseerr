@@ -161,20 +161,25 @@ private struct ActivityRequestRow: View {
             if let route = request.route { detail = try? await app.api.detail(for: route) }
         }
         .confirmationDialog("Cancel this download?", isPresented: $confirmCancel, titleVisibility: .visible) {
-            Button("Cancel Download", role: .destructive) {
-                let items = downloads
-                Task {
-                    do { try await app.downloads.cancel(items) } catch { notice = AppState.friendly(error) }
-                }
+            Button("Cancel Download", role: .destructive) { cancelDownloads(blocklist: false) }
+            if app.downloads.canBlocklist(downloads) {
+                Button("Cancel and Blocklist", role: .destructive) { cancelDownloads(blocklist: true) }
             }
             Button("Keep Downloading", role: .cancel) {}
         } message: {
-            Text("This removes \(detail?.displayTitle ?? "this title") from the download queue and deletes the partial download from your download client. The request stays in Seerr.")
+            Text("This removes \(detail?.displayTitle ?? "this title") from the download queue and deletes the partial download from your download client. The request stays in Seerr.\(app.downloads.canBlocklist(downloads) ? " Blocklisting also stops Sonarr or Radarr from grabbing this same release again, so it looks for another." : "")")
         }
         .alert("Download", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(notice ?? "")
+        }
+    }
+
+    private func cancelDownloads(blocklist: Bool) {
+        let items = downloads
+        Task {
+            do { try await app.downloads.cancel(items, blocklist: blocklist) } catch { notice = AppState.friendly(error) }
         }
     }
 

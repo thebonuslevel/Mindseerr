@@ -134,8 +134,16 @@ final class DownloadMonitor {
         try await togglePause([download])
     }
 
+    /// Whether any of these downloads is in a Sonarr/Radarr queue, the only place a release can be blocklisted.
+    func canBlocklist(_ downloads: [ArrDownload]) -> Bool {
+        downloads.contains { download in
+            services.first(where: { $0.id == download.serviceID }).map { !$0.kind.isDownloadClient } ?? false
+        }
+    }
+
     /// Cancels downloads: removes them from the Sonarr/Radarr queue and deletes them from the download client.
-    func cancel(_ downloads: [ArrDownload]) async throws {
+    /// With `blocklist`, releases in a Sonarr/Radarr queue are also blocklisted (a torrent client has no blocklist).
+    func cancel(_ downloads: [ArrDownload], blocklist: Bool = false) async throws {
         userRemoved.formUnion(downloads.map(\.id))
         for download in downloads {
             guard let service = services.first(where: { $0.id == download.serviceID }) else { continue }
@@ -143,14 +151,14 @@ final class DownloadMonitor {
                 // A download read straight from a torrent client has no queue entry: remove the torrent itself.
                 if let hash = download.downloadId, let client = torrentClients[service.id] { try await client.delete(hash: hash) }
             } else {
-                try await ArrClient.cancel(download, on: service)
+                try await ArrClient.cancel(download, on: service, blocklist: blocklist)
             }
         }
         await refresh()
     }
 
-    func cancel(_ download: ArrDownload) async throws {
-        try await cancel([download])
+    func cancel(_ download: ArrDownload, blocklist: Bool = false) async throws {
+        try await cancel([download], blocklist: blocklist)
     }
 
     // MARK: Polling

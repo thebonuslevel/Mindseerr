@@ -118,9 +118,12 @@ struct AdminView: View {
                             titleVisibility: .visible,
                             presenting: downloadToCancel) { download in
             Button("Cancel Download", role: .destructive) { cancel(download) }
+            if monitor.canBlocklist([download]) {
+                Button("Cancel and Blocklist", role: .destructive) { cancel(download, blocklist: true) }
+            }
             Button("Keep Downloading", role: .cancel) {}
         } message: { download in
-            Text("This removes \(download.title) from \(download.serviceName)'s queue and deletes the partial download from your download client. The request stays in Seerr.")
+            Text("This removes \(download.title) from \(download.serviceName)'s queue and deletes the partial download from your download client. The request stays in Seerr.\(monitor.canBlocklist([download]) ? " Blocklisting also stops \(download.serviceName) from grabbing this same release again, so it looks for another." : "")")
         }
         .confirmationDialog(approveAllTitle, isPresented: $confirmApproveAll, titleVisibility: .visible) {
             Button("Approve All") { approveAll() }
@@ -134,9 +137,9 @@ struct AdminView: View {
         }
     }
 
-    private func cancel(_ download: ArrDownload) {
+    private func cancel(_ download: ArrDownload, blocklist: Bool = false) {
         Task {
-            do { try await monitor.cancel(download) } catch { notice = AppState.friendly(error) }
+            do { try await monitor.cancel(download, blocklist: blocklist) } catch { notice = AppState.friendly(error) }
         }
     }
 
