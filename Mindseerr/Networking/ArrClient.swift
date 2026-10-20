@@ -285,6 +285,45 @@ enum ArrClient {
         }
     }
 
+    /// The downloads Seerr reports for its processing requests: what Sonarr and Radarr are fetching, read through
+    /// Seerr so an Apple TV with no download service of its own can still show progress. Read-only.
+    static func downloads(fromSeerr requests: [MediaRequest]) -> [ArrDownload] {
+        var seen = Set<String>()
+        var result: [ArrDownload] = []
+        for request in requests {
+            guard let media = request.media, let type = media.mediaType, type == .movie || type == .tv else { continue }
+            for item in (media.downloadStatus ?? []) + (media.downloadStatus4k ?? []) {
+                let episode = item.seasonNumber.map { season in
+                    item.episodeNumber.map { "Season \(season), Episode \($0)" } ?? "Season \(season)"
+                }
+                let id = "seerr-\(type.rawValue)-\(media.tmdbId ?? media.id)-\(item.externalId ?? 0)-\(episode ?? "")"
+                guard seen.insert(id).inserted else { continue }
+                let size = item.size ?? 0
+                let progress = size > 0 ? min(max((size - (item.sizeLeft ?? size)) / size, 0), 1) : 0
+                result.append(ArrDownload(
+                    id: id, serviceID: DownloadMonitor.seerrServiceID, serviceName: "Seerr",
+                    kind: type == .tv ? .sonarr : .radarr, downloadId: nil, queueIds: [],
+                    title: item.title ?? "Download", episodeLabel: type == .tv ? episode : nil,
+                    tmdbId: media.tmdbId, tvdbId: media.tvdbId, progress: progress,
+                    secondsLeft: item.timeLeft.flatMap(parseTimeLeft), phase: seerrPhase(item.status), message: nil))
+            }
+        }
+        return result
+    }
+
+    private static func seerrPhase(_ status: String?) -> ArrDownload.Phase {
+        switch status?.lowercased() ?? "" {
+        case "downloading", "": return .downloading
+        case "queued": return .queued
+        case "paused": return .paused
+        case "delay": return .delayed
+        case "completed": return .importing
+        case "warning": return .warning
+        case "failed": return .failed
+        case let other: return .other(other)
+        }
+    }
+
     /// Arr reports time left as "HH:MM:SS" or "D.HH:MM:SS".
     static func parseTimeLeft(_ text: String) -> Int? {
         var days = 0

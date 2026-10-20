@@ -39,6 +39,9 @@ SERVICES = {
 }
 PROFILES = [{"id": 1, "name": "Any"}, {"id": 3, "name": "HD-720p"}, {"id": 4, "name": "HD-1080p"}, {"id": 5, "name": "Ultra-HD"}]
 
+# Names handed out as cast and crew, so a person's own page says the same name (their ids aren't tied to the list order).
+PERSON_NAMES = {}
+
 def credits(t):
     n = t["id"] % len(PEOPLE)
     order = PEOPLE[n:] + PEOPLE[:n]
@@ -48,16 +51,32 @@ def credits(t):
             {"id": 201 + n, "name": order[9], "job": "Screenplay", "department": "Writing", "profilePath": None},
             {"id": 202 + n, "name": order[10], "job": "Producer", "department": "Production", "profilePath": None},
             {"id": 203 + n, "name": order[11], "job": "Original Music Composer", "department": "Sound", "profilePath": None}]
+    for member in cast + crew:
+        PERSON_NAMES[member["id"]] = member["name"]
     return {"cast": cast, "crew": crew}
 
 def user(uid):
     return {"id": uid, "displayName": USERS[uid], "permissions": 2 if uid == 1 else 32}
 
+def download_status(t):
+    """What Seerr reports for a title Sonarr or Radarr is downloading (media.downloadStatus), the way Seerr shapes it."""
+    d = t.get("download")
+    if not d or t["id"] in CANCELLED or d["service"] not in ("sonarr", "radarr"):
+        return None
+    size = 4.2e9 if d["service"] == "radarr" else 1.1e9
+    status = "paused" if f"dl{t['id']}" in PAUSED else ("downloading" if d["status"] == "paused" else d["status"])
+    base = {"externalId": t["id"], "mediaType": t["type"], "size": size, "sizeLeft": size * (1 - d["progress"]),
+            "status": status, "timeLeft": d.get("timeleft") or "00:00:00", "title": f"{t['title']}.{t['year']}.2160p.WEB-DL"}
+    if t["type"] == "movie":
+        return [base]
+    return [{**base, "externalId": t["id"] * 100 + i, "episode": {"seasonNumber": sn, "episodeNumber": ep}}
+            for i, (sn, ep) in enumerate(d["episodes"])]
+
 def media_info(t):
     status = MEDIA_STATUS.get(t.get("status"))
     if status is None:
         return None
-    info = {"id": t["id"], "tmdbId": t["id"], "tvdbId": t.get("tvdb"), "status": status}
+    info = {"id": t["id"], "tmdbId": t["id"], "tvdbId": t.get("tvdb"), "status": status, "downloadStatus": download_status(t) or []}
     if t["type"] == "tv":
         if t["status"] == "available":
             info["seasons"] = [{"seasonNumber": n, "status": 5} for n in range(1, len(t["seasons"]) + 1)]
@@ -98,7 +117,7 @@ def requests():
             "id": i + 1, "status": status, "is4k": False,
             "createdAt": f"2026-10-{16 - i % 14:02d}T18:00:00.000Z",
             "media": {"id": t["id"], "tmdbId": t["id"], "tvdbId": t.get("tvdb"), "mediaType": t["type"],
-                      "status": MEDIA_STATUS.get(t["status"], 1)},
+                      "status": MEDIA_STATUS.get(t["status"], 1), "downloadStatus": download_status(t) or []},
             "seasons": [{"id": i * 10 + n, "seasonNumber": n, "status": status} for n in t.get("requestSeasons", [])],
             "requestedBy": user(t["requestedBy"]),
         })
@@ -412,7 +431,7 @@ class Handler(BaseHTTPRequestHandler):
                 mine = [TITLES[ids[(pid * 3 + i * 5) % len(ids)]] for i in range(9)]
                 mine = list({t["id"]: t for t in mine}.values())
                 return self.send_json({"cast": [result(t) for t in mine[:6]], "crew": [result(t) for t in mine[4:]]})
-            name = PEOPLE[pid % len(PEOPLE)]
+            name = PERSON_NAMES.get(pid) or PEOPLE[pid % len(PEOPLE)]
             return self.send_json({"id": pid, "name": name, "knownForDepartment": "Acting", "birthday": "1980-04-02",
                                    "placeOfBirth": "Portland, Oregon, USA",
                                    "biography": f"{name} is an invented performer from the demo catalog, known for atmospheric dramas and a quiet, "

@@ -59,6 +59,40 @@ struct RequestMedia: Decodable, Sendable {
     let tvdbId: Int?
     let mediaType: MediaType?
     let status: MediaStatus?
+    /// What Seerr itself sees Sonarr or Radarr downloading for this title, for every user (standard and 4K copies).
+    let downloadStatus: [SeerrDownloadItem]?
+    let downloadStatus4k: [SeerrDownloadItem]?
+}
+
+/// One download as Seerr reports it on a title. Every field is optional and read leniently, so an oddly shaped
+/// entry from a different Seerr version can't stop a request from loading.
+struct SeerrDownloadItem: Decodable, Sendable {
+    let externalId: Int?
+    let title: String?
+    /// Sonarr's or Radarr's queue status: "downloading", "paused", "queued", "completed"...
+    let status: String?
+    let size: Double?
+    let sizeLeft: Double?
+    /// "HH:MM:SS".
+    let timeLeft: String?
+    let seasonNumber: Int?
+    let episodeNumber: Int?
+
+    private enum Keys: String, CodingKey { case externalId, title, status, size, sizeLeft, timeLeft, episode }
+    private enum EpisodeKeys: String, CodingKey { case seasonNumber, episodeNumber }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        externalId = try? c.decodeIfPresent(Int.self, forKey: .externalId)
+        title = try? c.decodeIfPresent(String.self, forKey: .title)
+        status = try? c.decodeIfPresent(String.self, forKey: .status)
+        size = try? c.decodeIfPresent(Double.self, forKey: .size)
+        sizeLeft = try? c.decodeIfPresent(Double.self, forKey: .sizeLeft)
+        timeLeft = try? c.decodeIfPresent(String.self, forKey: .timeLeft)
+        let episode = try? c.nestedContainer(keyedBy: EpisodeKeys.self, forKey: .episode)
+        seasonNumber = (try? episode?.decodeIfPresent(Int.self, forKey: .seasonNumber)) ?? nil
+        episodeNumber = (try? episode?.decodeIfPresent(Int.self, forKey: .episodeNumber)) ?? nil
+    }
 }
 
 struct RequestSeason: Decodable, Sendable {

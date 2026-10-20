@@ -360,10 +360,12 @@ struct DownloadControlButtons: View {
                 }
                 .accessibilityLabel(paused ? "Resume download" : "Pause download")
             }
-            Button(action: onCancel) {
-                Image(systemName: "slash.circle")
+            if app.downloads.canCancel(downloads) {
+                Button(action: onCancel) {
+                    Image(systemName: "slash.circle")
+                }
+                .accessibilityLabel("Cancel download")
             }
-            .accessibilityLabel("Cancel download")
         }
         .fixedSize()
         .alert("Download", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {

@@ -53,6 +53,11 @@ final class DownloadMonitor {
 
     private let refreshInterval: Duration = .seconds(10)
 
+    /// Stands in for Seerr in the downloads it reports itself (see `ArrClient.downloads(fromSeerr:)`).
+    nonisolated static let seerrServiceID = UUID(uuidString: "5EE22000-0000-4000-8000-000000000001")!
+    /// Whether this download came through Seerr, which can show it but not control it.
+    func isFromSeerr(_ download: ArrDownload) -> Bool { download.serviceID == Self.seerrServiceID }
+
     // MARK: Services
 
     private static func initialServices() -> [ArrService] {
@@ -134,6 +139,11 @@ final class DownloadMonitor {
         try await togglePause([download])
     }
 
+    /// Whether any of these downloads can be cancelled from here: it's in a service this Apple TV is connected to.
+    func canCancel(_ downloads: [ArrDownload]) -> Bool {
+        downloads.contains { download in services.contains { $0.id == download.serviceID } }
+    }
+
     /// Whether any of these downloads is in a Sonarr/Radarr queue, the only place a release can be blocklisted.
     func canBlocklist(_ downloads: [ArrDownload]) -> Bool {
         downloads.contains { download in
@@ -170,12 +180,6 @@ final class DownloadMonitor {
     func run(api: SeerrClient? = nil) async {
         seerr = api
         loaded = false
-        guard !services.isEmpty else {
-            downloads = []
-            errors = [:]
-            torrentOwners = [:]
-            return
-        }
         while !Task.isCancelled {
             await refresh()
             try? await Task.sleep(for: refreshInterval)
@@ -219,7 +223,22 @@ final class DownloadMonitor {
         await identify(extra.map(\.torrent))
         fresh += extra.map { makeDownload($0.torrent, on: $0.service) }
 
-        let unreachable = Set(failures.keys).union(torrentFailures.keys)
+        // Whatever Seerr reports for titles no connected service covers, so everyone sees progress.
+        var seerrReachable = true
+        if let seerr {
+            do {
+                let page = try await seerr.allRequests(filter: .processing, skip: 0, take: 100)
+                let feed = ArrClient.downloads(fromSeerr: page.results)
+                fresh += feed.filter { item in
+                    !fresh.contains { $0.matches(type: item.mediaType, tmdbId: item.tmdbId, tvdbId: item.tvdbId) }
+                }
+            } catch {
+                seerrReachable = false
+            }
+        }
+
+        var unreachable = Set(failures.keys).union(torrentFailures.keys)
+        if !seerrReachable { unreachable.insert(Self.seerrServiceID) }
         // What was last seen: in memory while the app has been running, or what was saved when it was last open.
         // The latter is how a download that finished while the app was closed gets announced on reopening.
         let previous = loaded ? downloads.map(SavedDownload.init) : SavedDownload.load()
@@ -261,7 +280,7 @@ final class DownloadMonitor {
     /// A service that couldn't be read is skipped, so a network blip doesn't announce everything it held.
     private func announceFinished(old: [SavedDownload], new: [ArrDownload], unreachable: Set<UUID>) {
         let stillThere = Set(new.map(\.id))
-        let live = Set(services.map(\.id))
+        let live = Set(services.map(\.id)).union([Self.seerrServiceID])
         var announced: Set<String> = []
         var finished: [FinishedDownload] = []
         // A removed service's downloads vanish too, which isn't a finish.
