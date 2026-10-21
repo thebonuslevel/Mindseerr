@@ -6,6 +6,8 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case sonarr, radarr
     /// Download clients rather than *arr apps: Mindseerr reads their torrents, and can pause, resume and cancel them.
     case qbittorrent, deluge, transmission
+    /// A usenet client: its downloads are NZBs, matched to Sonarr and Radarr by the NZB's ID.
+    case sabnzbd
 
     var id: String { rawValue }
 
@@ -16,6 +18,7 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
         case .qbittorrent: return "qBittorrent"
         case .deluge: return "Deluge"
         case .transmission: return "Transmission"
+        case .sabnzbd: return "SABnzbd"
         }
     }
 
@@ -23,13 +26,15 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
     var isDownloadClient: Bool {
         switch self {
         case .sonarr, .radarr: return false
-        case .qbittorrent, .deluge, .transmission: return true
+        case .qbittorrent, .deluge, .transmission, .sabnzbd: return true
         }
     }
 
     /// Sonarr and Radarr sign in with an API key; the torrent clients with a password (and a username, except Deluge).
     var usesUsername: Bool { self == .qbittorrent || self == .transmission }
     var requiresPassword: Bool { self == .qbittorrent || self == .deluge }
+    /// SABnzbd signs in with its API key, like Sonarr and Radarr.
+    var usesAPIKey: Bool { !isDownloadClient || self == .sabnzbd }
 
     /// The port as plain text for addresses. Interpolating the Int into SwiftUI text would format it
     /// like a number ("8,989").
@@ -42,6 +47,7 @@ enum ArrKind: String, Codable, CaseIterable, Identifiable, Sendable {
         case .qbittorrent: return 8080
         case .deluge: return 8112
         case .transmission: return 9091
+        case .sabnzbd: return 8080
         }
     }
 }
@@ -142,7 +148,7 @@ struct ArrDownload: Identifiable, Sendable {
         switch kind {
         case .radarr: return .movie
         case .sonarr: return .tv
-        case .qbittorrent, .deluge, .transmission: return resolvedType ?? .movie
+        case .qbittorrent, .deluge, .transmission, .sabnzbd: return resolvedType ?? .movie
         }
     }
 

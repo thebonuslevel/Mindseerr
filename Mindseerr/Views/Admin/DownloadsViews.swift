@@ -22,7 +22,7 @@ struct AddArrServiceView: View {
         VStack(alignment: .leading, spacing: 22) {
             Text("Add a Download Service")
                 .font(.largeTitle).bold()
-            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent, Deluge and Transmission work on their own, reading progress straight from the client, and alongside Sonarr and Radarr they add pause, resume and cancel.")
+            Text("Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent, Deluge, Transmission and SABnzbd work on their own, reading progress straight from the client, and alongside Sonarr and Radarr they add pause, resume and cancel.")
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: 1300, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)   // wrap onto as many lines as it needs
@@ -40,15 +40,15 @@ struct AddArrServiceView: View {
                 TextField("Address, like http://192.168.1.10:\(kind.defaultPortText)", text: $address)
                     .keyboardType(.URL)
                     .textContentType(.URL)
-                if kind.isDownloadClient {
+                if kind.usesAPIKey {
+                    TextField("API key", text: $apiKey)
+                        .textContentType(.password)
+                } else if kind.isDownloadClient {
                     if kind.usesUsername {
                         TextField(kind == .transmission ? "Username (if it has one)" : "Web UI username", text: $username)
                             .textContentType(.username)
                     }
                     SecureField(kind == .transmission ? "Password (if it has one)" : "Web UI password", text: $password)
-                } else {
-                    TextField("API key", text: $apiKey)
-                        .textContentType(.password)
                 }
             }
             .textInputAutocapitalization(.never)
@@ -91,7 +91,7 @@ struct AddArrServiceView: View {
 
     /// Sonarr and Radarr need an API key; qBittorrent and Deluge a password; Transmission only if it has one set.
     private var hasCredentials: Bool {
-        kind.isDownloadClient ? (!kind.requiresPassword || !password.isEmpty) : !apiKey.trimmed.isEmpty
+        kind.usesAPIKey ? !apiKey.trimmed.isEmpty : (!kind.requiresPassword || !password.isEmpty)
     }
 
     private var hint: String {
@@ -120,6 +120,12 @@ struct AddArrServiceView: View {
 
             Enter a username and password only if you turned RPC authentication on.
             """
+        case .sabnzbd:
+            return """
+            The API key is in SABnzbd under Config → General → Security. Use the full API key, not the NZB key.
+
+            Add the same SABnzbd that Sonarr and Radarr use, and its downloads are matched to their requests. Without them, its downloads are matched to titles by name.
+            """
         }
     }
 
@@ -131,9 +137,9 @@ struct AddArrServiceView: View {
         let service = ArrService(kind: kind,
                                  name: name.trimmed.isEmpty ? kind.name : name.trimmed,
                                  baseURL: url,
-                                 apiKey: kind.isDownloadClient ? "" : apiKey.trimmed,
+                                 apiKey: kind.usesAPIKey ? apiKey.trimmed : "",
                                  username: kind.usesUsername ? username.trimmed : nil,
-                                 password: kind.isDownloadClient ? password : nil)
+                                 password: kind.isDownloadClient && !kind.usesAPIKey ? password : nil)
         Task {
             checking = true
             error = nil

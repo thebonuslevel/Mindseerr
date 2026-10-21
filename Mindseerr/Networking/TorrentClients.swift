@@ -32,6 +32,7 @@ enum TorrentClients {
         switch service.kind {
         case .deluge: return DelugeClient(service: service)
         case .transmission: return TransmissionClient(service: service)
+        case .sabnzbd: return SABnzbdClient(service: service)
         default: return QBittorrentClient(service: service)
         }
     }

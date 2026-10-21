@@ -384,6 +384,34 @@
         }
       }
     },
+    "%@ rejected the API key. Copy it again from Config → General in SABnzbd." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ rechazó la clave de API. Vuelve a copiarla desde Config → General en SABnzbd."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a rejeté la clé API. Copiez-la à nouveau depuis Config → General dans SABnzbd."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ отклонил ключ API. Скопируйте его заново в SABnzbd: Config → General."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 拒绝了该 API 密钥。请在 SABnzbd 的 Config → General 中重新复制。"
+          }
+        }
+      }
+    },
     "%@ rejected the API key. Copy it again from Settings → General in %@." : {
       "localizations" : {
         "en" : {
@@ -2381,30 +2409,30 @@
         }
       }
     },
-    "Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent, Deluge and Transmission work on their own, reading progress straight from the client, and alongside Sonarr and Radarr they add pause, resume and cancel." : {
+    "Connect Sonarr and Radarr to see what's downloading for each Seerr request. qBittorrent, Deluge, Transmission and SABnzbd work on their own, reading progress straight from the client, and alongside Sonarr and Radarr they add pause, resume and cancel." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Conecta Sonarr y Radarr para ver qué se está descargando de cada solicitud de Seerr. qBittorrent, Deluge y Transmission funcionan por sí solos y leen el progreso directamente del cliente; junto con Sonarr y Radarr, añaden pausar, reanudar y cancelar."
+            "value" : "Conecta Sonarr y Radarr para ver qué se está descargando de cada solicitud de Seerr. qBittorrent, Deluge, Transmission y SABnzbd funcionan por sí solos y leen el progreso directamente del cliente; junto con Sonarr y Radarr, añaden pausar, reanudar y cancelar."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Connectez Sonarr et Radarr pour voir ce qui se télécharge pour chaque demande Seerr. qBittorrent, Deluge et Transmission fonctionnent seuls et lisent la progression directement depuis le client ; avec Sonarr et Radarr, ils ajoutent la mise en pause, la reprise et l’annulation."
+            "value" : "Connectez Sonarr et Radarr pour voir ce qui se télécharge pour chaque demande Seerr. qBittorrent, Deluge, Transmission et SABnzbd fonctionnent seuls et lisent la progression directement depuis le client ; avec Sonarr et Radarr, ils ajoutent la mise en pause, la reprise et l’annulation."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "Подключите Sonarr и Radarr, чтобы видеть, что загружается для каждого запроса в Seerr. qBittorrent, Deluge и Transmission работают самостоятельно и берут прогресс прямо из клиента, а вместе с Sonarr и Radarr добавляют паузу, возобновление и отмену."
+            "value" : "Подключите Sonarr и Radarr, чтобы видеть, что загружается для каждого запроса в Seerr. qBittorrent, Deluge, Transmission и SABnzbd работают самостоятельно и берут прогресс прямо из клиента, а вместе с Sonarr и Radarr добавляют паузу, возобновление и отмену."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "machine_translated",
-            "value" : "连接 Sonarr 和 Radarr，即可查看每个 Seerr 请求的下载情况。qBittorrent、Deluge 和 Transmission 可单独使用，直接从客户端读取进度；与 Sonarr 和 Radarr 搭配使用时，还可暂停、继续和取消下载。"
+            "value" : "连接 Sonarr 和 Radarr，即可查看每个 Seerr 请求的下载情况。qBittorrent、Deluge、Transmission 和 SABnzbd 可单独使用，直接从客户端读取进度；与 Sonarr 和 Radarr 搭配使用时，还可暂停、继续和取消下载。"
           }
         }
       }
