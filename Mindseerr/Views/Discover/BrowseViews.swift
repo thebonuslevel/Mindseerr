@@ -48,7 +48,7 @@ struct BrowseListView: View {
                                         .lineLimit(1)
                                         .frame(maxWidth: .infinity)
                                 } else {
-                                    CompanyTile(name: target.name, logoPath: logos[target.id])
+                                    CompanyTile(name: target.name, logoPath: logos[target.id], bundledLogo: KnownCompanies.bundledLogos[target.id])
                                 }
                             }
                             .accessibilityLabel(target.name)
@@ -97,10 +97,15 @@ private struct CompanyTile: View {
     @Environment(\.isFocused) private var focused
     let name: String
     let logoPath: String?
+    /// A logo shipped in the app, for one whose TMDB version doesn't whiten well.
+    var bundledLogo: String?
 
     var body: some View {
         Group {
-            if let url = TMDBImage.url(logoPath, size: .logo) {
+            if let bundledLogo {
+                Image(bundledLogo).resizable().scaledToFit()
+                    .brightness(focused ? -1 : 1)
+            } else if let url = TMDBImage.url(logoPath, size: .logo) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image {
                         // Whatever colours the logo has, every visible pixel becomes white (or black when focused).

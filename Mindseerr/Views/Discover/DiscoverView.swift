@@ -65,11 +65,11 @@ struct DiscoverView: View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 40) {
-                    if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
-                        SuggestionsRowView(model: app.suggestions)
-                    }
                     if !hidden.contains(DiscoverLayout.Entry.browse.rawValue) {
                         BrowseRowView()
+                    }
+                    if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
+                        SuggestionsRowView(model: app.suggestions)
                     }
                     ForEach(rows.filter { !hidden.contains($0.section.rawValue) }) { row in
                         MediaRowView(model: row)

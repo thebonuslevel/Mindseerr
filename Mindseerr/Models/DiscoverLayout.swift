@@ -7,7 +7,7 @@ enum DiscoverLayout {
 
     /// Everything Discover can show, in order: the personalised row first, then Seerr's sections.
     enum Entry: String, CaseIterable, Identifiable {
-        case suggested, browse, recentlyAdded, trending, popularMovies, upcomingMovies, popularTV, upcomingTV
+        case browse, suggested, recentlyAdded, trending, popularMovies, upcomingMovies, popularTV, upcomingTV
 
         var id: String { rawValue }
 
