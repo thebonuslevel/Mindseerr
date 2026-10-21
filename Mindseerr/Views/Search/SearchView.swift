@@ -13,10 +13,24 @@ struct SearchView: View {
     private enum TypeFilter: String, CaseIterable, Identifiable {
         case all = "All", movies = "Movies", series = "Series"
         var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .all: return String(localized: "All")
+            case .movies: return String(localized: "Movies")
+            case .series: return String(localized: "Series")
+            }
+        }
     }
 
     private enum ResultSort: String, CaseIterable {
         case bestMatch = "Best Match", topRated = "Top Rated", newest = "Newest"
+        var title: String {
+            switch self {
+            case .bestMatch: return String(localized: "Best Match")
+            case .topRated: return String(localized: "Top Rated")
+            case .newest: return String(localized: "Newest")
+            }
+        }
         var next: ResultSort { Self.allCases[(Self.allCases.firstIndex(of: self)! + 1) % Self.allCases.count] }
     }
 
@@ -97,18 +111,18 @@ struct SearchView: View {
             VStack(alignment: .leading, spacing: 30) {
                 HStack(spacing: 30) {
                     Picker("Show", selection: $typeFilter) {
-                        ForEach(TypeFilter.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(TypeFilter.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 700)
                     Button { sort = sort.next } label: {
-                        Label(sort.rawValue, systemImage: "arrow.up.arrow.down")
+                        Label(sort.title, systemImage: "arrow.up.arrow.down")
                     }
                 }
                 .focusSection()
 
                 if shown.isEmpty {
-                    ContentUnavailableView("No \(typeFilter.rawValue) Found", systemImage: "line.3.horizontal.decrease.circle",
+                    ContentUnavailableView("No \(typeFilter.title) Found", systemImage: "line.3.horizontal.decrease.circle",
                                            description: Text("Nothing in these results matches. Choose All to see everything."))
                         .frame(maxWidth: .infinity)
                 } else {

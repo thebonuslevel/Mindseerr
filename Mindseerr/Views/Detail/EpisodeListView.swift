@@ -86,7 +86,7 @@ struct EpisodeListView: View {
         UIApplication.shared.open(url, options: [:]) { opened in
             guard !opened else { return }
             Task { @MainActor in
-                notice = "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or turn the Play button off in Settings → External Player."
+                notice = String(localized: "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or turn the Play button off in Settings → External Player.")
             }
         }
     }

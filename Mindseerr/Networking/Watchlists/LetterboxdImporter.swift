@@ -40,7 +40,7 @@ enum LetterboxdImporter {
             guard let url = URL(string: "https://letterboxd.com/\(username)/watchlist/page/\(page)/") else { break }
             let (html, status) = try await WebPage.fetch(url)
             if status == 404 {
-                if page == 1 { throw APIError(status: 404, message: "There's no Letterboxd member called “\(username)”.") }
+                if page == 1 { throw APIError(status: 404, message: String(localized: "There's no Letterboxd member called “\(username)”.")) }
                 break
             }
             guard (200..<300).contains(status) else {
@@ -100,7 +100,7 @@ enum LetterboxdImporter {
 
     private static func resolveFilm(_ slug: String) async throws -> Film {
         guard let url = URL(string: "https://letterboxd.com/film/\(slug)/") else {
-            throw APIError(status: 0, message: "Bad film link.")
+            throw APIError(status: 0, message: String(localized: "Bad film link."))
         }
         let (html, status) = try await WebPage.fetch(url)
         guard (200..<300).contains(status) else { throw blocked(status) }

@@ -46,10 +46,10 @@ enum TorrentHTTP {
     }
 
     static func unreachable(_ service: ArrService) -> APIError {
-        APIError(status: 0, message: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port.")
+        APIError(status: 0, message: String(localized: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port."))
     }
 
     static func confused(_ service: ArrService) -> APIError {
-        APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a \(service.kind.name) server?")
+        APIError(status: 0, message: String(localized: "\(service.name) sent a response the app didn't understand. Is that a \(service.kind.name) server?"))
     }
 }

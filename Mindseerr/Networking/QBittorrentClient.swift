@@ -63,7 +63,7 @@ actor QBittorrentClient: TorrentClient {
     func torrents() async throws -> [TorrentInfo] {
         let data = try await call("torrents/info", method: "GET")
         guard let torrents = try? JSONDecoder().decode([QBitTorrent].self, from: data) else {
-            throw APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a qBittorrent server?")
+            throw APIError(status: 0, message: String(localized: "\(service.name) sent a response the app didn't understand. Is that a qBittorrent server?"))
         }
         return torrents.map {
             TorrentInfo(hash: $0.hash.lowercased(), name: $0.name, progress: $0.progress, phase: $0.phase,
@@ -108,7 +108,7 @@ actor QBittorrentClient: TorrentClient {
             throw failure(status: status)
         }
         if String(decoding: data, as: UTF8.self).contains("Fails") {
-            throw APIError(status: 401, message: "\(service.name) rejected the username or password.")
+            throw APIError(status: 401, message: String(localized: "\(service.name) rejected the username or password."))
         }
         signedIn = true
     }
@@ -140,18 +140,18 @@ actor QBittorrentClient: TorrentClient {
             let (data, response) = try await session.data(for: request)
             return (data, (response as? HTTPURLResponse)?.statusCode ?? 0)
         } catch let error as URLError where error.code != .cancelled {
-            throw APIError(status: 0, message: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port.")
+            throw APIError(status: 0, message: String(localized: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port."))
         }
     }
 
     private func failure(status: Int) -> APIError {
         switch status {
         case 401, 403:
-            return APIError(status: status, message: "\(service.name) refused the sign-in. Check the username and password, and that the Web UI is enabled in qBittorrent.")
+            return APIError(status: status, message: String(localized: "\(service.name) refused the sign-in. Check the username and password, and that the Web UI is enabled in qBittorrent."))
         case 404:
-            return APIError(status: status, message: "\(service.name) didn't recognize that address. Use the Web UI address, like http://192.168.1.10:8080.")
+            return APIError(status: status, message: String(localized: "\(service.name) didn't recognize that address. Use the Web UI address, like http://192.168.1.10:8080."))
         default:
-            return APIError(status: status, message: "\(service.name) returned error \(status).")
+            return APIError(status: status, message: String(localized: "\(service.name) returned error \(status)."))
         }
     }
 

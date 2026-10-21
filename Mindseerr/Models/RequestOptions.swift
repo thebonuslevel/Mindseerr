@@ -74,6 +74,6 @@ extension RequestServerDetails.RootFolder {
     var label: String {
         guard let freeSpace, freeSpace > 0 else { return path }
         let free = ByteCountFormatter.string(fromByteCount: Int64(freeSpace), countStyle: .file)
-        return "\(path)  ·  \(free) free"
+        return String(localized: "\(path)  ·  \(free) free")
     }
 }

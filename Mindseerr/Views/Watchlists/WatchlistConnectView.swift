@@ -268,17 +268,17 @@ struct TraktSignInView: View {
                 case .slowDown:
                     interval += 1
                 case .expired:
-                    error = "That code expired. Get a new one to try again."
+                    error = String(localized: "That code expired. Get a new one to try again.")
                     return
                 case .denied:
-                    error = "The sign-in was declined on Trakt."
+                    error = String(localized: "The sign-in was declined on Trakt.")
                     return
                 case .failed(let message):
                     error = message
                     return
                 }
             }
-            error = "That code expired. Get a new one to try again."
+            error = String(localized: "That code expired. Get a new one to try again.")
         } catch is CancellationError {
             // Sheet closed or a new code was requested.
         } catch {
@@ -365,7 +365,7 @@ struct TMDBSignInView: View {
                     return
                 }
             }
-            error = "That link expired. Get a new one to try again."
+            error = String(localized: "That link expired. Get a new one to try again.")
         } catch is CancellationError {
             // Sheet closed or a new link was requested.
         } catch {

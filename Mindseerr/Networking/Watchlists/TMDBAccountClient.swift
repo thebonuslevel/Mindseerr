@@ -83,7 +83,7 @@ actor TMDBAccountClient {
         let (data, status) = try await send("4/auth/request_token", method: "POST", bearer: appToken, body: [:])
         struct Response: Decodable { let requestToken: String? }
         guard status == 200, let token = (try? Self.decoder.decode(Response.self, from: data))?.requestToken else {
-            throw APIError(status: status, message: "TMDB didn't give a sign-in link (error \(status)). Check the API Read Access Token you entered.")
+            throw APIError(status: status, message: String(localized: "TMDB didn't give a sign-in link (error \(status)). Check the API Read Access Token you entered."))
         }
         return TMDBApproval(requestToken: token)
     }
@@ -139,7 +139,7 @@ actor TMDBAccountClient {
 
     /// Every page of one watchlist, newest additions first.
     private func pages(_ path: String, kind: MediaType) async throws -> [WatchlistEntry] {
-        guard let user else { throw APIError(status: 401, message: "Sign in to TMDB first.") }
+        guard let user else { throw APIError(status: 401, message: String(localized: "Sign in to TMDB first.")) }
         var entries: [WatchlistEntry] = []
         var page = 1
         var totalPages = 1
@@ -154,7 +154,7 @@ actor TMDBAccountClient {
                     : "TMDB returned an error (\(status)). Try again in a moment.")
             }
             guard let decoded = try? Self.decoder.decode(TMDBWatchlistPage.self, from: data) else {
-                throw APIError(status: 0, message: "TMDB sent a response the app didn't understand.")
+                throw APIError(status: 0, message: String(localized: "TMDB sent a response the app didn't understand."))
             }
             totalPages = decoded.totalPages
             for item in decoded.results {

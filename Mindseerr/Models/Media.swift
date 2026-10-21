@@ -332,9 +332,9 @@ enum SeasonState {
 
     var label: String? {
         switch self {
-        case .available: return "Available"
-        case .partiallyAvailable: return "Partially Available"
-        case .requested: return "Requested"
+        case .available: return String(localized: "Available")
+        case .partiallyAvailable: return String(localized: "Partially Available")
+        case .requested: return String(localized: "Requested")
         case .notRequested: return nil
         }
     }

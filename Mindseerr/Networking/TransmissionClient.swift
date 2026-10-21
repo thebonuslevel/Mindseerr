@@ -75,16 +75,16 @@ actor TransmissionClient: TorrentClient {
         }
         switch status {
         case 200: break
-        case 401: throw APIError(status: 401, message: "\(service.name) rejected the username or password.")
-        case 404: throw APIError(status: 404, message: "\(service.name) didn't recognize that address. Use Transmission's address, like http://192.168.1.10:9091.")
-        case 403: throw APIError(status: 403, message: "\(service.name) refused the request. Check its RPC whitelist in settings.json.")
-        default: throw APIError(status: status, message: "\(service.name) returned error \(status).")
+        case 401: throw APIError(status: 401, message: String(localized: "\(service.name) rejected the username or password."))
+        case 404: throw APIError(status: 404, message: String(localized: "\(service.name) didn't recognize that address. Use Transmission's address, like http://192.168.1.10:9091."))
+        case 403: throw APIError(status: 403, message: String(localized: "\(service.name) refused the request. Check its RPC whitelist in settings.json."))
+        default: throw APIError(status: status, message: String(localized: "\(service.name) returned error \(status)."))
         }
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw TorrentHTTP.confused(service)
         }
         if let result = object["result"] as? String, result != "success" {
-            throw APIError(status: 0, message: "\(service.name) said: \(result)")
+            throw APIError(status: 0, message: String(localized: "\(service.name) said: \(result)"))
         }
         return object["arguments"] as? [String: Any] ?? [:]
     }

@@ -145,7 +145,7 @@ struct AdminView: View {
 
     private var approveAllTitle: String {
         let n = counts?.pending ?? requests.count
-        return n == 1 ? "Approve 1 pending request?" : "Approve all \(n) pending requests?"
+        return n == 1 ? String(localized: "Approve 1 pending request?") : String(localized: "Approve all \(n) pending requests?")
     }
 
     // MARK: - Pieces
@@ -387,7 +387,7 @@ struct AdminView: View {
             approveAllProgress = nil
             let approved = ids.count - failed
             notice = failed == 0
-                ? (approved == 1 ? "Approved 1 request." : "Approved \(approved) requests.")
+                ? (approved == 1 ? String(localized: "Approved 1 request.") : String(localized: "Approved \(approved) requests."))
                 : "Approved \(approved) of \(ids.count). \(firstError ?? "")"
             await reload()
         }
@@ -476,7 +476,7 @@ struct AdminRequestRow: View {
                 parts.append("Series")
             } else {
                 let list = seasons.map(String.init).joined(separator: ", ")
-                parts.append(seasons.count == 1 ? "Season \(list)" : "Seasons \(list)")
+                parts.append(seasons.count == 1 ? String(localized: "Season \(list)") : String(localized: "Seasons \(list)"))
             }
         } else {
             parts.append("Movie")

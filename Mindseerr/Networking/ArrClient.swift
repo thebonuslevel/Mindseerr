@@ -98,13 +98,13 @@ struct ArrDownload: Identifiable, Sendable {
 
         var label: String {
             switch self {
-            case .downloading: return "Downloading"
-            case .queued: return "Queued"
-            case .paused: return "Paused"
-            case .importing: return "Importing"
-            case .delayed: return "Delayed"
-            case .warning: return "Needs attention"
-            case .failed: return "Failed"
+            case .downloading: return String(localized: "Downloading")
+            case .queued: return String(localized: "Queued")
+            case .paused: return String(localized: "Paused")
+            case .importing: return String(localized: "Importing")
+            case .delayed: return String(localized: "Delayed")
+            case .warning: return String(localized: "Needs attention")
+            case .failed: return String(localized: "Failed")
             case .other(let text): return text.prefix(1).uppercased() + text.dropFirst()
             }
         }
@@ -191,7 +191,7 @@ enum ArrClient {
     static func checkConnection(_ service: ArrService) async throws -> String {
         let status: SystemStatus = try await get("system/status", from: service)
         if let app = status.appName, app.lowercased() != service.kind.rawValue {
-            throw APIError(status: 0, message: "That address is a \(app) server, not \(service.kind.name).")
+            throw APIError(status: 0, message: String(localized: "That address is a \(app) server, not \(service.kind.name)."))
         }
         return status.version ?? "unknown version"
     }
@@ -356,7 +356,7 @@ enum ArrClient {
         do {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            throw APIError(status: 0, message: "\(service.name) sent a response the app didn't understand. Is that a \(service.kind.name) server?")
+            throw APIError(status: 0, message: String(localized: "\(service.name) sent a response the app didn't understand. Is that a \(service.kind.name) server?"))
         }
     }
 
@@ -381,14 +381,14 @@ enum ArrClient {
         do {
             (data, response) = try await session.data(for: request)
         } catch let error as URLError where error.code != .cancelled {
-            throw APIError(status: 0, message: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port.")
+            throw APIError(status: 0, message: String(localized: "Couldn't reach \(service.name) at \(service.baseURL.absoluteString). Check the address and port."))
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         switch status {
         case 200..<300: return data
-        case 401, 403: throw APIError(status: status, message: "\(service.name) rejected the API key. Copy it again from Settings → General in \(service.kind.name).")
-        case 404: throw APIError(status: status, message: "\(service.name) didn't recognize that address. If it uses a URL base (like /\(service.kind.rawValue)), include it.")
-        default: throw APIError(status: status, message: "\(service.name) returned error \(status).")
+        case 401, 403: throw APIError(status: status, message: String(localized: "\(service.name) rejected the API key. Copy it again from Settings → General in \(service.kind.name)."))
+        case 404: throw APIError(status: status, message: String(localized: "\(service.name) didn't recognize that address. If it uses a URL base (like /\(service.kind.rawValue)), include it."))
+        default: throw APIError(status: status, message: String(localized: "\(service.name) returned error \(status)."))
         }
     }
 

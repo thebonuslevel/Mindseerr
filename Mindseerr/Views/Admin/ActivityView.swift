@@ -215,7 +215,7 @@ private struct ActivityRequestRow: View {
                 parts.append("Series")
             } else {
                 let list = seasons.map(String.init).joined(separator: ", ")
-                parts.append(seasons.count == 1 ? "Season \(list)" : "Seasons \(list)")
+                parts.append(seasons.count == 1 ? String(localized: "Season \(list)") : String(localized: "Seasons \(list)"))
             }
         } else {
             parts.append("Movie")

@@ -125,7 +125,7 @@ struct AddArrServiceView: View {
 
     private func save() {
         guard let url = ArrService.normalizedURL(from: address) else {
-            error = "Enter the \(kind.name) server's address, like http://192.168.1.10:\(kind.defaultPortText)."
+            error = String(localized: "Enter the \(kind.name) server's address, like http://192.168.1.10:\(kind.defaultPortText).")
             return
         }
         let service = ArrService(kind: kind,
@@ -311,7 +311,7 @@ struct DownloadPhaseBadge: View {
     let phase: ArrDownload.Phase
 
     var body: some View {
-        Pill(text: phase.label, color: color)
+        Pill(text: LocalizedStringKey(phase.label), color: color)
     }
 
     private var color: Color {

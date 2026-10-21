@@ -47,7 +47,7 @@ enum PlexAuth {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw APIError(status: (response as? HTTPURLResponse)?.statusCode ?? 0,
-                           message: "Couldn't reach Plex. Try again in a moment.")
+                           message: String(localized: "Couldn't reach Plex. Try again in a moment."))
         }
         return try JSONDecoder().decode(PlexPin.self, from: data)
     }

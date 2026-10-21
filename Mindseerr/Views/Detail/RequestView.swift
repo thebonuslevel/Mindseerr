@@ -44,11 +44,11 @@ struct RequestView: View {
     private var open: [Int] { detail.requestableSeasonNumbers(is4k: is4k) }
     private var allSelected: Bool { !open.isEmpty && selected.count == open.count }
     private var server: RequestServer? { servers.first { $0.id == serverId } }
-    private var quality: String { is4k ? " in 4K" : "" }
+    private var quality: String { is4k ? String(localized: " in 4K", comment: "Appended to a request title: the 4K copy") : "" }
 
     private var requestTitle: String {
         guard type == .tv else { return "Request\(quality)" }
-        return (selected.count == 1 ? "Request 1 Season" : "Request \(selected.count) Seasons") + quality
+        return (selected.count == 1 ? String(localized: "Request 1 Season") : String(localized: "Request \(selected.count) Seasons")) + quality
     }
 
     var body: some View {
@@ -58,7 +58,7 @@ struct RequestView: View {
                     Text("Request \(detail.displayTitle)\(quality)")
                         .font(.title2).bold()
                     if type == .tv {
-                        Text("Choose the seasons to request. Seasons that are already requested or available\(is4k ? " in 4K" : "") are locked.")
+                        Text("Choose the seasons to request. Seasons that are already requested or available\(is4k ? String(localized: " in 4K", comment: "Appended to a request title: the 4K copy") : "") are locked.")
                             .foregroundStyle(.secondary)
                     }
                 }

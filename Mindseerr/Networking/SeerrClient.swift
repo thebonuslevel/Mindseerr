@@ -13,12 +13,12 @@ enum DiscoverSection: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .recentlyAdded: return "Recently Added"
-        case .trending: return "Trending"
-        case .popularMovies: return "Popular Movies"
-        case .upcomingMovies: return "Upcoming Movies"
-        case .popularTV: return "Popular Series"
-        case .upcomingTV: return "Upcoming Series"
+        case .recentlyAdded: return String(localized: "Recently Added")
+        case .trending: return String(localized: "Trending")
+        case .popularMovies: return String(localized: "Popular Movies")
+        case .upcomingMovies: return String(localized: "Upcoming Movies")
+        case .popularTV: return String(localized: "Popular Series")
+        case .upcomingTV: return String(localized: "Upcoming Series")
         }
     }
 
@@ -284,11 +284,11 @@ actor SeerrClient {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .pending: return "Pending"
-            case .processing: return "Processing"
-            case .failed: return "Failed"
-            case .available: return "Available"
-            case .all: return "All"
+            case .pending: return String(localized: "Pending")
+            case .processing: return String(localized: "Processing")
+            case .failed: return String(localized: "Failed")
+            case .available: return String(localized: "Available")
+            case .all: return String(localized: "All")
             }
         }
     }
@@ -362,7 +362,7 @@ actor SeerrClient {
             #if DEBUG
             print("Decoding \(T.self) from \(path) failed:", error)
             #endif
-            throw APIError(status: 0, message: "The server sent a response the app didn't understand.")
+            throw APIError(status: 0, message: String(localized: "The server sent a response the app didn't understand."))
         }
     }
 
@@ -399,7 +399,7 @@ actor SeerrClient {
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw APIError(status: 0, message: "No response from the server.")
+            throw APIError(status: 0, message: String(localized: "No response from the server."))
         }
         captureCookie(from: http)
 
@@ -412,7 +412,7 @@ actor SeerrClient {
 
         if (300..<400).contains(http.statusCode) {
             throw APIError(status: http.statusCode,
-                           message: "The server redirected to a different address. Enter the address it redirects to instead.")
+                           message: String(localized: "The server redirected to a different address. Enter the address it redirects to instead."))
         }
         guard (200..<300).contains(http.statusCode) else {
             let fallback = HTTPURLResponse.localizedString(forStatusCode: http.statusCode).capitalized
@@ -424,7 +424,7 @@ actor SeerrClient {
     /// Coalesces concurrent re-logins (e.g. a whole row of posters failing at once) into one.
     private func reauthenticate() async throws {
         if let reauthTask { return try await reauthTask.value }
-        guard let credentials else { throw APIError(status: 401, message: "Please sign in again.") }
+        guard let credentials else { throw APIError(status: 401, message: String(localized: "Please sign in again.")) }
         let task = Task { try await self.login(with: credentials); return () }
         reauthTask = task
         defer { reauthTask = nil }

@@ -8,10 +8,10 @@ enum BrowseKind: String, Hashable, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .movieGenres: return "Movie Genres"
-        case .tvGenres: return "Series Genres"
-        case .studios: return "Studios"
-        case .networks: return "Networks"
+        case .movieGenres: return String(localized: "Movie Genres")
+        case .tvGenres: return String(localized: "Series Genres")
+        case .studios: return String(localized: "Studios")
+        case .networks: return String(localized: "Networks")
         }
     }
 
@@ -39,9 +39,9 @@ struct BrowseTarget: Hashable, Sendable {
     /// The heading above its titles: "Comedy Movies", "Netflix Series", "Pixar Movies".
     var heading: String {
         switch filter {
-        case .genre: return "\(name) \(type == .tv ? "Series" : "Movies")"
-        case .studio: return "\(name) Movies"
-        case .network: return "\(name) Series"
+        case .genre: return type == .tv ? String(localized: "\(name) Series") : String(localized: "\(name) Movies")
+        case .studio: return String(localized: "\(name) Movies")
+        case .network: return String(localized: "\(name) Series")
         }
     }
 }
@@ -52,9 +52,9 @@ enum BrowseSort: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .popular: return "Most Popular"
-        case .topRated: return "Top Rated"
-        case .newest: return "Newest"
+        case .popular: return String(localized: "Most Popular")
+        case .topRated: return String(localized: "Top Rated")
+        case .newest: return String(localized: "Newest")
         }
     }
 

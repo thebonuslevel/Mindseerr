@@ -8,11 +8,11 @@ enum AppSection: Hashable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .discover: return "Discover"
-        case .search: return "Search"
-        case .watchlists: return "Watchlists"
-        case .activity: return "Activity"
-        case .settings: return "Settings"
+        case .discover: return String(localized: "Discover")
+        case .search: return String(localized: "Search")
+        case .watchlists: return String(localized: "Watchlists")
+        case .activity: return String(localized: "Activity")
+        case .settings: return String(localized: "Settings")
         }
     }
 
@@ -79,7 +79,7 @@ struct SideMenu: View {
                 if expanded {
                     Image("MindseerrWordmark")
                         .resizable().scaledToFit()
-                        .frame(height: 60)
+                        .frame(height: 48)
                 }
             }
             .padding(.leading, 20)   // the same distance from the edge as the rows' logos (8 outside + 12 inside)

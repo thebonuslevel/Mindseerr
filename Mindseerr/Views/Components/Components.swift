@@ -67,7 +67,7 @@ struct PosterCard: View {
                 Text(item.displayTitle)
                     .font(.caption)
                     .lineLimit(1)
-                Text([item.year, item.type == .tv ? "Series" : "Movie"].compactMap { $0 }.joined(separator: " · "))
+                Text([item.year, item.type == .tv ? String(localized: "Series") : String(localized: "Movie")].compactMap { $0 }.joined(separator: " · "))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -109,7 +109,7 @@ struct PosterPlaceholder: View {
 // MARK: - Badges
 
 struct Pill: View {
-    let text: String
+    let text: LocalizedStringKey
     let color: Color
 
     var body: some View {

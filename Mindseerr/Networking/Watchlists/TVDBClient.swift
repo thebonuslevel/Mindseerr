@@ -82,7 +82,7 @@ actor TVDBClient {
 
     private func login() async throws {
         guard let apiKey = TVDBConfig.apiKey else { throw Self.notConfigured }
-        guard let pin else { throw APIError(status: 401, message: "Add your TheTVDB PIN first.") }
+        guard let pin else { throw APIError(status: 401, message: String(localized: "Add your TheTVDB PIN first.")) }
         let (data, status) = try await send("login", method: "POST", authorized: false,
                                             body: ["apikey": apiKey, "pin": pin])
         guard status == 200, let newToken = (try? JSONDecoder().decode(TVDBEnvelope<[String: String]>.self, from: data))?.data?["token"] else {
@@ -138,7 +138,7 @@ actor TVDBClient {
                 : "TheTVDB returned an error (\(status)). Try again in a moment.")
         }
         guard let value = (try? JSONDecoder().decode(TVDBEnvelope<T>.self, from: data))?.data else {
-            throw APIError(status: 0, message: "TheTVDB sent a response the app didn't understand.")
+            throw APIError(status: 0, message: String(localized: "TheTVDB sent a response the app didn't understand."))
         }
         return value
     }

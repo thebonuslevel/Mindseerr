@@ -8,11 +8,11 @@ struct RottenTomatoesScores: View {
         HStack(spacing: 28) {
             if let score = rating.criticsScore {
                 // 60% and up is "fresh" (a tomato); below that is "rotten" (the green splat).
-                scoreView(icon: score >= 60 ? "🍅" : "🤢", score: score, label: rating.criticsRating ?? (score >= 60 ? "Fresh" : "Rotten"),
+                scoreView(icon: score >= 60 ? "🍅" : "🤢", score: score, label: rating.criticsRating ?? (score >= 60 ? String(localized: "Fresh") : String(localized: "Rotten")),
                           caption: "Tomatometer")
             }
             if let score = rating.audienceScore {
-                scoreView(icon: "🍿", score: score, label: rating.audienceRating ?? (score >= 60 ? "Upright" : "Spilled"),
+                scoreView(icon: "🍿", score: score, label: rating.audienceRating ?? (score >= 60 ? String(localized: "Upright") : String(localized: "Spilled")),
                           caption: "Audience")
             }
         }

@@ -19,8 +19,8 @@ enum ExternalPlayer: String, CaseIterable, Identifiable {
 
     var note: String {
         switch self {
-        case .infuse: return "Opens the movie in Infuse by its TMDB id and starts it. Infuse needs the title in its library."
-        case .off: return "No Play button on movie pages."
+        case .infuse: return String(localized: "Opens the movie in Infuse by its TMDB id and starts it. Infuse needs the title in its library.")
+        case .off: return String(localized: "No Play button on movie pages.")
         }
     }
 

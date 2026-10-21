@@ -69,7 +69,7 @@ struct WatchlistsView: View {
                 let source = store.source
                 Task {
                     let result = await store.requestAllMissing(source, api: app.api, choices: choices)
-                    var text = result.sent == 1 ? "Requested 1 title." : "Requested \(result.sent) titles."
+                    var text = result.sent == 1 ? String(localized: "Requested 1 title.") : String(localized: "Requested \(result.sent) titles.")
                     if result.failed > 0 {
                         text += " \(result.failed) couldn't be requested"
                         text += result.firstError.map { ": \($0)" } ?? "."

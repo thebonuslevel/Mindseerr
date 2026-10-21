@@ -4,12 +4,16 @@ options:
   deploymentTarget:
     tvOS: "17.0"
   createIntermediateGroups: true
+  developmentLanguage: en
 
 settings:
   base:
     SWIFT_VERSION: "5.10"
-    MARKETING_VERSION: "1.3"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "1.4"
+    CURRENT_PROJECT_VERSION: "5"
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: NO
 
 targets:
   Mindseerr:
@@ -29,6 +33,8 @@ targets:
       path: Support/Info.plist
       properties:
         CFBundleDisplayName: Mindseerr
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, es, fr, ru, zh-Hans]
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UIRequiredDeviceCapabilities: [arm64]

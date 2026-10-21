@@ -26,7 +26,7 @@ struct SettingsView: View {
                     Button {
                         menuExpands.toggle()
                     } label: {
-                        LabeledContent("Side Menu", value: menuExpands ? "Expands" : "Always Collapsed")
+                        LabeledContent("Side Menu", value: menuExpands ? String(localized: "Expands") : String(localized: "Always Collapsed"))
                     }
                     NavigationLink {
                         TopShelfSectionView()
@@ -65,7 +65,7 @@ struct SettingsView: View {
                     Button {
                         notifyOn.toggle()
                     } label: {
-                        LabeledContent("Download Finished", value: notifyOn ? "On" : "Off")
+                        LabeledContent("Download Finished", value: notifyOn ? String(localized: "On") : String(localized: "Off"))
                     }
                 } header: {
                     Text("Notifications")
@@ -79,7 +79,7 @@ struct SettingsView: View {
                     if let method = app.signInMethod {
                         infoRow("Signed in with", method)
                     }
-                    infoRow("Can manage requests", app.user?.canManageRequests == true ? "Yes" : "No")
+                    infoRow("Can manage requests", app.user?.canManageRequests == true ? String(localized: "Yes") : String(localized: "No"))
                     if let email = app.user?.email, !email.isEmpty {
                         infoRow("Email", email)
                     }
@@ -313,7 +313,7 @@ struct DiscoverSectionsView: View {
                 ForEach(DiscoverLayout.Entry.allCases) { entry in
                     // Selecting the row flips it, like a switch.
                     Button { toggle(entry) } label: {
-                        LabeledContent(entry.title, value: isHidden(entry) ? "Off" : "On")
+                        LabeledContent(entry.title, value: isHidden(entry) ? String(localized: "Off") : String(localized: "On"))
                     }
                 }
             } footer: {

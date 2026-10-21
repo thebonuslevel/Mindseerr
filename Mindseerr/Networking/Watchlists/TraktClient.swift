@@ -90,7 +90,7 @@ actor TraktClient {
         guard let clientID = TraktConfig.clientID else { throw Self.notConfigured }
         let (data, status) = try await send("oauth/device/code", method: "POST", body: ["client_id": clientID])
         guard status == 200 else {
-            throw APIError(status: status, message: "Trakt didn't give a sign-in code (error \(status)). Check the Client ID in project.yml.")
+            throw APIError(status: status, message: String(localized: "Trakt didn't give a sign-in code (error \(status)). Check the Client ID in project.yml."))
         }
         return try Self.decoder.decode(TraktDeviceCode.self, from: data)
     }
@@ -166,7 +166,7 @@ actor TraktClient {
     // MARK: - Plumbing
 
     private func authorizedGET<T: Decodable>(_ path: String) async throws -> T {
-        guard let current = token else { throw APIError(status: 401, message: "Sign in to Trakt first.") }
+        guard let current = token else { throw APIError(status: 401, message: String(localized: "Sign in to Trakt first.")) }
         if current.expiresAt < Date().addingTimeInterval(3600) { try await refresh() }
 
         var (data, status) = try await send(path, method: "GET", body: nil)
@@ -183,13 +183,13 @@ actor TraktClient {
         do {
             return try Self.decoder.decode(T.self, from: data)
         } catch {
-            throw APIError(status: 0, message: "Trakt sent a response the app didn't understand.")
+            throw APIError(status: 0, message: String(localized: "Trakt sent a response the app didn't understand."))
         }
     }
 
     private func refresh() async throws {
         guard let current = token, let clientID = TraktConfig.clientID else {
-            throw APIError(status: 401, message: "Sign in to Trakt again.")
+            throw APIError(status: 401, message: String(localized: "Sign in to Trakt again."))
         }
         // Refresh tokens are single-use: store() below replaces the saved one with the new token.
         let (data, status) = try await send("oauth/token", method: "POST", body: Self.withSecret([
@@ -200,7 +200,7 @@ actor TraktClient {
         ]))
         guard status == 200, let newToken = try? Self.decoder.decode(TraktToken.self, from: data) else {
             store(nil)
-            throw APIError(status: 401, message: "Your Trakt sign-in has expired. Sign in again.")
+            throw APIError(status: 401, message: String(localized: "Your Trakt sign-in has expired. Sign in again."))
         }
         store(newToken)
     }

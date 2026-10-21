@@ -32,13 +32,13 @@ enum TopShelfCache {
 
         var title: String {
             switch self {
-            case .suggested: return "Suggested for You"
-            case .recentlyAdded: return "Recently Added"
-            case .trending: return "Trending"
-            case .popularMovies: return "Popular Movies"
-            case .upcomingMovies: return "Upcoming Movies"
-            case .popularTV: return "Popular Series"
-            case .upcomingTV: return "Upcoming Series"
+            case .suggested: return String(localized: "Suggested for You")
+            case .recentlyAdded: return String(localized: "Recently Added")
+            case .trending: return String(localized: "Trending")
+            case .popularMovies: return String(localized: "Popular Movies")
+            case .upcomingMovies: return String(localized: "Upcoming Movies")
+            case .popularTV: return String(localized: "Popular Series")
+            case .upcomingTV: return String(localized: "Upcoming Series")
             }
         }
 

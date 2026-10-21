@@ -80,7 +80,7 @@ actor DelugeClient: TorrentClient {
     private func ensureReady() async throws {
         if !signedIn {
             guard try await rpc("auth.login", [service.password ?? ""]) as? Bool == true else {
-                throw APIError(status: 401, message: "\(service.name) rejected the password. It's the one for Deluge's Web UI (the default is “deluge”).")
+                throw APIError(status: 401, message: String(localized: "\(service.name) rejected the password. It's the one for Deluge's Web UI (the default is “deluge”)."))
             }
             signedIn = true
         }
@@ -88,7 +88,7 @@ actor DelugeClient: TorrentClient {
             // The Web UI has to be attached to a daemon before it can list torrents.
             guard let hosts = try await rpc("web.get_hosts", []) as? [[Any]],
                   let hostID = hosts.first?.first as? String else {
-                throw APIError(status: 0, message: "\(service.name) isn't connected to a Deluge daemon. Open its Web UI and choose one under Connection Manager.")
+                throw APIError(status: 0, message: String(localized: "\(service.name) isn't connected to a Deluge daemon. Open its Web UI and choose one under Connection Manager."))
             }
             _ = try await rpc("web.connect", [hostID])
         }
@@ -135,12 +135,12 @@ actor DelugeClient: TorrentClient {
         if let error = object["error"] as? [String: Any] {
             let message = error["message"] as? String ?? "unknown error"
             if message.localizedCaseInsensitiveContains("not authenticated") {
-                throw APIError(status: 401, message: "\(service.name) signed us out. Try again.")
+                throw APIError(status: 401, message: String(localized: "\(service.name) signed us out. Try again."))
             }
             if message.localizedCaseInsensitiveContains("unknown method") || message.localizedCaseInsensitiveContains("has no attribute") {
-                throw APIError(status: -1, message: "\(service.name): \(message)")
+                throw APIError(status: -1, message: String(localized: "\(service.name): \(message)"))
             }
-            throw APIError(status: 0, message: "\(service.name) said: \(message)")
+            throw APIError(status: 0, message: String(localized: "\(service.name) said: \(message)"))
         }
         return object["result"]
     }

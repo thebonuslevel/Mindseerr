@@ -78,7 +78,7 @@ final class AppState {
         #endif
         let candidates = Self.candidates(for: input)
         guard !candidates.isEmpty else {
-            throw APIError(status: 0, message: "That doesn't look like a valid address.")
+            throw APIError(status: 0, message: String(localized: "That doesn't look like a valid address."))
         }
         // Without http:// or https:// typed, try HTTPS first and fall back to HTTP. The checks are short, so a
         // server that only answers on one of them doesn't leave the user waiting.
@@ -100,7 +100,7 @@ final class AppState {
                 throw APIError(status: api.status, message: api.status >= 300 && api.status < 400
                                ? api.message : "That address responded, but it doesn't look like a Seerr server.")
             }
-            throw failure ?? APIError(status: 0, message: "Couldn't reach that address.")
+            throw failure ?? APIError(status: 0, message: String(localized: "Couldn't reach that address."))
         }
         let url = found.url, status = found.status, probe = found.probe
         serverVersion = status.version
@@ -181,12 +181,12 @@ final class AppState {
     private static func signInError(_ error: APIError, for credentials: Credentials) -> APIError {
         switch (credentials, error.status) {
         case (.jellyfin, 401):
-            return APIError(status: 401, message: "Wrong username or password.")
+            return APIError(status: 401, message: String(localized: "Wrong username or password."))
         case (.jellyfin, 403):
             return APIError(status: 403, message:
                 "This account doesn't have access to this Seerr server. Ask the owner to import your account or allow new Jellyfin sign-ins.")
         case (.local, 401), (.local, 403):
-            return APIError(status: error.status, message: "That email and password didn't work for this Seerr server.")
+            return APIError(status: error.status, message: String(localized: "That email and password didn't work for this Seerr server."))
         case (.apiKey, 401), (.apiKey, 403):
             return APIError(status: error.status, message:
                 "That API key isn't valid for this server. Copy it again from Seerr → Settings → General.")
@@ -221,14 +221,14 @@ final class AppState {
         if let urlError = error as? URLError {
             switch urlError.code {
             case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed:
-                return "Couldn't reach that server. Check the address and that your Apple TV is on the same network."
+                return String(localized: "Couldn't reach that server. Check the address and that your Apple TV is on the same network.")
             case .timedOut:
-                return "The server took too long to respond."
+                return String(localized: "The server took too long to respond.")
             case .notConnectedToInternet, .networkConnectionLost:
-                return "Your Apple TV isn't connected to the network."
+                return String(localized: "Your Apple TV isn't connected to the network.")
             case .serverCertificateUntrusted, .serverCertificateHasBadDate,
                  .serverCertificateNotYetValid, .serverCertificateHasUnknownRoot, .secureConnectionFailed:
-                return "The server's HTTPS certificate isn't trusted by Apple TV."
+                return String(localized: "The server's HTTPS certificate isn't trusted by Apple TV.")
             default:
                 return urlError.localizedDescription
             }

@@ -434,7 +434,7 @@ struct PlexSignInView: View {
                 try await app.signIn(with: .plex(token: token))
                 return
             }
-            error = "That code expired. Get a new one to try again."
+            error = String(localized: "That code expired. Get a new one to try again.")
         } catch is CancellationError {
             // View went away or a new code was requested.
         } catch {

@@ -93,7 +93,8 @@ struct MediaDetailView: View {
     }
 
     private var confirmTitle: String {
-        "Request \(detail?.displayTitle ?? "this title")\(confirmMovieRequest?.is4k == true ? " in 4K" : "")?"
+        let suffix = confirmMovieRequest?.is4k == true ? String(localized: " in 4K", comment: "Appended to a request title: the 4K copy") : ""
+        return String(localized: "Request \(detail?.displayTitle ?? String(localized: "this title"))\(suffix)?")
     }
 
     private var canChooseOptions: Bool { app.user?.canChooseRequestOptions == true }
@@ -265,7 +266,7 @@ struct MediaDetailView: View {
     /// The request button for the standard or 4K copy, or its status once requested or available.
     @ViewBuilder
     private func requestButton(_ detail: MediaDetail, is4k: Bool) -> some View {
-        let suffix = is4k ? " in 4K" : ""
+        let suffix = is4k ? String(localized: " in 4K", comment: "Appended to a request title: the 4K copy") : ""
         switch RequestAvailability(detail: detail, type: route.type, is4k: is4k) {
         case .requestable:
             Button {
@@ -313,7 +314,7 @@ struct MediaDetailView: View {
     /// Hands the movie to the player chosen in Settings, and says so if that isn't possible or the app isn't installed.
     private func play(_ detail: MediaDetail) {
         guard let url = player.playURL(tmdbId: route.tmdbId) else {
-            notice = Notice(title: "Can't Open in \(player.name)", message: "\(player.name) couldn't be opened.")
+            notice = Notice(title: String(localized: "Can't Open in \(player.name)"), message: String(localized: "\(player.name) couldn't be opened."))
             return
         }
         NSLog("Mindseerr play: opening %@", url.absoluteString)
@@ -321,8 +322,8 @@ struct MediaDetailView: View {
             NSLog("Mindseerr play: %@ -> %@", url.absoluteString, opened ? "opened" : "refused")
             guard !opened else { return }
             Task { @MainActor in
-                notice = Notice(title: "Can't Open \(player.name)",
-                                message: "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or turn the Play button off in Settings → External Player.")
+                notice = Notice(title: String(localized: "Can't Open \(player.name)"),
+                                message: String(localized: "\(player.name) didn't open. Install it from the App Store on your Apple TV, then try again, or turn the Play button off in Settings → External Player."))
             }
         }
     }
@@ -331,8 +332,8 @@ struct MediaDetailView: View {
         guard let url = trailer.youTubeAppURL else { return }
         openURL(url) { opened in
             if !opened {
-                notice = Notice(title: "Can't Play Trailer",
-                                message: "Trailers play in the YouTube app. Install YouTube from the App Store on your Apple TV, then try again.")
+                notice = Notice(title: String(localized: "Can't Play Trailer"),
+                                message: String(localized: "Trailers play in the YouTube app. Install YouTube from the App Store on your Apple TV, then try again."))
             }
         }
     }
@@ -352,7 +353,7 @@ struct MediaDetailView: View {
     }
 
     private func submit(seasons: [Int]?, options: RequestOptions) async {
-        let title = (detail?.displayTitle ?? "This title") + (options.is4k ? " in 4K" : "")
+        let title = (detail?.displayTitle ?? "This title") + (options.is4k ? String(localized: " in 4K", comment: "Appended to a request title: the 4K copy") : "")
         isRequesting = true
         defer { isRequesting = false }
         do {
@@ -360,11 +361,11 @@ struct MediaDetailView: View {
             let message = request.status == .approved
                 ? "\(title) was approved and is on its way."
                 : "\(title) was sent and is waiting for approval."
-            notice = Notice(title: "Requested", message: message)
+            notice = Notice(title: String(localized: "Requested"), message: message)
             await load()
             await loadQuota()
         } catch {
-            notice = Notice(title: "Request Failed", message: AppState.friendly(error))
+            notice = Notice(title: String(localized: "Request Failed"), message: AppState.friendly(error))
         }
     }
 }
