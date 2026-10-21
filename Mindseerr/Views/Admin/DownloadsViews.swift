@@ -15,6 +15,7 @@ struct AddArrServiceView: View {
     @State private var password = ""
     @State private var checking = false
     @State private var error: String?
+    @State private var untrusted: UntrustedCertificate?
 
     var body: some View {
         // Scrolls, so the longer clients' forms and hints never run off the bottom of the screen.
@@ -87,6 +88,7 @@ struct AddArrServiceView: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .themedBackground()
+        .certificateApproval($untrusted, onTrust: save)
     }
 
     /// Sonarr and Radarr need an API key; qBittorrent and Deluge a password; Transmission only if it has one set.
@@ -144,6 +146,7 @@ struct AddArrServiceView: View {
             checking = true
             error = nil
             defer { checking = false }
+            CertificateTrust.clearRejection(for: url)
             do {
                 if kind.isDownloadClient {
                     _ = try await TorrentClients.make(for: service).checkConnection()
@@ -153,6 +156,8 @@ struct AddArrServiceView: View {
                 onSave(service)
                 dismiss()
             } catch {
+                // A certificate tvOS doesn't trust: offer to trust it rather than just failing.
+                untrusted = CertificateTrust.rejection(for: url)
                 self.error = AppState.friendly(error)
             }
         }

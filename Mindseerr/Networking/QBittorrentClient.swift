@@ -47,7 +47,7 @@ actor QBittorrentClient: TorrentClient {
         self.service = service
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 15
-        session = URLSession(configuration: config)
+        session = URLSession(configuration: config, delegate: TrustedCertificateDelegate(), delegateQueue: nil)
     }
 
     // MARK: - Reading

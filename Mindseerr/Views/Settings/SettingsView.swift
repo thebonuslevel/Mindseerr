@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage(DiscoverLayout.storageKey) private var hiddenSections = ""
     @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
     @AppStorage(SideMenu.expandsKey) private var menuExpands = true
+    @State private var trustedCertificates = CertificateTrust.trusted
     /// What the Top Shelf shows: a Discover section, or nil when it's off.
     @State private var shelfChoice: TopShelfCache.Section? = TopShelfCache.isEnabled ? TopShelfCache.section : nil
 
@@ -87,6 +88,13 @@ struct SettingsView: View {
                 Section("Server") {
                     infoRow("Address", app.serverURL?.absoluteString ?? "—")
                     infoRow("Seerr version", app.serverVersion ?? "—")
+                    if !trustedCertificates.isEmpty {
+                        NavigationLink {
+                            TrustedCertificatesView()
+                        } label: {
+                            LabeledContent("Trusted Certificates", value: "\(trustedCertificates.count)")
+                        }
+                    }
                 }
                 Section {
                     Button("Sign Out", role: .destructive) { confirmSignOut = true }
@@ -105,7 +113,10 @@ struct SettingsView: View {
             .themedBackground()
             .clearsSideMenu()
             // The choice is made on a pushed page; pick it up when coming back.
-            .onAppear { shelfChoice = TopShelfCache.isEnabled ? TopShelfCache.section : nil }
+            .onAppear {
+                shelfChoice = TopShelfCache.isEnabled ? TopShelfCache.section : nil
+                trustedCertificates = CertificateTrust.trusted
+            }
             .navigationDestination(isPresented: $showAbout) { AboutView() }
             .confirmationDialog("Sign out of Seerr?", isPresented: $confirmSignOut, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) { Task { await app.signOut() } }
@@ -333,5 +344,33 @@ struct DiscoverSectionsView: View {
         var hidden = DiscoverLayout.hidden(hiddenStored)
         if hidden.contains(entry.rawValue) { hidden.remove(entry.rawValue) } else { hidden.insert(entry.rawValue) }
         hiddenStored = DiscoverLayout.store(hidden)
+    }
+}
+
+/// Its own page for the certificates the user approved, so each can be taken back.
+struct TrustedCertificatesView: View {
+    @State private var trusted = CertificateTrust.trusted
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(trusted.keys.sorted(), id: \.self) { id in
+                    Button {
+                        CertificateTrust.forget(id)
+                        trusted = CertificateTrust.trusted
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(id)
+                            Text(trusted[id] ?? "").font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                    }
+                }
+            } footer: {
+                Text("These servers use a certificate Apple TV can't verify, and you chose to trust it. Select one to stop trusting it; Mindseerr asks again the next time it connects.")
+            }
+        }
+        .themedBackground()
+        .clearsSideMenu()
+        .navigationTitle("Trusted Certificates")
     }
 }

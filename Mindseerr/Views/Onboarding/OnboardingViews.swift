@@ -31,6 +31,7 @@ struct ServerSetupView: View {
     @State private var address = ""
     @State private var connecting = false
     @State private var error: String?
+    @State private var untrusted: UntrustedCertificate?
 
     var body: some View {
         VStack(spacing: 40) {
@@ -70,6 +71,7 @@ struct ServerSetupView: View {
         .onAppear {
             if address.isEmpty, let saved = app.serverURL?.absoluteString { address = saved }
         }
+        .certificateApproval($untrusted, onTrust: connect)
     }
 
     private func connect() {
@@ -79,6 +81,9 @@ struct ServerSetupView: View {
             error = nil
             do {
                 try await app.connect(to: address)
+            } catch let certificate as UntrustedCertificate {
+                untrusted = certificate
+                self.error = AppState.friendly(certificate)
             } catch {
                 self.error = AppState.friendly(error)
             }

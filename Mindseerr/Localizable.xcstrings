@@ -660,6 +660,34 @@
         }
       }
     },
+    "%@ uses a certificate Apple TV can't verify, like a self-signed one. Trust it only if this is your own server.\n\nSHA-256 fingerprint:\n%@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ usa un certificado que el Apple TV no puede verificar, como uno autofirmado. Confía en él solo si es tu propio servidor.\n\nHuella SHA-256:\n%2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utilise un certificat que l’Apple TV ne peut pas vérifier, par exemple un certificat auto-signé. N’y faites confiance que s’il s’agit de votre propre serveur.\n\nEmpreinte SHA-256 :\n%2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ использует сертификат, который Apple TV не может проверить, например самоподписанный. Доверяйте ему, только если это ваш собственный сервер.\n\nОтпечаток SHA-256:\n%2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 使用了 Apple TV 无法验证的证书，例如自签名证书。仅当这是你自己的服务器时才信任它。\n\nSHA-256 指纹：\n%2$@"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {
@@ -7989,6 +8017,34 @@
         }
       }
     },
+    "These servers use a certificate Apple TV can't verify, and you chose to trust it. Select one to stop trusting it; Mindseerr asks again the next time it connects." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estos servidores usan un certificado que el Apple TV no puede verificar y tú decidiste confiar en él. Selecciona uno para dejar de confiar en él; Mindseerr volverá a preguntar la próxima vez que se conecte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces serveurs utilisent un certificat que l’Apple TV ne peut pas vérifier, et vous avez choisi de lui faire confiance. Sélectionnez-en un pour ne plus lui faire confiance ; Mindseerr redemandera lors de la prochaine connexion."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эти серверы используют сертификат, который Apple TV не может проверить, и вы решили ему доверять. Выберите сервер, чтобы отозвать доверие; при следующем подключении Mindseerr спросит снова."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些服务器使用的证书 Apple TV 无法验证，而你选择了信任它。选择其中一项即可取消信任；Mindseerr 下次连接时会再次询问。"
+          }
+        }
+      }
+    },
     "This address isn't encrypted, and isn't on your home network. Anyone between your Apple TV and the server could read the sign-in. Use an https:// address if you can." : {
       "localizations" : {
         "es" : {
@@ -8389,6 +8445,90 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "热门趋势"
+          }
+        }
+      }
+    },
+    "Trust Certificate" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confiar en el certificado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire confiance au certificat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доверять сертификату"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信任证书"
+          }
+        }
+      }
+    },
+    "Trust this certificate?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Confiar en este certificado?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faire confiance à ce certificat ?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доверять этому сертификату?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信任此证书？"
+          }
+        }
+      }
+    },
+    "Trusted Certificates" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificados de confianza"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificats approuvés"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доверенные сертификаты"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "受信任的证书"
           }
         }
       }

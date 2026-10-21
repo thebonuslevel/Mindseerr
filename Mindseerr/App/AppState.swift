@@ -87,10 +87,13 @@ final class AppState {
         for candidate in candidates {
             let probe = SeerrClient(baseURL: candidate, sessionCookie: nil, credentials: nil,
                                     timeout: candidates.count > 1 ? 6 : 20)
+            CertificateTrust.clearRejection(for: candidate)
             do {
                 found = (candidate, try await probe.status(), probe)
                 break
             } catch {
+                // A certificate tvOS doesn't trust: stop here and let the user decide, instead of dropping to http.
+                if let certificate = CertificateTrust.rejection(for: candidate) { throw certificate }
                 // A server that answered but isn't Seerr is a better thing to report than one that didn't answer.
                 if failure == nil || (error as? APIError) != nil { failure = error }
             }

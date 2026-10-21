@@ -190,7 +190,7 @@ enum ArrClient {
     private static let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 15
-        return URLSession(configuration: config)
+        return URLSession(configuration: config, delegate: TrustedCertificateDelegate(), delegateQueue: nil)
     }()
 
     /// Checks the address and key. Returns the server's version, or throws a readable error.

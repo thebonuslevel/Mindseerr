@@ -43,7 +43,7 @@ enum TorrentHTTP {
     static func session() -> URLSession {
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 15
-        return URLSession(configuration: config)
+        return URLSession(configuration: config, delegate: TrustedCertificateDelegate(), delegateQueue: nil)
     }
 
     static func unreachable(_ service: ArrService) -> APIError {

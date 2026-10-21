@@ -37,7 +37,7 @@ enum DiscoverSection: String, CaseIterable, Identifiable, Sendable {
 /// Follows a redirect only when it stays on the same server (or upgrades it from http to https). The session cookie
 /// and API key are added to each request by hand, and URLSession would carry them along to wherever a redirect
 /// pointed, so anything else is refused.
-final class SameOriginRedirects: NSObject, URLSessionTaskDelegate {
+final class SameOriginRedirects: TrustedCertificateDelegate, URLSessionTaskDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         guard let from = task.originalRequest?.url, let to = request.url,
