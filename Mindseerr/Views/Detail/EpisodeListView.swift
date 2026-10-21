@@ -12,6 +12,8 @@ struct EpisodeListView: View {
     @State private var seasons: [SeasonDetail] = []
     @State private var loading = true
     @State private var notice: String?
+    @State private var playback: PlaybackSession?
+    @State private var preparing = false
 
     var body: some View {
         NavigationStack {
@@ -44,7 +46,10 @@ struct EpisodeListView: View {
             .navigationTitle(detail.displayTitle)
         }
         .task { await load() }
-        .alert("Can't Open \(player.name)", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
+        .fullScreenCover(item: $playback) { session in
+            NativePlayerView(session: session).ignoresSafeArea()
+        }
+        .alert(player == .native ? String(localized: "Can't Play") : String(localized: "Can't Open \(player.name)"), isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(notice ?? "")
@@ -82,6 +87,21 @@ struct EpisodeListView: View {
     }
 
     private func play(_ episode: Episode) {
+        if player == .native {
+            guard !preparing else { return }
+            preparing = true
+            let title = "\(detail.displayTitle) · S\(episode.seasonNumber) E\(episode.episodeNumber)"
+            Task {
+                defer { preparing = false }
+                do {
+                    playback = try await MediaServerPlayback.session(
+                        for: detail.mediaInfo, episode: .init(season: episode.seasonNumber, number: episode.episodeNumber), title: title)
+                } catch {
+                    notice = error.localizedDescription
+                }
+            }
+            return
+        }
         guard let url = player.episodeURL(seriesTmdbId: tmdbId, season: episode.seasonNumber, episode: episode.episodeNumber) else { return }
         UIApplication.shared.open(url, options: [:]) { opened in
             guard !opened else { return }

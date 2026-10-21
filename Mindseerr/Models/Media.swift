@@ -42,6 +42,12 @@ struct MediaInfo: Decodable, Sendable {
     let status4k: MediaStatus?
     let seasons: [SeasonAvailability]?
     let requests: [MediaRequest]?
+    /// Where the title lives on the media server, for the built-in player: Plex's item key, Jellyfin and Emby's item ID,
+    /// and the links Seerr keeps to it (which also give the server's address).
+    let ratingKey: String?
+    let jellyfinMediaId: String?
+    let mediaUrl: String?
+    let plexUrl: String?
 }
 
 struct SeasonAvailability: Decodable, Sendable {

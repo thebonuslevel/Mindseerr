@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="docs/logo.png" alt="Mindseerr logo" width="200">
+  <img src="docs/logo.png" alt="Mindseerr logo" width="200"><br>
+  <img src="docs/wordmark.svg" alt="mindseerr" width="380">
 </p>
 
 # Mindseerr
@@ -16,15 +17,16 @@ Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev
 
 Connect your **Sonarr** and **Radarr** servers right from the Activity tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
 
-Add your torrent client the same way: **qBittorrent**, **Deluge** or **Transmission**. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same client they use.
+Add your torrent client the same way: **qBittorrent**, **Deluge**, **Transmission** or the usenet client **SABnzbd**. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same client they use.
 
 | Client | Address | Sign-in |
 |---|---|---|
 | qBittorrent | Web UI address, like `http://192.168.1.10:8080` | Web UI username and password |
 | Deluge | Web UI address, like `http://192.168.1.10:8112` | Web UI password (default `deluge`); its Web UI has to be connected to a daemon under Connection Manager |
 | Transmission | Like `http://192.168.1.10:9091` | Username and password only if you turned RPC authentication on |
+| SABnzbd | Like `http://192.168.1.10:8080` | API key, under Config → General → Security |
 
-**A torrent client works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent, Deluge or Transmission and Active Downloads reads progress straight from it.
+**A torrent client works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent, Deluge, Transmission or SABnzbd and Active Downloads reads progress straight from it.
 
 ![Active Downloads fed only by a torrent client (qBittorrent shown), with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
 
@@ -40,7 +42,7 @@ The request list knows what's downloading too. Any request whose title is in a S
 
 ### Activity tab: pause, resume and cancel downloads
 
-On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the torrent in qBittorrent, Deluge or Transmission, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
+On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the download in qBittorrent, Deluge, Transmission or SABnzbd, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
 
 ### Detail page
 
@@ -65,6 +67,8 @@ Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: t
 On a movie that's available on your server, a **Play in Infuse** button sits first among the actions. It opens the movie in Infuse by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed on the Apple TV and have the title in its library (it can read Plex, Jellyfin and Emby). **Settings → External Player** chooses **Infuse** or **Off**; with Off, the Play button isn't shown.
 
 On a **series** that has something on your server, the same button opens an episode list: every season on the server, with each episode's number, title, runtime and a short summary. Select an episode to play it in Infuse. Infuse needs the series in its library, and its episode link is as documented but untried on a real Apple TV.
+
+**Apple Player (new, untested on a real server):** choose it under Settings → External Player and Play streams the title from the media server Seerr is set up with, in Apple's own player, without leaving Mindseerr. It works for Plex, Jellyfin and Emby, for movies and single episodes, using the Plex or Jellyfin/Emby sign-in you used for Seerr (signing in with a Seerr account or API key can't use it). It resumes where you left off and saves progress back to the server. Subtitle and audio-track choice depends on what the server puts in its stream.
 
 If Infuse isn't installed, a message says so. Mindseerr only hands the movie over; it doesn't play anything itself. Plex and Swiftfin aren't offered: Plex's Apple TV app ignores links to a single movie (I tried its play and page links, with Plex open and closed, on a real Apple TV), and Swiftfin doesn't publish one.
 
@@ -161,7 +165,7 @@ Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look a
 - **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
 - **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
 - **Download finished banner** on any screen while the app is open, with a switch in Settings.
-- **Download controls**: connect qBittorrent, Deluge or Transmission to pause, resume or cancel a download right from Active Downloads on the Activity tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
+- **Download controls**: connect qBittorrent, Deluge, Transmission or SABnzbd to pause, resume or cancel a download right from Active Downloads on the Activity tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
 - **Activity tab** for everyone. Admins and users with the Manage Requests permission get the full panel: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
 - **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
 - **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
@@ -305,7 +309,7 @@ Done:
 - [x] A Recently Added row, and Settings to switch each Discover section on or off
 - [x] A personalised, expandable "Suggested for You" row balancing taste, Rotten Tomatoes, trending and new releases
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB, with a picker for titles and seasons
-- [x] qBittorrent, Deluge and Transmission: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
+- [x] qBittorrent, Deluge, Transmission and SABnzbd: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
 - [x] A banner when a download finishes, on any screen, including ones that finished while the app was closed (shown when it's reopened)
 - [x] An Activity tab for everyone: the admin panel for admins, a user's own requests for everyone else
 - [x] A Play button on available movies that opens them in Infuse
@@ -315,11 +319,10 @@ Done:
 Still to do:
 
 - Add other players if they gain links to a single title
-- Support usenet clients (SABnzbd, NZBGet) for progress and the download controls
+- Support the NZBGet usenet client for progress and the download controls
 - Show download progress to non-admin users without every Apple TV needing the download services set up
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
 - Browse Discover by genre, studio or network, and filter or sort search results
-- Trust a self-signed HTTPS certificate for Seerr and the download services, after the user approves it
 - Send Seerr's XSRF token so the app works with CSRF protection turned on
 - Localization
 - A signed build through TestFlight or the App Store, so installing doesn't need sideloading

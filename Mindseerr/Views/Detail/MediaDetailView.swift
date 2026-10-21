@@ -11,6 +11,8 @@ struct MediaDetailView: View {
     @State private var tomatoes: RottenTomatoesRating?
     @State private var showEpisodes = false
     @AppStorage(ExternalPlayer.storageKey) private var player: ExternalPlayer = .infuse
+    @State private var playback: PlaybackSession?
+    @State private var preparing = false
     @State private var loadError: String?
     /// The Radarr (movie) or Sonarr (series) servers in Seerr; decides whether 4K is offered.
     @State private var servers: [RequestServer] = []
@@ -55,6 +57,9 @@ struct MediaDetailView: View {
             }
         }
         .task { await load() }
+        .fullScreenCover(item: $playback) { session in
+            NativePlayerView(session: session).ignoresSafeArea()
+        }
         .fullScreenCover(isPresented: $showEpisodes) {
             if let detail { EpisodeListView(detail: detail, tmdbId: route.tmdbId) }
         }
@@ -232,7 +237,7 @@ struct MediaDetailView: View {
             // Available movies can be played in the chosen external player.
             if route.type == .movie, player.isOn, detail.mediaInfo?.status == .available {
                 Button { play(detail) } label: {
-                    Label("Play in \(player.name)", systemImage: "play.circle.fill")
+                    Label(player.playLabel, systemImage: "play.circle.fill")
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
                 }
@@ -241,7 +246,7 @@ struct MediaDetailView: View {
             if route.type == .tv, player.isOn,
                detail.mediaInfo?.status == .available || detail.mediaInfo?.status == .partiallyAvailable {
                 Button { showEpisodes = true } label: {
-                    Label("Play in \(player.name)", systemImage: "play.circle.fill")
+                    Label(player.playLabel, systemImage: "play.circle.fill")
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
                 }
@@ -313,6 +318,19 @@ struct MediaDetailView: View {
 
     /// Hands the movie to the player chosen in Settings, and says so if that isn't possible or the app isn't installed.
     private func play(_ detail: MediaDetail) {
+        if player == .native {
+            guard !preparing else { return }
+            preparing = true
+            Task {
+                defer { preparing = false }
+                do {
+                    playback = try await MediaServerPlayback.session(for: detail.mediaInfo, episode: nil, title: detail.displayTitle)
+                } catch {
+                    notice = Notice(title: String(localized: "Can't Play"), message: error.localizedDescription)
+                }
+            }
+            return
+        }
         guard let url = player.playURL(tmdbId: route.tmdbId) else {
             notice = Notice(title: String(localized: "Can't Open in \(player.name)"), message: String(localized: "\(player.name) couldn't be opened."))
             return

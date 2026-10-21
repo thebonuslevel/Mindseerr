@@ -182,6 +182,34 @@
         }
       }
     },
+    "%@ didn't accept your sign-in." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no aceptó tu inicio de sesión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n’a pas accepté votre connexion."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ не принял ваш вход."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 未接受你的登录信息。"
+          }
+        }
+      }
+    },
     "%@ didn't open. Install it from the App Store on your Apple TV, then try again, or turn the Play button off in Settings → External Player." : {
       "localizations" : {
         "es" : {
@@ -566,6 +594,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "%1$@ 表示：%2$@"
+          }
+        }
+      }
+    },
+    "%@ sent a response the app didn't understand." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ envió una respuesta que la app no entendió."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a envoyé une réponse que l’app n’a pas comprise."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ прислал ответ, который приложение не поняло."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 发送了应用无法理解的响应。"
           }
         }
       }
@@ -1568,6 +1624,34 @@
         }
       }
     },
+    "Apple Player" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproductor de Apple"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecteur Apple"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Плеер Apple"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple 播放器"
+          }
+        }
+      }
+    },
     "Approve" : {
       "localizations" : {
         "es" : {
@@ -1957,6 +2041,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "无法在 %@ 中打开"
+          }
+        }
+      }
+    },
+    "Can't Play" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede reproducir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture impossible"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удаётся воспроизвести"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法播放"
           }
         }
       }
@@ -2747,6 +2859,118 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "无法连接到 %2$@ 上的 %1$@。请检查地址和端口。"
+          }
+        }
+      }
+    },
+    "Couldn't reach %@. Check that your Apple TV is on the same network, or that the server is reachable." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo conectar con %@. Comprueba que tu Apple TV esté en la misma red o que se pueda acceder al servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre %@. Vérifiez que votre Apple TV est sur le même réseau ou que le serveur est accessible."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к %@. Проверьте, что Apple TV находится в той же сети или что сервер доступен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 %@。请确认你的 Apple TV 与服务器在同一网络，或服务器可以访问。"
+          }
+        }
+      }
+    },
+    "Couldn't reach Jellyfin." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo conectar con Jellyfin."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre Jellyfin."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к Jellyfin."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 Jellyfin。"
+          }
+        }
+      }
+    },
+    "Couldn't reach Plex." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo conectar con Plex."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre Plex."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к Plex."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 Plex。"
+          }
+        }
+      }
+    },
+    "Couldn't reach Plex. Check that your Apple TV is on the same network, or that the server is reachable." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo conectar con Plex. Comprueba que tu Apple TV esté en la misma red o que se pueda acceder al servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre Plex. Vérifiez que votre Apple TV est sur le même réseau ou que le serveur est accessible."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось подключиться к Plex. Проверьте, что Apple TV находится в той же сети или что сервер доступен."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到 Plex。请确认你的 Apple TV 与服务器在同一网络，或服务器可以访问。"
           }
         }
       }
@@ -3957,6 +4181,62 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "正在导入"
+          }
+        }
+      }
+    },
+    "Jellyfin didn't accept your sign-in." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin no aceptó tu inicio de sesión."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin n’a pas accepté votre connexion."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin не принял ваш вход."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin 未接受你的登录信息。"
+          }
+        }
+      }
+    },
+    "Jellyfin doesn't have this episode." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin no tiene este episodio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin n’a pas cet épisode."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В Jellyfin нет этого эпизода."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jellyfin 中没有此集。"
           }
         }
       }
@@ -5423,6 +5703,34 @@
         }
       }
     },
+    "Play" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproducir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Смотреть"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放"
+          }
+        }
+      }
+    },
     "Play in %@" : {
       "localizations" : {
         "es" : {
@@ -5479,6 +5787,34 @@
         }
       }
     },
+    "Plays the title in Apple's player, streamed from your Plex, Jellyfin or Emby server with your Seerr sign-in. Progress is saved to the server." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reproduce el título en el reproductor de Apple, desde tu servidor Plex, Jellyfin o Emby con tu inicio de sesión de Seerr. El progreso se guarda en el servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lit le titre dans le lecteur d’Apple, en streaming depuis votre serveur Plex, Jellyfin ou Emby avec votre connexion Seerr. La progression est enregistrée sur le serveur."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Воспроизводит фильм или сериал в плеере Apple с вашего сервера Plex, Jellyfin или Emby, используя вход в Seerr. Прогресс сохраняется на сервере."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Apple 播放器中播放，通过你的 Seerr 登录信息从 Plex、Jellyfin 或 Emby 服务器串流。播放进度会保存到服务器。"
+          }
+        }
+      }
+    },
     "Please sign in again." : {
       "localizations" : {
         "es" : {
@@ -5503,6 +5839,62 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "请重新登录。"
+          }
+        }
+      }
+    },
+    "Plex doesn't have this episode." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex no tiene este episodio."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex n’a pas cet épisode."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В Plex нет этого эпизода."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex 中没有此集。"
+          }
+        }
+      }
+    },
+    "Plex doesn't have this title." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex no tiene este título."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex n’a pas ce titre."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В Plex нет этого фильма или сериала."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plex 中没有此影片。"
           }
         }
       }
@@ -6611,6 +7003,34 @@
         }
       }
     },
+    "Seerr doesn't list this title on your media server yet." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seerr aún no muestra este título en tu servidor multimedia."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seerr n’indique pas encore ce titre sur votre serveur multimédia."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seerr пока не показывает этот фильм или сериал на вашем медиасервере."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seerr 尚未在你的媒体服务器上列出此影片。"
+          }
+        }
+      }
+    },
     "Select All" : {
       "localizations" : {
         "es" : {
@@ -7705,6 +8125,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "Top Shelf 会显示你所选版块的前几部影片，内容截至 Mindseerr 上次加载时。请不时打开“发现”以保持内容最新。选择“关”时，tvOS 会改为显示 Mindseerr 横幅。"
+          }
+        }
+      }
+    },
+    "The built-in player uses your Plex, Jellyfin or Emby sign-in. Sign in to Seerr with your media server account, or choose another player in Settings → External Player." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El reproductor integrado usa tu inicio de sesión de Plex, Jellyfin o Emby. Inicia sesión en Seerr con tu cuenta del servidor multimedia o elige otro reproductor en Ajustes → Reproductor externo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le lecteur intégré utilise votre connexion Plex, Jellyfin ou Emby. Connectez-vous à Seerr avec votre compte du serveur multimédia, ou choisissez un autre lecteur dans Réglages → Lecteur externe."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Встроенный плеер использует ваш вход в Plex, Jellyfin или Emby. Войдите в Seerr с учётной записью медиасервера или выберите другой плеер в разделе «Настройки» → «Внешний плеер»."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置播放器使用你的 Plex、Jellyfin 或 Emby 登录信息。请使用媒体服务器账户登录 Seerr，或在“设置”→“外部播放器”中选择其他播放器。"
           }
         }
       }
@@ -9005,6 +9453,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "你的 Apple TV 未连接到网络。"
+          }
+        }
+      }
+    },
+    "Your Plex account can't see this server." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu cuenta de Plex no puede ver este servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre compte Plex ne peut pas voir ce serveur."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваша учётная запись Plex не видит этот сервер."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的 Plex 账户无法访问此服务器。"
           }
         }
       }
