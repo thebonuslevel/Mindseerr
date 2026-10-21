@@ -22,7 +22,8 @@ enum SuggestionEngine {
     private static let ratedCandidates = 60
     /// Seerr's Trending pages to read (20 titles each).
     private static let trendingPages = 3
-    static let resultCount = 40
+    /// How many ranked titles the engine returns; the row shows `SuggestionsModel.shownCount` of them, reshuffled.
+    static let resultCount = 80
 
     /// The four weights; they add up to 1.
     private static let tasteWeight = 0.5, qualityWeight = 0.25, trendingWeight = 0.125, newWeight = 0.125
@@ -152,25 +153,111 @@ private extension Optional {
     }
 }
 
-/// The suggestions shown on Discover. Cached for a few hours so they aren't recomputed on every visit.
+/// The suggestions shown on Discover. The engine's ranked pool is kept for a few hours so it isn't recomputed on every
+/// visit, and what is shown from it is reshuffled every 48 hours. A title that was in the top 10 isn't allowed back into
+/// the top 10 for 8 days (unless the pool is too small to avoid it). The order, when it changed and which titles were in
+/// each top 10 are saved, so relaunching the app doesn't reshuffle.
 @MainActor
 @Observable
 final class SuggestionsModel {
     private(set) var items: [MediaResult] = []
     private(set) var loading = false
     @ObservationIgnored private var loadedAt: Date?
+    @ObservationIgnored private var pool: [MediaResult] = []
 
+    static let shownCount = 40
+    static let topCount = 10
     private let freshFor: TimeInterval = 3 * 3600
+    private let shuffleEvery: TimeInterval = 48 * 3600
+    private let topRepeatGap: TimeInterval = 8 * 24 * 3600
+    /// The titles near the top of the ranking that a new top 10 is drawn from.
+    private let topDrawPool = 30
+
+    /// The current time. In a debug build, MINDSEERR_SUGGESTIONS_DAYS_AHEAD moves it forward, to try the 48-hour and
+    /// 8-day rules without waiting.
+    private var now: Date {
+        #if DEBUG
+        if let days = ProcessInfo.processInfo.environment["MINDSEERR_SUGGESTIONS_DAYS_AHEAD"].flatMap(Double.init) {
+            return Date().addingTimeInterval(days * 86400)
+        }
+        #endif
+        return Date()
+    }
+
+    private struct Saved: Codable {
+        var order: [String] = []
+        var shuffledAt: Date?
+        /// Each top 10 that was shown, with when it first appeared.
+        var tops: [Top] = []
+        struct Top: Codable { var at: Date; var ids: [String] }
+    }
+
+    @ObservationIgnored private var saved: Saved = {
+        UserDefaults.standard.data(forKey: "suggestions.shuffle").flatMap { try? JSONDecoder().decode(Saved.self, from: $0) } ?? Saved()
+    }()
 
     func refresh(api: SeerrClient, userId: Int?, force: Bool = false) async {
         guard !loading else { return }
-        if !force, let loadedAt, Date().timeIntervalSince(loadedAt) < freshFor, !items.isEmpty { return }
+        let poolFresh = loadedAt.map { Date().timeIntervalSince($0) < freshFor } ?? false
+        if !force, poolFresh, !pool.isEmpty {
+            // The ranking is still good; only the order shown may be due for a change.
+            if shuffleDue { arrange() }
+            return
+        }
         loading = true
         defer { loading = false }
         let fresh = await SuggestionEngine.suggestions(api: api, userId: userId)
         guard !Task.isCancelled else { return }
-        items = fresh
+        pool = fresh
         loadedAt = Date()
-        MediaRowModel.saveForTopShelf(fresh, section: .suggested)
+        arrange()
+    }
+
+    private var shuffleDue: Bool {
+        guard let at = saved.shuffledAt else { return true }
+        return now.timeIntervalSince(at) >= shuffleEvery
+    }
+
+    /// Sets `items` from the pool: the saved order while it's less than 48 hours old, a fresh shuffle after that.
+    private func arrange() {
+        let byID = Dictionary(pool.map { ($0.uid, $0) }, uniquingKeysWith: { first, _ in first })
+        var order: [MediaResult]
+        if !shuffleDue, !saved.order.isEmpty {
+            // Keep what was being shown (minus anything that left the pool), then top up from the rest of the ranking.
+            order = saved.order.compactMap { byID[$0] }
+            let have = Set(order.map(\.uid))
+            order += pool.filter { !have.contains($0.uid) }
+        } else {
+            order = shuffled()
+        }
+        items = Array(order.prefix(Self.shownCount))
+        MediaRowModel.saveForTopShelf(items, section: .suggested)
+    }
+
+    /// A new order: a top 10 drawn at random from the best-ranked titles not in a top 10 within the last 8 days, then
+    /// the rest of the ranking, loosely mixed.
+    private func shuffled() -> [MediaResult] {
+        let now = self.now
+        var tops = saved.tops.filter { now.timeIntervalSince($0.at) < topRepeatGap }
+        let barred = Set(tops.flatMap(\.ids))
+        var eligible = pool.filter { !barred.contains($0.uid) }
+        // Too few left to fill a top 10: let back the ones that have been out the longest.
+        if eligible.count < Self.topCount {
+            let oldestFirst = tops.sorted { $0.at < $1.at }.flatMap(\.ids)
+            for id in oldestFirst where eligible.count < Self.topCount {
+                if let item = pool.first(where: { $0.uid == id }), !eligible.contains(where: { $0.uid == id }) { eligible.append(item) }
+            }
+        }
+        let top = Array(eligible.prefix(topDrawPool).shuffled().prefix(Self.topCount))
+        let topIDs = Set(top.map(\.uid))
+        // Below the top 10, the remaining titles in a loosely shuffled order: rank still counts, in blocks of ten.
+        let rest = pool.filter { !topIDs.contains($0.uid) }
+        let mixed = stride(from: 0, to: rest.count, by: 10).flatMap { Array(rest[$0..<min($0 + 10, rest.count)]).shuffled() }
+        let order = top + mixed
+
+        tops.append(Saved.Top(at: now, ids: top.map(\.uid)))
+        saved = Saved(order: order.map(\.uid), shuffledAt: now, tops: tops)
+        if let data = try? JSONEncoder().encode(saved) { UserDefaults.standard.set(data, forKey: "suggestions.shuffle") }
+        return order
     }
 }
