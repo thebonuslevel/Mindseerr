@@ -64,6 +64,14 @@ struct SearchView: View {
 
     @Environment(\.appTheme) private var theme
     static let menuClearance: CGFloat = 140
+    private func lineCover(width: CGFloat) -> some View {
+        Rectangle()
+            .fill(theme.background)
+            .frame(width: width, height: 14)
+            .padding(.top, 207)
+            .allowsHitTesting(false)
+    }
+
     private static let topID = "search-top"
 
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
@@ -85,15 +93,11 @@ struct SearchView: View {
         // of the menu as a safe area: that moves the left edge in without cutting off the system's "Hold to dictate" on the
         // right, which plain padding did. The results' own margin is reduced by the same amount (see MainTabView).
         .safeAreaPadding(.leading, SearchView.menuClearance)
-        // The system draws a line under the keyboard from the page's left edge, which runs into the collapsed menu. A strip
-        // of the page's own background hides its first stretch, so the line starts clear of the menu.
-        .overlay(alignment: .topLeading) {
-            Rectangle()
-                .fill(theme.background)
-                .frame(width: SideMenu.collapsedWidth + 40, height: 14)
-                .padding(.top, 207)
-                .allowsHitTesting(false)
-        }
+        // The system draws a line under the keyboard from the page's left edge to near its right, which runs into the
+        // collapsed menu. Strips of the page's own background hide both ends by the same amount, so the line starts clear
+        // of the menu and sits centered.
+        .overlay(alignment: .topLeading) { lineCover(width: SideMenu.collapsedWidth + 40) }
+        .overlay(alignment: .topTrailing) { lineCover(width: SideMenu.collapsedWidth + 40 - 80) }   // the right edge already sits 80 in
         // Leaving the tab closes any open title, clears the search and scrolls to the top, so coming back shows
         // the empty Search page. (On the stack itself: a pushed title also hides the results, which mustn't reset anything.)
         .onDisappear {
