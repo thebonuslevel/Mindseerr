@@ -83,7 +83,7 @@ private struct BrowseTile: View {
             .accessibilityLabel(target.name)
         } else {
             NavigationLink(value: target) {
-                CompanyTile(name: target.name, logoPath: logo, bundledLogo: KnownCompanies.bundledLogos[target.id])
+                CompanyTile(name: target.name, logoPath: logo, boxed: KnownCompanies.boxedLogos.contains(target.id))
             }
             .accessibilityLabel(target.name)
         }
@@ -214,14 +214,14 @@ private struct CompanyTile: View {
     @Environment(\.isFocused) private var focused
     let name: String
     let logoPath: String?
-    /// A logo shipped in the app, for one whose TMDB version doesn't whiten well.
-    var bundledLogo: String?
+    /// The logo is a coloured box with lettering in it: cut the box away and show the lettering in white.
+    var boxed = false
 
     var body: some View {
         Group {
-            if let bundledLogo {
-                Image(bundledLogo).resizable().scaledToFit()
-                    .brightness(focused ? -1 : 1)
+            if boxed, let url = TMDBImage.url(logoPath, size: .logo) {
+                BoxedLogo(url: url, name: name)
+                    .brightness(focused ? -1 : 0)
             } else if let url = TMDBImage.url(logoPath, size: .logo) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image {
@@ -351,5 +351,59 @@ struct BrowseResultsView: View {
         .task(id: model.sort) {
             if model.items.isEmpty { await model.loadMore(using: app.api) }
         }
+    }
+}
+
+/// A logo with a coloured box behind its lettering, drawn as white lettering on nothing. The pixels are read once the
+/// image has downloaded: reddish ones (the box) disappear, everything else turns white.
+private struct BoxedLogo: View {
+    let url: URL
+    let name: String
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+            } else {
+                Text(name).lineLimit(1).opacity(failed ? 1 : 0)
+            }
+        }
+        .task(id: url) {
+            guard image == nil else { return }
+            if let cached = LogoMask.cache.object(forKey: url as NSURL) { image = cached; return }
+            guard let (data, _) = try? await URLSession.shared.data(from: url),
+                  let made = LogoMask.make(from: data) else { failed = true; return }
+            LogoMask.cache.setObject(made, forKey: url as NSURL)
+            image = made
+        }
+    }
+}
+
+enum LogoMask {
+    nonisolated(unsafe) static let cache = NSCache<NSURL, UIImage>()
+
+    /// White lettering from a logo that has a coloured box: the more a pixel leans red, the more transparent it becomes.
+    static func make(from data: Data) -> UIImage? {
+        guard let source = UIImage(data: data)?.cgImage else { return nil }
+        let width = source.width, height = source.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        guard let context = CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
+        for i in stride(from: 0, to: pixels.count, by: 4) {
+            let alpha = Double(pixels[i + 3]) / 255
+            // Premultiplied: undo it to read the real colour.
+            let r = alpha > 0 ? Double(pixels[i]) / 255 / alpha : 0
+            let g = alpha > 0 ? Double(pixels[i + 1]) / 255 / alpha : 0
+            let b = alpha > 0 ? Double(pixels[i + 2]) / 255 / alpha : 0
+            let redness = min(max((r - (g + b) / 2) * 2, 0), 1)
+            let out = UInt8(max(0, min(255, alpha * (1 - redness) * 255)))
+            pixels[i] = out; pixels[i + 1] = out; pixels[i + 2] = out; pixels[i + 3] = out   // white at that alpha, premultiplied
+        }
+        guard let result = context.makeImage() else { return nil }
+        return UIImage(cgImage: result)
     }
 }

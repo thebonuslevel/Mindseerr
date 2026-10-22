@@ -75,8 +75,9 @@ enum BrowseSort: String, CaseIterable, Sendable {
 
 /// Well-known studios and networks, by their TMDB ids. Seerr has no list of them to ask for, only titles by id.
 enum KnownCompanies {
-    /// Logos shipped in the app, by studio id, where TMDB's own doesn't whiten cleanly.
-    static let bundledLogos: [Int: String] = [420: "MarvelStudiosLogo"]
+    /// Studios whose logo from Seerr is a coloured box with lettering in it (Marvel's red box), which would come out
+    /// as a plain white block if every pixel were whitened. The box is cut away instead (see `LogoMask`).
+    static let boxedLogos: Set<Int> = [420]
 
     static let studios: [(id: Int, name: String)] = [
         (2, "Disney"), (3, "Pixar"), (420, "Marvel Studios"), (9993, "DC Entertainment"), (174, "Warner Bros."),
