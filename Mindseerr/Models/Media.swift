@@ -246,6 +246,8 @@ struct RelatedVideo: Decodable, Sendable {
 struct Genre: Decodable, Identifiable, Sendable {
     let id: Int
     let name: String
+    /// TMDB backdrop paths for the genre's card, from Seerr's genre list. Absent on a title's own genres.
+    let backdrops: [String]?
 }
 
 struct Season: Decodable, Identifiable, Sendable {

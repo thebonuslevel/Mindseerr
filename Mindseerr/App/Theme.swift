@@ -73,7 +73,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
     }
 }
 
-private extension Color {
+extension Color {
     /// A color from a 0xRRGGBB value.
     init(hex: UInt32) {
         self.init(red: Double((hex >> 16) & 0xFF) / 255,

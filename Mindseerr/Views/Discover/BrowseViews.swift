@@ -31,6 +31,8 @@ final class BrowseListModel {
     private(set) var targets: [BrowseTarget] = []
     /// TMDB logo paths for studios and networks, by id, as they arrive.
     private(set) var logos: [Int: String] = [:]
+    /// A backdrop path for each genre's card, by id.
+    private(set) var backdrops: [Int: String] = [:]
     private(set) var loading = true
     private(set) var error: String?
     @ObservationIgnored private var started = false
@@ -48,9 +50,10 @@ final class BrowseListModel {
         case .movieGenres, .tvGenres:
             do {
                 let type = kind.mediaType
-                targets = try await api.genres(for: type)
+                let genres = try await api.genres(for: type)
                     .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-                    .map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
+                for genre in genres { if let path = GenreStyle.backdrop(from: genre.backdrops) { backdrops[genre.id] = path } }
+                targets = genres.map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
             } catch {
                 self.error = AppState.friendly(error)
                 started = false
@@ -69,18 +72,49 @@ final class BrowseListModel {
 private struct BrowseTile: View {
     let target: BrowseTarget
     let logo: String?
+    var backdrop: String?
 
     var body: some View {
-        NavigationLink(value: target) {
-            if target.filter == .genre {
-                Text(target.name)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity)
-            } else {
+        if target.filter == .genre {
+            NavigationLink(value: target) {
+                GenreCard(target: target, backdrop: backdrop)
+            }
+            .buttonStyle(.card)
+            .accessibilityLabel(target.name)
+        } else {
+            NavigationLink(value: target) {
                 CompanyTile(name: target.name, logoPath: logo, bundledLogo: KnownCompanies.bundledLogos[target.id])
             }
+            .accessibilityLabel(target.name)
         }
-        .accessibilityLabel(target.name)
+    }
+}
+
+/// A genre as a card: one of its backdrops tinted in the genre's own two colors, with the name over it.
+private struct GenreCard: View {
+    let target: BrowseTarget
+    let backdrop: String?
+
+    var body: some View {
+        let tone = GenreStyle.tone(for: target.id)
+        ZStack {
+            LinearGradient(colors: [Color(hex: UInt32(tone.dark, radix: 16) ?? 0x1F2937), Color(hex: UInt32(tone.light, radix: 16) ?? 0xD1D5DB).opacity(0.5)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            if let backdrop, let url = GenreStyle.imageURL(path: backdrop, genreID: target.id) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image { image.resizable().scaledToFill() }
+                }
+            }
+            Text(target.name)
+                .font(.title3).fontWeight(.heavy)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.35), radius: 4, y: 1)
+                .padding(.horizontal, 16)
+        }
+        .frame(height: 190)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -123,8 +157,8 @@ struct BrowseSectionRow: View {
                             ProgressView().padding(.horizontal, 60)
                         }
                         ForEach(model.targets, id: \.self) { target in
-                            BrowseTile(target: target, logo: model.logos[target.id])
-                                .frame(width: model.kind == .movieGenres || model.kind == .tvGenres ? 300 : 340)
+                            BrowseTile(target: target, logo: model.logos[target.id], backdrop: model.backdrops[target.id])
+                                .frame(width: model.kind == .movieGenres || model.kind == .tvGenres ? 340 : 340)
                         }
                     }
                     .padding(.vertical, 30) // room for the focus lift
@@ -145,7 +179,7 @@ struct BrowseListView: View {
     @Environment(AppState.self) private var app
     let model: BrowseListModel
 
-    private let columns = [GridItem(.adaptive(minimum: 320, maximum: 420), spacing: 30, alignment: .top)]
+    private let columns = [GridItem(.adaptive(minimum: 320, maximum: 380), spacing: 30, alignment: .top)]
 
     var body: some View {
         ScrollView {
@@ -159,7 +193,7 @@ struct BrowseListView: View {
                 } else {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 30) {
                         ForEach(model.targets, id: \.self) { target in
-                            BrowseTile(target: target, logo: model.logos[target.id])
+                            BrowseTile(target: target, logo: model.logos[target.id], backdrop: model.backdrops[target.id])
                         }
                     }
                     .focusSection()

@@ -91,3 +91,39 @@ enum KnownCompanies {
         (67, "Showtime"), (4, "BBC One"), (56, "Cartoon Network"), (80, "Adult Swim"),
     ]
 }
+
+/// How a genre's card looks: Seerr's own duotone pair for the genre, applied to one of its backdrops by TMDB's image
+/// service (the same way Seerr's website does it).
+enum GenreStyle {
+    private static let tones: [String: (dark: String, light: String)] = [
+        "red": ("991B1B", "FCA5A5"), "darkred": ("1F2937", "F87171"), "blue": ("032541", "01B4E4"),
+        "lightblue": ("1F2937", "60A5FA"), "darkblue": ("1F2937", "2864D2"), "orange": ("92400E", "FCD34D"),
+        "lightgreen": ("065F46", "6EE7B7"), "green": ("087D29", "21CB51"), "purple": ("5B21B6", "C4B5FD"),
+        "yellow": ("777E0D", "E4ED55"), "darkorange": ("552C01", "D47C1D"), "black": ("1F2937", "D1D5DB"),
+        "pink": ("9D174D", "F9A8D4"), "darkpurple": ("480C8B", "A96BEF"),
+    ]
+
+    /// TMDB genre id to tone, as on Seerr's website.
+    private static let byGenre: [Int: String] = [
+        28: "red", 12: "darkpurple", 16: "blue", 35: "orange", 80: "darkblue", 99: "lightgreen", 18: "pink",
+        10751: "yellow", 14: "lightblue", 36: "orange", 27: "black", 10402: "blue", 9648: "purple", 10749: "pink",
+        878: "lightblue", 10770: "red", 53: "black", 10752: "darkred", 37: "orange", 10759: "darkpurple",
+        10762: "blue", 10763: "black", 10764: "darkorange", 10765: "lightblue", 10766: "pink", 10767: "lightgreen",
+        10768: "darkred",
+    ]
+
+    static func tone(for genreID: Int) -> (dark: String, light: String) {
+        tones[byGenre[genreID] ?? "black"] ?? ("1F2937", "D1D5DB")
+    }
+
+    /// Seerr shows the fifth backdrop; fall back to the last one there is.
+    static func backdrop(from paths: [String]?) -> String? {
+        guard let paths, !paths.isEmpty else { return nil }
+        return paths.count > 4 ? paths[4] : paths.last
+    }
+
+    static func imageURL(path: String, genreID: Int) -> URL? {
+        let tone = tone(for: genreID)
+        return URL(string: "https://image.tmdb.org/t/p/w780_filter(duotone,\(tone.dark),\(tone.light))\(path)")
+    }
+}
