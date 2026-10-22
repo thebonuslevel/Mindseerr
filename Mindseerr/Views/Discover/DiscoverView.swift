@@ -58,6 +58,7 @@ final class MediaRowModel: Identifiable {
 enum DiscoverRoute: Hashable {
     case section(DiscoverSection)
     case suggestions
+    case seasonal
 }
 
 struct DiscoverView: View {
@@ -75,6 +76,9 @@ struct DiscoverView: View {
                     if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
                         SuggestionsRowView(model: app.suggestions) { path.append(DiscoverRoute.suggestions) }
                     }
+                    if !hidden.contains(DiscoverLayout.Entry.seasonal.rawValue) {
+                        SeasonalRowView(model: app.seasonal) { path.append(DiscoverRoute.seasonal) }
+                    }
                     ForEach(rows.filter { !hidden.contains($0.section.rawValue) }) { row in
                         MediaRowView(model: row) { path.append(DiscoverRoute.section(row.section)) }
                     }
@@ -89,7 +93,14 @@ struct DiscoverView: View {
                     if let model = rows.first(where: { $0.section == section }) { ExpandedSectionView(model: model) }
                 case .suggestions:
                     ExpandedSuggestionsView(model: app.suggestions)
+                case .seasonal:
+                    ExpandedSeasonalView(model: app.seasonal)
                 }
+            }
+        }
+        .task(id: hiddenStored) {
+            if !hidden.contains(DiscoverLayout.Entry.seasonal.rawValue) {
+                await app.seasonal.refresh(api: app.api)
             }
         }
         .task(id: hiddenStored) {
@@ -254,6 +265,68 @@ struct ExpandedSuggestionsView: View {
         ScrollView(.vertical) {
             LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
                 ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
+            }
+            .padding(.vertical, 30) // room for the focus lift
+        }
+        .scrollClipDisabled()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .themedBackground()
+    }
+}
+
+/// Picks for the holiday that's coming up, as a row of posters under the holiday's name. Hidden when no holiday is near
+/// or nothing has loaded.
+struct SeasonalRowView: View {
+    let model: SeasonalModel
+    let onExpand: () -> Void
+    @FocusState private var titleFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let holiday = model.holiday, !model.items.isEmpty {
+                Button(action: onExpand) {
+                    HStack(spacing: 16) {
+                        Text(holiday.title)
+                            .font(.title3).fontWeight(.semibold)
+                        if titleFocused {
+                            Label("Expand", systemImage: "arrow.up.left.and.arrow.down.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .buttonStyle(ThemedButtonStyle(idleFill: false))
+                .focused($titleFocused)
+                .animation(.easeOut(duration: 0.15), value: titleFocused)
+
+                ScrollView(.horizontal) {
+                    LazyHStack(alignment: .top, spacing: 40) {
+                        ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
+                    }
+                    .padding(.vertical, 30) // room for the focus lift
+                }
+                .scrollClipDisabled()
+            }
+        }
+        .focusSection()
+    }
+}
+
+/// The holiday's picks as a full-screen grid.
+struct ExpandedSeasonalView: View {
+    let model: SeasonalModel
+
+    private let columns = [GridItem(.adaptive(minimum: 240), spacing: 40)]
+
+    var body: some View {
+        ScrollView(.vertical) {
+            VStack(alignment: .leading, spacing: 30) {
+                if let holiday = model.holiday {
+                    Text(holiday.title).font(.title3).fontWeight(.semibold)
+                }
+                LazyVGrid(columns: columns, alignment: .leading, spacing: 50) {
+                    ForEach(model.items, id: \.uid) { PosterCard(item: $0) }
+                }
             }
             .padding(.vertical, 30) // room for the focus lift
         }

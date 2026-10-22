@@ -389,6 +389,12 @@ class Handler(BaseHTTPRequestHandler):
             kind = "movie" if p.endswith("movie") else "tv"
             names = sorted({g for t in CATALOG["titles"] if t["type"] == kind for g in t["genres"]})
             return self.send_json([{"id": 100 + i, "name": n, "backdrops": []} for i, n in enumerate(names)])
+        if p == "/search/keyword":
+            return self.send_json({"page": 1, "totalPages": 1, "totalResults": 1, "results": [{"id": 3335, "name": q.get("query", "")}]})
+        if p in ("/discover/movies", "/discover/tv") and "keywords" in q:
+            kind = "movie" if p.endswith("movies") else "tv"
+            pool = [t for t in CATALOG["titles"] if t["type"] == kind][:8]
+            return self.send_json({"page": 1, "totalPages": 1, "totalResults": len(pool), "results": [result(t) for t in pool]})
         if p in ("/discover/movies", "/discover/tv") and any(k in q for k in ("genre", "studio", "network", "sortBy")):
             kind = "movie" if p.endswith("movies") else "tv"
             pool = [t for t in CATALOG["titles"] if t["type"] == kind]

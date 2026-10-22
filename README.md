@@ -71,6 +71,7 @@ The menu runs down the left edge: **Discover, Browse, Search, Watchlists and Act
 ![Discover with Suggested for You and Recently Added rows](docs/screenshots/discover-browse.png)
 
 - **Browse** has its own item in the side menu, laid out like Discover: a row each for **Movie Genres, Series Genres, Studios and Networks**. Select a row's title to open it as a full grid, or pick a tile to see its titles. The heading on each results page changes the order (Most Popular, Newest and so on), and studios and networks appear as white logos.
+- **Seasonal picks** appear in the run-up to a popular holiday (Christmas, Halloween, Thanksgiving, Easter, Valentine's Day, St. Patrick's Day, the Fourth of July and New Year's Eve): a row such as "🎃 Halloween Picks" with movies and series TMDB tags with that holiday, expandable like the others. It's hidden the rest of the year and can be switched off under **Settings → Discover → Discover Sections**.
 - **Suggested for You**, **Recently Added**, **Trending**, **Popular Movies**, **Upcoming Movies**, **Popular Series** and **Upcoming Series**. Rows page in more as you scroll, and each title expands into a full-screen grid.
 - Every section can be switched off under **Settings → Discover → Discover Sections**.
 

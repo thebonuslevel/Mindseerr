@@ -169,6 +169,26 @@ actor SeerrClient {
         return try await send(target.type == .tv ? "discover/tv" : "discover/movies", query: query)
     }
 
+    /// TMDB's id for a holiday's keyword (asked of Seerr once, then remembered).
+    func keywordID(for holiday: Holiday) async -> Int? {
+        let key = "seasonal.keyword.\(holiday.id)"
+        let saved = UserDefaults.standard.integer(forKey: key)
+        if saved != 0 { return saved }
+        struct Keyword: Decodable { let id: Int; let name: String }
+        struct Page: Decodable { let results: [Keyword] }
+        guard let page: Page = try? await send("search/keyword", query: ["query": holiday.keyword]) else { return nil }
+        let match = page.results.first { $0.name.lowercased() == holiday.keyword } ?? page.results.first
+        if let match { UserDefaults.standard.set(match.id, forKey: key) }
+        return match?.id
+    }
+
+    /// The most popular titles TMDB tags with a keyword.
+    func keywordTitles(_ keyword: Int, type: MediaType) async throws -> [MediaResult] {
+        let page: PagedResponse<MediaResult> = try await send(type == .tv ? "discover/tv" : "discover/movies",
+                                                              query: ["keywords": "\(keyword)", "sortBy": "popularity.desc"])
+        return page.results
+    }
+
     /// The newest titles on the server (available or partly available), newest first. Seerr lists them as bare
     /// media records, so each one's details are looked up (and cached) to get its title and poster.
     func recentlyAdded(page: Int) async throws -> PagedResponse<MediaResult> {
