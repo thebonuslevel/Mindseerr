@@ -329,6 +329,8 @@ struct APIKeySignInView: View {
 struct PlexSignInView: View {
     @Environment(AppState.self) private var app
     @State private var pin: PlexPin?
+    /// A second PIN, behind the QR code, whose long code fills itself in when scanned.
+    @State private var scanPin: PlexPin?
     @State private var error: String?
     @State private var signingIn = false
     @State private var attempt = 0
@@ -402,8 +404,19 @@ struct PlexSignInView: View {
                     .foregroundStyle(.secondary)
                 }
 
-                QRCodeView(text: "https://plex.tv/link")
-                    .frame(width: 300, height: 300)
+                VStack(spacing: 20) {
+                    QRCodeView(text: scanPin.map { PlexAuth.authAppURL(code: $0.code) } ?? "https://plex.tv/link")
+                        .frame(width: 300, height: 300)
+                    Group {
+                        if scanPin == nil {
+                            Text("Scan to open plex.tv/link")
+                        } else {
+                            Text("Or scan this: the code fills in for you")
+                        }
+                    }
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                }
             }
 
             if let error {
@@ -423,16 +436,25 @@ struct PlexSignInView: View {
         guard confirmed else { return }
         error = nil
         pin = nil
+        scanPin = nil
         do {
             let newPin = try await PlexAuth.createPin()
             pin = newPin
+            // The QR code carries its own long code. If that can't be made, it just opens plex.tv/link.
+            scanPin = try? await PlexAuth.createPin(strong: true)
             let deadline = Date().addingTimeInterval(TimeInterval(newPin.expiresIn ?? 900))
 
             while Date() < deadline {
                 try await Task.sleep(for: .seconds(2))
-                // Ignore transient polling failures; keep waiting until the code expires.
-                guard let checked = try? await PlexAuth.checkPin(newPin.id),
-                      let token = checked.authToken, !token.isEmpty else { continue }
+                // Whichever code is used first wins. Ignore transient polling failures; keep waiting until the code expires.
+                var found: String?
+                for candidate in [pin, scanPin].compactMap({ $0 }) {
+                    if let checked = try? await PlexAuth.checkPin(candidate.id), let token = checked.authToken, !token.isEmpty {
+                        found = token
+                        break
+                    }
+                }
+                guard let token = found else { continue }
 
                 signingIn = true
                 defer { signingIn = false }

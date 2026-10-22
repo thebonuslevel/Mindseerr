@@ -5367,6 +5367,34 @@
         }
       }
     },
+    "Or scan this: the code fills in for you" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O escanea esto: el código se rellena solo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ou scannez ceci : le code se remplit tout seul"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Или отсканируйте это: код подставится сам"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "或扫描此码：验证码会自动填入"
+          }
+        }
+      }
+    },
     "Or sign in with" : {
       "localizations" : {
         "es" : {
@@ -6775,6 +6803,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "用手机扫描二维码，然后在 themoviedb.org 上选择“Approve”。"
+          }
+        }
+      }
+    },
+    "Scan to open plex.tv/link" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escanea para abrir plex.tv/link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scannez pour ouvrir plex.tv/link"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отсканируйте, чтобы открыть plex.tv/link"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扫描以打开 plex.tv/link"
           }
         }
       }

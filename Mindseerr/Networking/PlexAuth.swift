@@ -21,10 +21,19 @@ enum PlexAuth {
     }
 
     /// `strong=false` returns a 4-character code that plex.tv/link accepts.
-    static func createPin() async throws -> PlexPin {
-        var request = makeRequest(URL(string: "https://plex.tv/api/v2/pins?strong=false")!)
+    static func createPin(strong: Bool = false) async throws -> PlexPin {
+        var request = makeRequest(URL(string: "https://plex.tv/api/v2/pins?strong=\(strong)")!)
         request.httpMethod = "POST"
         return try await fetch(request)
+    }
+
+    /// The link behind the QR code: Plex's sign-in page with a long ("strong") code already filled in, so scanning it
+    /// and approving on the phone is all it takes. Takes the code of a PIN made with `strong: true`.
+    static func authAppURL(code: String) -> String {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "&=+[]")
+        func encode(_ text: String) -> String { text.addingPercentEncoding(withAllowedCharacters: allowed) ?? text }
+        return "https://app.plex.tv/auth#?clientID=\(encode(clientIdentifier))&code=\(encode(code))&context%5Bdevice%5D%5Bproduct%5D=\(encode(product))"
     }
 
     static func checkPin(_ id: Int) async throws -> PlexPin {
