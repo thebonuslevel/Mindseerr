@@ -237,8 +237,10 @@ private struct CompanyTile: View {
                 Text(name).lineLimit(1)
             }
         }
+        .padding(.horizontal, 24)
         .frame(maxWidth: .infinity)
-        .frame(height: 64)
+        // The button adds 16 above and below, so this makes it as tall as a genre card (190).
+        .frame(height: 158)
     }
 }
 
