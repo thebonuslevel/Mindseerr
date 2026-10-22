@@ -57,16 +57,28 @@ final class BrowseListModel {
         case .networks:
             targets = KnownCompanies.networks.map { BrowseTarget(type: .tv, filter: .network, id: $0.id, name: $0.name) }
         case .movieGenres, .tvGenres:
-            do {
-                let type = kind.mediaType
-                let genres = try await api.genres(for: type)
-                    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-                for genre in genres { if let path = GenreStyle.backdrop(from: genre.backdrops) { backdrops[genre.id] = path } }
-                targets = genres.map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
-            } catch {
-                self.error = AppState.friendly(error)
-                started = false
+            let type = kind.mediaType
+            var entries: [GenreCache.Entry]
+            let saved = GenreCache.load(type)
+            if let saved, saved.fresh {
+                entries = saved.genres
+            } else {
+                do {
+                    entries = try await api.genres(for: type)
+                        .map { GenreCache.Entry(id: $0.id, name: $0.name, backdrop: GenreStyle.backdrop(from: $0.backdrops)) }
+                    GenreCache.save(entries, for: type)
+                } catch {
+                    // Seerr can't be reached: an out-of-date list is better than none.
+                    if let saved { entries = saved.genres } else {
+                        self.error = AppState.friendly(error)
+                        started = false
+                        entries = []
+                    }
+                }
             }
+            entries.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            for entry in entries { if let path = entry.backdrop { backdrops[entry.id] = path } }
+            targets = entries.map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
         }
         loading = false
         // Studios and networks show their logos. The ones Seerr has already named are used at once; the rest are asked
@@ -112,9 +124,7 @@ private struct GenreCard: View {
             LinearGradient(colors: [Color(hex: UInt32(tone.dark, radix: 16) ?? 0x1F2937), Color(hex: UInt32(tone.light, radix: 16) ?? 0xD1D5DB).opacity(0.5)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             if let backdrop, let url = GenreStyle.imageURL(path: backdrop, genreID: target.id) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image { image.resizable().scaledToFill() }
-                }
+                CachedPhoto(url: url, maxAge: GenreCache.maxAge)
             }
             Text(target.name)
                 .font(.title3).fontWeight(.heavy)
@@ -361,6 +371,23 @@ enum LogoTreatment: Sendable {
     case cutBox
     /// Keep the artwork's light and dark as white and see-through (Warner Bros.' shield, MGM's lion).
     case shaded
+}
+
+/// A card's backdrop from the cache folder, downloaded again once it's older than `maxAge`. Nothing shows until it's there.
+private struct CachedPhoto: View {
+    let url: URL
+    let maxAge: TimeInterval
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image { Image(uiImage: image).resizable().scaledToFill() }
+        }
+        .task(id: url) {
+            guard image == nil, let data = await LogoCache.imageData(for: url, maxAge: maxAge) else { return }
+            image = UIImage(data: data)
+        }
+    }
 }
 
 /// A logo image from the cache folder (downloaded once, then kept), or the company's name until it's there.
