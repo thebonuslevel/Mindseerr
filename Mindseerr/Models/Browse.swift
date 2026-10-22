@@ -29,6 +29,8 @@ enum BrowseKind: String, Hashable, CaseIterable, Identifiable, Sendable {
 
 /// One genre, studio or network to list titles for.
 struct BrowseTarget: Hashable, Sendable {
+    /// "studio:420" or "network:213": unique across the two kinds, which can share ids.
+    var cacheKey: String { "\(filter == .network ? "network" : "studio"):\(id)" }
     enum Filter: String, Hashable, Sendable { case genre, studio, network }
 
     let type: MediaType
@@ -77,7 +79,27 @@ enum BrowseSort: String, CaseIterable, Sendable {
 enum KnownCompanies {
     /// Studios whose logo from Seerr would come out as a plain white blob if every pixel were whitened: Marvel's is a red
     /// box with lettering in it, and Warner Bros.' and MGM's are full-colour artwork. See `LogoMask` for the two treatments.
-    static let treatedLogos: [Int: LogoTreatment] = [420: .cutBox, 174: .shaded, 21: .shaded]
+    /// Keyed by "studio:id", since a studio and a network can share an id (174 is both Warner Bros. and AMC).
+    static let treatedLogos: [String: LogoTreatment] = ["studio:420": .cutBox, "studio:174": .shaded, "studio:21": .shaded]
+
+    /// TMDB's logo for each, used until Seerr has named one (or when it can't be asked). Seerr's answer replaces it.
+    static let fallbackLogos: [String: String] = [
+        "network:213": "/wwemzKWzjKYJFfCeiB57q3r4Bcm.png", "network:49": "/tuomPhY2UtuPTqqFnKMVHvSb724.png",
+        "network:2739": "/1edZOYAfoyZyZ3rklNSiUpXX30Q.png", "network:2552": "/bngHRFi794mnMq34gfVcm9nDxN1.png",
+        "network:1024": "/w7HfLNm9CWwRmAMU58udl2L7We7.png", "network:453": "/pqUTCleNUiTLAVlelGxUgWn1ELh.png",
+        "network:4330": "/fi83B1oztoS47xxcemFdPMhIzK.png", "network:3353": "/gIAcGTjKKr0KOHL5s4O36roJ8p7.png",
+        "network:174": "/pmvRmATOCaDykE6JrVoeYxlFHw3.png", "network:88": "/aexGjtcs42DgRtZh7zOxayiry4J.png",
+        "network:67": "/Allse9kbjiP6ExaQrnSpIhkurEi.png", "network:4": "/uJjcCg3O4DMEjM0xtno9OWFciRP.png",
+        "network:56": "/c5OC6oVCg6QP4eqzW6XIq17CQjI.png", "network:80": "/tHZPHOLc6iF27G34cAZGPsMtMSy.png",
+        "studio:2": "/wdrCwmRnLFJhEoH8GSfymY85KHT.png", "studio:3": "/1TjvGVDMYsj6JBxOAkUHpPEwLf7.png",
+        "studio:420": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png", "studio:9993": "/2Tc1P3Ac8M479naPp1kYT3izLS5.png",
+        "studio:174": "/zhD3hhtKB5qyv7ZeL4uLpNxgMVU.png", "studio:33": "/8lvHyhjr8oUKOOy2dKXoALWKdp0.png",
+        "studio:4": "/jay6WcMgagAklUt7i9Euwj1pzTF.png", "studio:5": "/71BqEFAF4V3qjjMPCpLuyJFB9A.png",
+        "studio:25": "/nM2MfoMqzJQRiSynsDabOtFKetD.png", "studio:21": "/usUnaYV6hQnlVAXP6r4HwrlLFPG.png",
+        "studio:1632": "/cisLn1YAUuptXVBa0xjq7ST9cH0.png", "studio:41077": "/1ZXsGaFPgrgS6ZZGS37AqD5uU12.png",
+        "studio:521": "/3BPX5VGBov8SDqTV7wC1L1xShAS.png", "studio:923": "/5UQsZrfbfG2dYJbx8DxfoTr2Bvu.png",
+        "studio:3172": "/rzKluDcRkIwHZK2pHsiT667A2Kw.png", "studio:10342": "/uFuxPEZRUcBTEiYIxjHJq62Vr77.png",
+    ]
 
     static let studios: [(id: Int, name: String)] = [
         (2, "Disney"), (3, "Pixar"), (420, "Marvel Studios"), (9993, "DC Entertainment"), (174, "Warner Bros."),

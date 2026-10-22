@@ -81,12 +81,21 @@ final class BrowseListModel {
             targets = entries.map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
         }
         loading = false
-        // Studios and networks show their logos. The ones Seerr has already named are used at once; the rest are asked
-        // for one company at a time.
+        // Studios and networks show their logos. Each one starts with what's known (Seerr's earlier answer, else TMDB's
+        // usual logo) so it appears at once. Seerr is then asked about any it hasn't answered for, trying up to three
+        // times, and its answer replaces the stand-in.
         if kind == .studios || kind == .networks {
-            for target in targets { if let known = LogoCache.path(for: target) { logos[target.id] = known } }
-            let found = await boundedMap(targets, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
-            for (id, path) in found { if let path { logos[id] = path } }
+            for target in targets {
+                if let known = LogoCache.path(for: target) ?? KnownCompanies.fallbackLogos[target.cacheKey] { logos[target.id] = known }
+            }
+            let unasked = targets.filter { LogoCache.path(for: $0) == nil }
+            for attempt in 0..<3 {
+                let pending = unasked.filter { LogoCache.path(for: $0) == nil }
+                if pending.isEmpty { break }
+                if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt) * 2)) }
+                let found = await boundedMap(pending, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
+                for (id, path) in found { if let path { logos[id] = path } }
+            }
         }
     }
 }
@@ -106,7 +115,7 @@ private struct BrowseTile: View {
             .accessibilityLabel(target.name)
         } else {
             NavigationLink(value: target) {
-                CompanyTile(name: target.name, logoPath: logo, treatment: KnownCompanies.treatedLogos[target.id])
+                CompanyTile(name: target.name, logoPath: logo, treatment: KnownCompanies.treatedLogos["\(target.filter.rawValue):\(target.id)"])
             }
             .accessibilityLabel(target.name)
         }
@@ -407,8 +416,12 @@ private struct CachedLogo: View {
         }
         .task(id: url) {
             guard image == nil else { return }
-            guard let data = await LogoCache.imageData(for: url), let loaded = UIImage(data: data) else { failed = true; return }
-            image = loaded
+            // Tried up to three times, so one dropped download doesn't leave the company's name showing.
+            for attempt in 0..<3 {
+                if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt) * 2)) }
+                if let data = await LogoCache.imageData(for: url), let loaded = UIImage(data: data) { image = loaded; return }
+            }
+            failed = true
         }
     }
 }
@@ -432,10 +445,15 @@ private struct TreatedLogo: View {
         .task(id: url) {
             guard image == nil else { return }
             if let cached = LogoMask.cache.object(forKey: url as NSURL) { image = cached; return }
-            guard let data = await LogoCache.imageData(for: url),
-                  let made = LogoMask.make(from: data, treatment: treatment) else { failed = true; return }
-            LogoMask.cache.setObject(made, forKey: url as NSURL)
-            image = made
+            for attempt in 0..<3 {
+                if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt) * 2)) }
+                if let data = await LogoCache.imageData(for: url), let made = LogoMask.make(from: data, treatment: treatment) {
+                    LogoMask.cache.setObject(made, forKey: url as NSURL)
+                    image = made
+                    return
+                }
+            }
+            failed = true
         }
     }
 }
