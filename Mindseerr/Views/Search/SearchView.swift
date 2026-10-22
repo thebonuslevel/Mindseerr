@@ -62,7 +62,8 @@ struct SearchView: View {
         }
     }
 
-    static let menuClearance: CGFloat = 72
+    @Environment(\.appTheme) private var theme
+    static let menuClearance: CGFloat = 140
     private static let topID = "search-top"
 
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
@@ -81,8 +82,18 @@ struct SearchView: View {
             .mediaDestinations()
         }
         // The search field and keyboard are laid out by the system and ignore content margins, so they're pushed clear
-        // of the menu's panel here. The results' own margin is reduced by the same amount (see MainTabView).
-        .padding(.leading, SearchView.menuClearance)
+        // of the menu as a safe area: that moves the left edge in without cutting off the system's "Hold to dictate" on the
+        // right, which plain padding did. The results' own margin is reduced by the same amount (see MainTabView).
+        .safeAreaPadding(.leading, SearchView.menuClearance)
+        // The system draws a line under the keyboard from the page's left edge, which runs into the collapsed menu. A strip
+        // of the page's own background hides its first stretch, so the line starts clear of the menu.
+        .overlay(alignment: .topLeading) {
+            Rectangle()
+                .fill(theme.background)
+                .frame(width: SideMenu.collapsedWidth + 40, height: 14)
+                .padding(.top, 207)
+                .allowsHitTesting(false)
+        }
         // Leaving the tab closes any open title, clears the search and scrolls to the top, so coming back shows
         // the empty Search page. (On the stack itself: a pushed title also hides the results, which mustn't reset anything.)
         .onDisappear {

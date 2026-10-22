@@ -58,7 +58,12 @@ extension EnvironmentValues {
 
 struct MainTabView: View {
     @Environment(AppState.self) private var app
+    #if DEBUG
+    /// MINDSEERR_START_SECTION=search (and so on) opens on that section, for screenshots without driving the remote.
+    @State private var section = AppSection.allCases.first { String(describing: $0) == ProcessInfo.processInfo.environment["MINDSEERR_START_SECTION"] } ?? .discover
+    #else
     @State private var section = AppSection.discover
+    #endif
     /// Changing this rebuilds Settings, so coming back to it shows its top level, scrolled to the top.
     @State private var settingsResetID = UUID()
     /// Changing this rebuilds whichever page is showing, sending it back to its top level (selecting its menu item again).
