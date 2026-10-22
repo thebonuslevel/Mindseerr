@@ -93,22 +93,13 @@ struct SideMenu: View {
             .padding(.bottom, expanded ? 34 : 24)
             .accessibilityHidden(true)
 
-            ForEach(AppSection.allCases) { section in
-                Button {
-                    if section == selection { onReselect() } else { selection = section }
-                } label: {
-                    MenuRowLabel(section: section, selected: section == selection, expanded: expanded)
-                }
-                .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded))
-                .focused($focused, equals: section)
-                // Coming back from the page, the cursor lands on the section that's showing.
-                .prefersDefaultFocus(section == selection, in: menuSpace)
-                .accessibilityLabel(section.title)
-            }
+            ForEach(AppSection.allCases.filter { $0 != .settings }) { row($0) }
+            // Settings sits apart, at the bottom.
             Spacer(minLength: 0)
+            row(.settings)
         }
         .padding(.horizontal, expanded ? 12 : 0)
-        .padding(.bottom, expanded ? 22 : 0)
+        .padding(.bottom, expanded ? 22 : 40)
         .frame(width: expanded ? expandedPanelWidth : Self.collapsedWidth, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
         .background { if expanded { panel } }
@@ -128,6 +119,19 @@ struct SideMenu: View {
         }
         .focusSection()
         .focusScope(menuSpace)
+    }
+
+    private func row(_ section: AppSection) -> some View {
+        Button {
+            if section == selection { onReselect() } else { selection = section }
+        } label: {
+            MenuRowLabel(section: section, selected: section == selection, expanded: expanded)
+        }
+        .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded))
+        .focused($focused, equals: section)
+        // Coming back from the page, the cursor lands on the section that's showing.
+        .prefersDefaultFocus(section == selection, in: menuSpace)
+        .accessibilityLabel(section.title)
     }
 
     private var panel: some View {
