@@ -68,12 +68,16 @@ The menu runs down the left edge: **Discover, Browse, Search, Watchlists and Act
 
 ### Discover
 
-![Discover with Suggested for You and Recently Added rows](docs/screenshots/discover-browse.png)
+![Discover with the Suggested for You row and a Halloween Picks seasonal row](docs/screenshots/discover-seasonal.png)
 
 - **Browse** has its own item in the side menu, laid out like Discover: a row each for **Movie Genres, Series Genres, Studios and Networks**. Select a row's title to open it as a full grid, or pick a tile to see its titles. The heading on each results page changes the order (Most Popular, Newest and so on), and studios and networks appear as white logos.
+
 - **Seasonal picks** appear in the run-up to a popular holiday (Christmas, Halloween, Thanksgiving, Easter, Valentine's Day, St. Patrick's Day, Mother's Day, Memorial Day, Pride, Juneteenth, Father's Day, the Fourth of July, Summer, Labor Day and New Year's Eve): a row such as "🎃 Halloween Picks" with movies and series TMDB tags with that holiday, expandable like the others. It's hidden the rest of the year and can be switched off under **Settings → Discover → Discover Sections**.
 - **Suggested for You**, **Recently Added**, **Trending**, **Popular Movies**, **Upcoming Movies**, **Popular Series** and **Upcoming Series**. Rows page in more as you scroll, and each title expands into a full-screen grid.
 - Every section can be switched off under **Settings → Discover → Discover Sections**.
+
+
+![The Browse page: a row of genre cards tinted in Seerr's colors for movie genres, then series genres, studios and networks](docs/screenshots/browse-rows.png)
 
 ![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
 

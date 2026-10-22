@@ -16,6 +16,11 @@ from urllib.parse import urlparse, parse_qs
 HERE = os.path.dirname(os.path.abspath(__file__))
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
 ART = sys.argv[2] if len(sys.argv) > 2 else "/tmp/oppdemo/img"
+# TMDB's own genre ids, so the genre cards get their real colours in screenshots.
+GENRE_IDS = {"Action & Adventure": 10759, "Adventure": 12, "Comedy": 35, "Crime": 80, "Drama": 18, "Fantasy": 14,
+             "Horror": 27, "Music": 10402, "Mystery": 9648, "Romance": 10749, "Sci-Fi & Fantasy": 10765,
+             "Science Fiction": 878, "Thriller": 53, "Western": 37}
+
 CATALOG = json.load(open(os.path.join(HERE, "catalog.json")))
 TITLES = {t["id"]: t for t in CATALOG["titles"]}
 USERS = {int(k): v for k, v in CATALOG["users"].items()}
@@ -388,7 +393,7 @@ class Handler(BaseHTTPRequestHandler):
         if p in ("/discover/genreslider/movie", "/discover/genreslider/tv"):
             kind = "movie" if p.endswith("movie") else "tv"
             names = sorted({g for t in CATALOG["titles"] if t["type"] == kind for g in t["genres"]})
-            return self.send_json([{"id": 100 + i, "name": n, "backdrops": []} for i, n in enumerate(names)])
+            return self.send_json([{"id": GENRE_IDS.get(n, 100 + i), "name": n, "backdrops": []} for i, n in enumerate(names)])
         if p == "/search/keyword":
             return self.send_json({"page": 1, "totalPages": 1, "totalResults": 1, "results": [{"id": 3335, "name": q.get("query", "")}]})
         if p in ("/discover/movies", "/discover/tv") and "keywords" in q:
@@ -399,8 +404,7 @@ class Handler(BaseHTTPRequestHandler):
             kind = "movie" if p.endswith("movies") else "tv"
             pool = [t for t in CATALOG["titles"] if t["type"] == kind]
             if "genre" in q:
-                names = sorted({g for t in pool for g in t["genres"]})
-                wanted = names[int(q["genre"]) - 100] if 0 <= int(q["genre"]) - 100 < len(names) else None
+                wanted = next((n for n, i in GENRE_IDS.items() if i == int(q["genre"])), None)
                 pool = [t for t in pool if wanted in t["genres"]]
             elif "studio" in q or "network" in q:
                 pool = [t for i, t in enumerate(pool) if (i + int(q.get("studio") or q.get("network"))) % 2 == 0]
