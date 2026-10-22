@@ -4,19 +4,28 @@ import SwiftUI
 /// A row's title opens all of it as a grid.
 struct BrowseView: View {
     @State private var path = NavigationPath()
+    /// One model per kind, shared by its row and its full-screen grid.
+    @State private var models = Dictionary(uniqueKeysWithValues: BrowseKind.allCases.map { ($0, BrowseListModel(kind: $0)) })
 
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 40) {
                     ForEach(BrowseKind.allCases) { kind in
-                        BrowseSectionRow(kind: kind)
+                        if let model = models[kind] {
+                            // The grid is pushed on the navigation path like a title is (a separate `isPresented`
+                            // destination left it on screen when a title was opened from inside it).
+                            BrowseSectionRow(model: model) { path.append(kind) }
+                        }
                     }
                 }
                 .padding(.vertical, 30)
             }
             .themedBackground()
             .mediaDestinations()
+            .navigationDestination(for: BrowseKind.self) { kind in
+                if let model = models[kind] { BrowseListView(model: model) }
+            }
         }
         // Leaving the section pops back to its rows, so coming back shows the top level.
         .onDisappear { path = NavigationPath() }
@@ -121,17 +130,13 @@ private struct GenreCard: View {
 /// A Browse row: the title (select it to open the whole list as a grid) over a row of tiles.
 struct BrowseSectionRow: View {
     @Environment(AppState.self) private var app
-    @State private var model: BrowseListModel
-    @State private var expanded = false
+    let model: BrowseListModel
+    let onExpand: () -> Void
     @FocusState private var titleFocused: Bool
-
-    init(kind: BrowseKind) {
-        _model = State(initialValue: BrowseListModel(kind: kind))
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Button { expanded = true } label: {
+            Button(action: onExpand) {
                 HStack(spacing: 16) {
                     Text(model.kind.title)
                         .font(.title3).fontWeight(.semibold)
@@ -168,9 +173,6 @@ struct BrowseSectionRow: View {
         }
         .focusSection()
         .task { await model.load(using: app.api) }
-        .navigationDestination(isPresented: $expanded) {
-            BrowseListView(model: model)
-        }
     }
 }
 

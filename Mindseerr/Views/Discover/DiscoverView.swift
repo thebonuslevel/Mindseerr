@@ -53,6 +53,13 @@ final class MediaRowModel: Identifiable {
     }
 }
 
+/// An expanded Discover section, pushed on the page's navigation path like a title is. (Pushing it with a separate
+/// `isPresented` destination left it on screen when a title was opened from inside it.)
+enum DiscoverRoute: Hashable {
+    case section(DiscoverSection)
+    case suggestions
+}
+
 struct DiscoverView: View {
     @Environment(AppState.self) private var app
     @State private var rows = DiscoverSection.allCases.map { MediaRowModel(section: $0) }
@@ -66,16 +73,24 @@ struct DiscoverView: View {
             ScrollView(.vertical) {
                 LazyVStack(alignment: .leading, spacing: 40) {
                     if !hidden.contains(DiscoverLayout.Entry.suggested.rawValue) {
-                        SuggestionsRowView(model: app.suggestions)
+                        SuggestionsRowView(model: app.suggestions) { path.append(DiscoverRoute.suggestions) }
                     }
                     ForEach(rows.filter { !hidden.contains($0.section.rawValue) }) { row in
-                        MediaRowView(model: row)
+                        MediaRowView(model: row) { path.append(DiscoverRoute.section(row.section)) }
                     }
                 }
                 .padding(.vertical, 30)
             }
             .themedBackground()
             .mediaDestinations()
+            .navigationDestination(for: DiscoverRoute.self) { route in
+                switch route {
+                case .section(let section):
+                    if let model = rows.first(where: { $0.section == section }) { ExpandedSectionView(model: model) }
+                case .suggestions:
+                    ExpandedSuggestionsView(model: app.suggestions)
+                }
+            }
         }
         .task(id: hiddenStored) {
             // The suggestions are only worked out while their row is shown.
@@ -98,13 +113,14 @@ struct DiscoverView: View {
 struct MediaRowView: View {
     @Environment(AppState.self) private var app
     let model: MediaRowModel
-    @State private var expanded = false
+    /// Opens the whole section full screen.
+    let onExpand: () -> Void
     @FocusState private var titleFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             // The title is focusable; selecting it opens the whole section full screen.
-            Button { expanded = true } label: {
+            Button(action: onExpand) {
                 HStack(spacing: 16) {
                     Text(model.section.title)
                         .font(.title3).fontWeight(.semibold)
@@ -146,10 +162,6 @@ struct MediaRowView: View {
         .focusSection()
         .task {
             if model.items.isEmpty { await model.loadMore(using: app.api) }
-        }
-        // Pushed inside Discover's stack (not a full-screen cover), so the side menu stays on screen.
-        .navigationDestination(isPresented: $expanded) {
-            ExpandedSectionView(model: model)
         }
     }
 }
@@ -198,13 +210,13 @@ struct ExpandedSectionView: View {
 /// Hidden until there's something to show.
 struct SuggestionsRowView: View {
     let model: SuggestionsModel
-    @State private var expanded = false
+    let onExpand: () -> Void
     @FocusState private var titleFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if !model.items.isEmpty {
-                Button { expanded = true } label: {
+                Button(action: onExpand) {
                     HStack(spacing: 16) {
                         Text("Suggested for You")
                             .font(.title3).fontWeight(.semibold)
@@ -229,9 +241,6 @@ struct SuggestionsRowView: View {
             }
         }
         .focusSection()
-        .navigationDestination(isPresented: $expanded) {
-            ExpandedSuggestionsView(model: model)
-        }
     }
 }
 
