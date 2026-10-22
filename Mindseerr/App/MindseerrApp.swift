@@ -81,6 +81,7 @@ struct MainTabView: View {
             Group {
                 switch section {
                 case .discover: DiscoverView()
+                case .browse: BrowseView()
                 case .search: SearchView()
                 case .watchlists: WatchlistsView()
                 case .activity: ActivityView()

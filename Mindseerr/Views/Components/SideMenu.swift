@@ -2,13 +2,14 @@ import SwiftUI
 
 /// The app's sections, in menu order.
 enum AppSection: Hashable, CaseIterable, Identifiable {
-    case discover, search, watchlists, activity, settings
+    case discover, browse, search, watchlists, activity, settings
 
     var id: Self { self }
 
     var title: String {
         switch self {
         case .discover: return String(localized: "Discover")
+        case .browse: return String(localized: "Browse")
         case .search: return String(localized: "Search")
         case .watchlists: return String(localized: "Watchlists")
         case .activity: return String(localized: "Activity")
@@ -20,6 +21,7 @@ enum AppSection: Hashable, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .discover: return "sparkles.tv"
+        case .browse: return "square.grid.2x2.fill"
         case .search: return "magnifyingglass"
         case .watchlists: return "bookmark.fill"
         case .activity: return "arrow.down.circle.fill"

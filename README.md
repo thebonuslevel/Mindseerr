@@ -64,13 +64,13 @@ The session survives relaunches (cookie and credentials live in the Keychain); i
 
 ### Side menu
 
-The menu runs down the left edge: **Discover, Search, Watchlists, Activity and Settings**, each with its own logo. By default it opens into a blurred, see-through panel with the section names while you're on it, and shrinks to just the logos when you move into a page. Press **Select** or **right** on an item to go into that section's first item; selecting the section you're already in sends it back to its top level. **Settings → Look and Feel → Side Menu** can keep it always collapsed instead. Leaving a section and coming back always shows its top level, and Search clears its box.
+The menu runs down the left edge: **Discover, Browse, Search, Watchlists and Activity**, with **Settings** at the bottom, each with its own logo. By default it opens into a blurred, see-through panel with the section names while you're on it, and shrinks to just the logos when you move into a page. Press **Select** or **right** on an item to go into that section's first item; selecting the section you're already in sends it back to its top level. **Settings → Look and Feel → Side Menu** can keep it always collapsed instead. Leaving a section and coming back always shows its top level, and Search clears its box.
 
 ### Discover
 
-![Discover with the Browse row at the top, followed by Suggested for You](docs/screenshots/discover-browse.png)
+![Discover with Suggested for You and Recently Added rows](docs/screenshots/discover-browse.png)
 
-- **Browse** sits at the top: choose **Movie Genres, Series Genres, Studios or Networks**, then pick one to see its titles. The heading on each results page changes the order (Most Popular, Newest and so on), and studios and networks appear as white logos.
+- **Browse** has its own item in the side menu: choose **Movie Genres, Series Genres, Studios or Networks**, then pick one to see its titles. The heading on each results page changes the order (Most Popular, Newest and so on), and studios and networks appear as white logos.
 - **Suggested for You**, **Recently Added**, **Trending**, **Popular Movies**, **Upcoming Movies**, **Popular Series** and **Upcoming Series**. Rows page in more as you scroll, and each title expands into a full-screen grid.
 - Every section can be switched off under **Settings → Discover → Discover Sections**.
 

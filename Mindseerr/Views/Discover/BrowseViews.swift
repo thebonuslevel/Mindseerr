@@ -1,20 +1,38 @@
 import SwiftUI
 
-/// "Browse" on Discover: four ways in (movie genres, series genres, studios, networks), each opening a page of choices.
-struct BrowseRowView: View {
+/// The Browse section: four ways in (movie genres, series genres, studios, networks), each opening a page of choices.
+struct BrowseView: View {
+    @State private var path = NavigationPath()
+
+    private let columns = [GridItem(.flexible(), spacing: 40), GridItem(.flexible(), spacing: 40)]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Browse")
-                .font(.title3).fontWeight(.semibold)
-            HStack(spacing: 30) {
-                ForEach(BrowseKind.allCases) { kind in
-                    NavigationLink(value: kind) {
-                        Label(kind.title, systemImage: kind.symbol)
+        NavigationStack(path: $path) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 30) {
+                    Text("Browse")
+                        .font(.title3).fontWeight(.semibold)
+                    LazyVGrid(columns: columns, alignment: .leading, spacing: 40) {
+                        ForEach(BrowseKind.allCases) { kind in
+                            NavigationLink(value: kind) {
+                                Label(kind.title, systemImage: kind.symbol)
+                                    .font(.title3)
+                                    .frame(maxWidth: .infinity, minHeight: 90)
+                            }
+                        }
                     }
+                    .focusSection()
+                    .frame(maxWidth: 1200)
                 }
+                .padding(.vertical, 30)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollClipDisabled()
+            .themedBackground()
+            .mediaDestinations()
         }
-        .focusSection()
+        // Leaving the section pops back to the four choices, so coming back shows the top level.
+        .onDisappear { path = NavigationPath() }
     }
 }
 
