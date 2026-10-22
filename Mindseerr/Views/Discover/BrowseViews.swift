@@ -214,23 +214,27 @@ struct BrowseListView: View {
 /// the logo arrives or if there isn't one.
 private struct CompanyTile: View {
     @Environment(\.isFocused) private var focused
+    @Environment(\.appTheme) private var theme
     let name: String
     let logoPath: String?
     /// For a logo that doesn't whiten well as it is: how to draw it in white instead.
     var treatment: LogoTreatment?
 
+    /// White on a dark theme and dark on a light one, flipping while focused (the highlight is the opposite shade).
+    private var darkLogo: Bool { focused != (theme.colorScheme == .light) }
+
     var body: some View {
         Group {
             if let treatment, let url = TMDBImage.url(logoPath, size: .logo) {
                 TreatedLogo(url: url, name: name, treatment: treatment)
-                    .brightness(focused ? -1 : 0)
+                    .brightness(darkLogo ? -1 : 0)
             } else if let url = TMDBImage.url(logoPath, size: .logo) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image {
                         // Whatever colours the logo has, every visible pixel becomes white (or black when focused).
                         image.resizable().scaledToFit()
                             .saturation(0)
-                            .brightness(focused ? -1 : 1)
+                            .brightness(darkLogo ? -1 : 1)
                     } else {
                         Text(name).lineLimit(1).opacity(phase.error == nil ? 0 : 1)
                     }
