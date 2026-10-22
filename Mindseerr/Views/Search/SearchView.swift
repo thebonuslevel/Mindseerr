@@ -119,15 +119,17 @@ struct SearchView: View {
             ContentUnavailableView("Search Seerr", systemImage: "magnifyingglass",
                                    description: Text("Find a movie or series to request."))
                 .padding(.top, 80)
+                .keepsFocusBelowKeyboard()
         } else if let error {
             ContentUnavailableView("Search Failed", systemImage: "exclamationmark.triangle",
                                    description: Text(error))
                 .padding(.top, 80)
+                .keepsFocusBelowKeyboard()
         } else if results.isEmpty {
             if loading {
-                ProgressView().padding(.top, 120)
+                ProgressView().padding(.top, 120).keepsFocusBelowKeyboard()
             } else {
-                ContentUnavailableView.search(text: query).padding(.top, 80)
+                ContentUnavailableView.search(text: query).padding(.top, 80).keepsFocusBelowKeyboard()
             }
         } else {
             VStack(alignment: .leading, spacing: 30) {
@@ -187,5 +189,15 @@ struct SearchView: View {
             guard !Task.isCancelled else { return }
             self.error = AppState.friendly(error)
         }
+    }
+}
+
+private extension View {
+    /// With nothing to select below the keyboard (no query yet, still searching, no results), pressing down would jump
+    /// across to the side menu. This gives the page something to rest on instead, with no highlight of its own.
+    func keepsFocusBelowKeyboard() -> some View {
+        frame(maxWidth: .infinity, minHeight: 400)
+            .focusable()
+            .focusEffectDisabled()
     }
 }
