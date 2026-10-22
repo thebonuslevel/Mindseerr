@@ -3,189 +3,40 @@
   <img src="docs/wordmark.svg" alt="mindseerr" width="380">
 </p>
 
-# Mindseerr
-
-Mindseerr is a native SwiftUI Apple TV client for [Seerr](https://docs.seerr.dev) (the merged Overseerr + Jellyseerr project).
-
-## Screenshots
-
-*Simulated examples: the titles, poster art, people and downloads are invented and served by the demo server in `Tools/demo-server`. Shown in the Gloam theme.*
-
-### Activity tab: Sonarr, Radarr & download clients
-
-![Activity tab (admin view) with request counts, connected Sonarr and Radarr services, and the Active Downloads list](docs/screenshots/admin-download-services.png)
-
-Connect your **Sonarr** and **Radarr** servers right from the Activity tab. Under the Seerr request counts, **Download Services** lists each connected server with a live status dot (green when it's reachable, red with the reason when it isn't), and **Add Sonarr or Radarr** walks you through the address and API key, testing the connection before saving. Add as many as you run, like a separate 4K Radarr.
-
-Add your torrent client the same way: **qBittorrent**, **Deluge**, **Transmission** or the usenet client **SABnzbd**. Alongside Sonarr and Radarr it adds pause, resume and cancel (described below): Mindseerr matches its torrents to their downloads, so add the same client they use.
-
-| Client | Address | Sign-in |
-|---|---|---|
-| qBittorrent | Web UI address, like `http://192.168.1.10:8080` | Web UI username and password |
-| Deluge | Web UI address, like `http://192.168.1.10:8112` | Web UI password (default `deluge`); its Web UI has to be connected to a daemon under Connection Manager |
-| Transmission | Like `http://192.168.1.10:9091` | Username and password only if you turned RPC authentication on |
-| SABnzbd | Like `http://192.168.1.10:8080` | API key, under Config → General → Security |
-
-**A torrent client works on its own, too.** If you don't run Sonarr or Radarr, add just qBittorrent, Deluge, Transmission or SABnzbd and Active Downloads reads progress straight from it.
-
-![Active Downloads fed only by a torrent client (qBittorrent shown), with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
-
-Mindseerr lists every unfinished torrent and works out which Seerr title it is from its release name, so *The.Drowned.Lighthouse.2026.1080p.WEB-DL* becomes the movie *The Drowned Lighthouse*, and *Deep.Station.S02E05* becomes Season 2, Episode 5 of *Deep Station*. Matched titles get their poster and the name of whoever requested them, and show up as progress on Discover and detail pages just like Sonarr and Radarr downloads. A torrent whose name doesn't match a title is still listed, by its release name. Finished and seeding torrents are left out.
-
-**Active Downloads** then shows the downloads in their queues that belong to a Seerr request, matched to the request they came from: who asked for it, which server is fetching it, a progress bar, status and time left. Series show which season and episode is downloading. The list refreshes every 10 seconds. Downloads with no Seerr request behind them, such as something you added straight to Sonarr, Radarr or qBittorrent, are left out.
-
-### Activity tab: download status on requests
-
-![Request list on the Activity tab where each request has a colored tag showing its download state: Paused, Importing, Downloading](docs/screenshots/admin-request-progress.png)
-
-The request list knows what's downloading too. Any request whose title is in a Sonarr or Radarr queue gets a tag with its actual state, colored to match: **Downloading** (soft green), **Paused** (amber), **Queued** (gray), **Importing** (blue), **Needs attention** (orange) or **Failed** (red). You can tell at a glance an approved request that's on its way from one that's stuck.
-
-### Activity tab: pause, resume and cancel downloads
-
-On each row of **Active Downloads** are two round buttons. **Pause** (and **Play** to resume it) controls the download in qBittorrent, Deluge, Transmission or SABnzbd, and shows once one of them is connected and holding that download. **Cancel**, the circle with a line through it, takes the download out of the Sonarr or Radarr queue and deletes the partial download from your download client, after asking you to confirm. The request stays in Seerr, so you can retry it later.
-
-### Detail page
-
-![Series detail page with a frosted panel under the title reading Season 2, Episode 5, and a progress bar at 81%](docs/screenshots/detail-progress.png)
-
-Open a title that's downloading and its progress sits right under the title on a frosted panel that stays readable over any backdrop: status, percent, time left and which server has it. For a series with several episodes downloading, each gets its own line labeled with its season and episode.
-
-### Detail page: trailer and 4K requests
-
-![Series detail page with Request Series, Request Series in 4K and Trailer buttons under the title, tagline and overview](docs/screenshots/detail-trailer-4k.png)
-
-Every title opens to a page with its poster, tagline, year, runtime or season count, genres, rating and overview. Right under it are the actions. **Request** (or **Request Series**) sends it to your standard Radarr or Sonarr, and when your Seerr server has a 4K server and your account may use it, **Request in 4K** appears beside it. The two copies are tracked separately, so you can have a title available in HD and still request it in 4K, and each shows its own status: **Requested**, **Available**, **4K Requested** or **4K Available**. For a series you pick which seasons to request. **Trailer** opens the official trailer in the YouTube app, so install YouTube from the App Store on your Apple TV if you haven't.
-
-### Detail page: Rotten Tomatoes scores
-
-![Movie detail page showing a 76% Certified Fresh Tomatometer and a 59% Spilled audience score under the title](docs/screenshots/detail-ratings.png)
-
-Under the title's year, runtime and genres sit its **Rotten Tomatoes** scores: the critics' **Tomatometer** with its label (Certified Fresh, Fresh or Rotten) and, for movies, the **Audience** score (Upright or Spilled). Series show the critics' score only. The scores come from Seerr, so they appear when your Seerr server can look them up and are simply left out when it can't.
-
-### Detail page: play in Infuse
-
-On a movie that's available on your server, a **Play in Infuse** button sits first among the actions. It opens the movie in Infuse by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed on the Apple TV and have the title in its library (it can read Plex, Jellyfin and Emby). **Settings → External Player** chooses **Infuse** or **Off**; with Off, the Play button isn't shown.
-
-On a **series** that has something on your server, the same button opens an episode list: every season on the server, with each episode's number, title, runtime and a short summary. Select an episode to play it in Infuse. Infuse needs the series in its library, and its episode link is as documented but untried on a real Apple TV.
-
-**Apple Player (new, untested on a real server):** choose it under Settings → External Player and Play streams the title from the media server Seerr is set up with, in Apple's own player, without leaving Mindseerr. It works for Plex, Jellyfin and Emby, for movies and single episodes, using the Plex or Jellyfin/Emby sign-in you used for Seerr (signing in with a Seerr account or API key can't use it). It resumes where you left off and saves progress back to the server. Subtitle and audio-track choice depends on what the server puts in its stream.
-
-If Infuse isn't installed, a message says so. Mindseerr only hands the movie over; it doesn't play anything itself. Plex and Swiftfin aren't offered: Plex's Apple TV app ignores links to a single movie (I tried its play and page links, with Plex open and closed, on a real Apple TV), and Swiftfin doesn't publish one.
-
-### Detail page: cast, crew and suggestions
-
-![Detail page scrolled to the Cast row, with round avatars and each actor's name and character](docs/screenshots/detail-cast.png)
-
-Scroll down for the **Cast**, shown as round avatars with each actor's name and the character they play, followed by the key **Crew**: director, writers, producers and composer, each with their role.
-
-![Recommended row of posters with Requested, Available and Pending badges and a download progress bar](docs/screenshots/detail-recommended.png)
-
-Cast and crew are selectable. Choosing one opens their page, with their photo, a short bio and their other movies and series, **best rated first**.
-
-![A cast member's page with their biography and a grid of their other work sorted by Rotten Tomatoes score, highest first](docs/screenshots/person-credits.png)
-
-The order follows each title's Rotten Tomatoes Tomatometer, printed under its poster. Titles without a Rotten Tomatoes score fall back to TMDB's rating, shown as a star. Each title is a normal poster card with its availability badge, so you can open it and request it from there.
-
-Below that, **Recommended** and **Similar** rows suggest more to watch. They're ordinary poster cards, so each one carries its availability badge and any download progress bar, and selecting one opens its own detail page. It's an easy way to find the next thing to request without going back to search.
-
-### Download finished notification
-
-![A rounded, translucent "Download finished" banner for Hollow Crown Road in the top right corner of the Discover screen](docs/screenshots/download-finished-banner.png)
-
-When a download for one of your requests finishes, a **Download finished** banner slides into the top right corner, shaped like an iOS or macOS notification: a rounded, see-through card tinted with your theme's highlight color, with the title's poster, its name and, for a series, the season and episode. It appears over whichever screen you're on, stays for a few seconds, and never takes the remote's focus. If several finish together they show one after another. Downloads you cancel yourself don't count, and neither do failed ones. A download counts as finished when it leaves the queue nearly done or importing.
-
-tvOS doesn't allow banners from an app that isn't open, so while Mindseerr is closed nothing can pop up. Instead, Mindseerr remembers what was downloading when you last used it, and when you reopen it, shows a banner for each download that finished in the meantime (a few of them, then one banner for the rest). While it's open, banners appear on any tab as downloads finish. You can turn it off under **Settings → Notifications → Download Finished**.
-
-### Discover: suggested for you
-
-![The Suggested for You row at the top of Discover, with its title highlighted and an Expand hint](docs/screenshots/discover-suggested.png)
-
-A **Suggested for You** row sits at the top of Discover. Select its title to expand it into a full-screen grid, like the other rows.
-
-![The Suggested for You row expanded into a full-screen poster grid](docs/screenshots/discover-suggested-expanded.png)
-
-Mindseerr builds it from Seerr's own data and balances four things:
-
-| Factor | Weight | What it is |
-|---|---|---|
-| **Taste** | 50% | Seerr's recommendations for your own recent requests (counted three times as heavily) and for the titles available on your server. A title several of them point at scores higher. |
-| **Rotten Tomatoes** | 25% | The Tomatometer, averaged with the audience score when there is one (TMDB's rating stands in when there is none). Well-rated titles are promoted and poorly rated ones demoted. |
-| **Trending** | 12.5% | Where the title sits on Seerr's Trending list. Trending titles that nothing recommended still join the candidates. |
-| **New** | 12.5% | How recently it came out, or is about to: newest scores highest, fading over about three years. |
-
-Anything already available, being downloaded or requested is dropped, and clearly poorly rated titles are left out as long as enough good ones remain. The row is worked out when you open Discover and kept for a few hours, and it stays hidden until there's something to show. On a non-admin account, "all available titles" may be limited to your own, because Seerr only shows regular users their own requests.
-
-### Discover: Recently Added and your own layout
-
-A **Recently Added** row lists the newest titles on your server (available or partly available), newest first, with their usual badges. Like the other rows it expands to a full-screen grid, and it's one of the choices for the Top Shelf.
-
-Every section of Discover can be switched off. Open **Settings → Discover → Discover Sections** and select a section to flip it between **On** and **Off**: Suggested for You, Recently Added, Trending, Popular Movies, Upcoming Movies, Popular Series and Upcoming Series. Everything is on by default, and a section that's off isn't loaded or shown.
-
-### Discover: progress on posters
-
-![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
-
-While browsing, posters of titles that are downloading get a thin progress bar along their bottom edge, drawn in the current theme's highlight color, on Discover, in expanded sections and in Search. No need to open anything to see what's on its way.
-
-### Watchlists
-
-![Watchlists tab showing a Trakt watchlist as a poster grid, with Partial, Available and Requested badges and buttons to request everything that's missing](docs/screenshots/watchlists.png)
-
-Bring your watchlists along. Pick **Trakt**, **Letterboxd**, **TMDB** or **TheTVDB** along the top and Mindseerr imports it and matches every title to your Seerr server. Each poster gets a badge: **Available** (green), **Requested** (indigo) or **Partial** (teal, when some seasons are still missing), and titles that aren't on your server carry no badge. A summary line counts what's available, requested and missing.
-
-**Request Missing** opens a **Choose What to Request** screen first, so you decide what actually gets requested instead of sending everything (below). **Not on Server Only** filters the grid down to just the missing titles, and **Refresh** imports the list again. Select any poster to open its detail page and request it from there. Titles that can't be matched to a movie or series stay visible and are marked **No Match**.
-
-![The Choose What to Request screen with movies ticked and seasons of a series partly unticked](docs/screenshots/watchlist-choose-seasons.png)
-
-Every missing movie and series starts ticked. Untick any movie you don't want, and for each series pick just the seasons you're after, with **All** and **None** shortcuts. Only seasons that can still be requested are offered (ones already available or requested are left out), each with its episode count. A series with no seasons picked is skipped, and the button counts what you're about to send, such as **Request 7 Titles**.
-
-### Connecting a watchlist
-
-![Connect TheTVDB screen with an API key field, a PIN field and a short explanation of where to find both](docs/screenshots/watchlists-connect.png)
-
-Each service connects the way it allows. **Trakt** and **TMDB** sign in with a code or QR link you approve on your phone, so your password never touches the TV. **TheTVDB** takes your own API key and PIN and imports your favorites, which is its version of a watchlist. **Letterboxd** reads your public watchlist page from just your username. Every screen explains where to find what it asks for, and keys you enter stay in the Keychain on your Apple TV.
-
-### Top Shelf
-
-![The Apple TV Home Screen with Mindseerr in the top row and a row of trending posters above the apps](docs/screenshots/top-shelf.png)
-
-Put Mindseerr in the top row of your Home Screen and the **Top Shelf**, the area above your apps, fills with a section of Discover, Trending by default. Highlight Mindseerr to see the posters, then select one to open that title's page in the app. The titles are the ones Mindseerr last loaded for that section on Discover, so open the app now and then to keep the row fresh. Until it has loaded Discover once, tvOS shows the Mindseerr banner instead.
-
-### Choosing what the Top Shelf shows
-
-![Settings with the Look and Feel section: Appearance set to Gloam and Top Shelf set to a section of Discover](docs/screenshots/settings-top-shelf.png)
-
-Top Shelf is one menu. Open **Settings** and select **Top Shelf** under **Look and Feel** to pick what it shows: **Suggested for You**, **Recently Added**, **Trending** (the default), **Popular Movies**, **Upcoming Movies**, **Popular Series** or **Upcoming Series**. Choose **Off** at the top of that list to turn it off, and the Home Screen shows the Mindseerr banner instead. The change applies right away. The same section holds **Appearance**, where you pick the app's theme.
-
-![The Top Shelf menu listing Off and every Discover section, with a tick on the current choice](docs/screenshots/top-shelf-menu.png)
-
-## Features
-
-- **Plex sign-in** with the TV-friendly code flow: the app shows a 4-character code, you enter it at plex.tv/link on any device.
-- **Jellyfin and Emby sign-in** with your media server username and password. The app asks Seerr which server it uses and shows the right screen.
-- **Seerr account sign-in** (email and password, for accounts created in Seerr) and **API key sign-in** (signs in as the server's main admin account). Both are offered under "Or sign in with" on the sign-in screen.
-- **Download finished banner** on any screen while the app is open, with a switch in Settings.
-- **Download controls**: connect qBittorrent, Deluge, Transmission or SABnzbd to pause, resume or cancel a download right from Active Downloads on the Activity tab. They also work without Sonarr or Radarr, reading download progress straight from the client.
-- **Activity tab** for everyone. Admins and users with the Manage Requests permission get the full panel: request counts, filters (Pending, Processing, Failed, Available, All), Approve, Decline, Approve All, Retry for failed requests, and Delete.
-- **Eight themes** to choose from in Settings → Look and Feel → Appearance: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist. Abyss is true black (#000000) so OLED pixels stay off behind the UI, and Mist is a light off-white theme.
-- **About page**, opened from the logo at the bottom of Settings, with the version, a link to the GitHub project and credits for Trakt, TMDB, TheTVDB and Plex.
-- **Discover**: Suggested for You, Recently Added, Trending, Popular Movies, Upcoming Movies, Popular Series, Upcoming Series. Rows page in more titles as you scroll.
-- **Search** across movies and series with the tvOS search keyboard. Results show availability badges and download progress like Discover.
-- **Detail pages** with backdrop, overview, runtime/seasons, genres, rating and live availability.
-- **Requests**: request a movie, or pick specific seasons of a series. Seasons already available or requested are locked.
-- **Watchlists**: import your Trakt, Letterboxd, TMDB and TheTVDB watchlists, see which titles are already on your server, and request the rest. Pick which titles, and which seasons of each series, to send.
-- **Tabs that reset**: Discover, Search, Watchlists, Activity and Settings each return to their top level when you leave them and come back, and Search clears its box.
-- **A side menu** instead of a top tab bar: Discover, Search, Watchlists, Activity and Settings, each with its own logo. It shows the logos and names over a blurred, see-through panel while you're on the menu, and shrinks to just the logos, with no background at all, when you move into a page. Highlighting a section switches to it straight away, and moving back into the page puts the cursor on its first item. The Activity section changes with who's signed in: admins see every request with approvals and download controls, and everyone else sees their own unfinished requests and where each one stands.
-- Session survives relaunches (cookie and sign-in credentials in the Keychain); if the Seerr session expires, the app silently signs in again.
-
-## Requirements
-
-- Mac with Xcode 16 or later
-- tvOS 17+ (Apple TV HD or 4K, or the Apple TV simulator)
-- A Seerr server using Plex, Jellyfin or Emby
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the project: `brew install xcodegen`
-
-## Build & run
+<p align="center">
+  A native Apple TV client for <a href="https://docs.seerr.dev">Seerr</a> (the merged Overseerr + Jellyseerr project).<br>
+  Discover, request and watch what's coming, from the couch, with the remote.
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/side-menu-expanded.png" alt="Mindseerr's Discover page with the side menu open" width="780">
+</p>
+
+- **Discover** trending, popular and upcoming titles, browse by genre, studio or network, and get **Suggested for You**.
+- **Request** movies and series (in HD or 4K), pick seasons, and see what's already on your server.
+- **Watch progress** for everything downloading, even for people who don't run Sonarr or Radarr themselves.
+- **Manage** your server from the couch: approve requests, connect Sonarr, Radarr, qBittorrent, Deluge, Transmission and SABnzbd, pause or cancel downloads.
+- **Watchlists** from Trakt, Letterboxd, TMDB and TheTVDB, with one-step requesting of what's missing.
+- **Play** an available title in Apple's player straight from Plex, Jellyfin or Emby, or hand it to Infuse.
+- **Top Shelf**, eight themes and four extra languages: Spanish, French, Russian and Simplified Chinese.
+
+*All screenshots are simulated: the titles, poster art, people and downloads are invented and served by the demo server in `Tools/demo-server`. Shown in the Gloam theme.*
+
+## Contents
+
+- [Getting started](#getting-started)
+- [Tour](#tour)
+- [Download services](#download-services)
+- [Watchlists](#watchlists)
+- [Settings](#settings)
+- [Build, install and IPA](#build-install-and-ipa)
+- [How it talks to Seerr](#how-it-talks-to-seerr)
+- [Notes and troubleshooting](#notes-and-troubleshooting)
+- [Roadmap](#roadmap)
+
+## Getting started
+
+**You need:** a Mac with Xcode 16 or later, [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`), an Apple TV (HD or 4K, tvOS 17+) or the Apple TV simulator, and a Seerr server using Plex, Jellyfin or Emby.
 
 ```sh
 cd Mindseerr
@@ -195,13 +46,168 @@ open Mindseerr.xcodeproj
 
 1. Select the **Mindseerr** target → *Signing & Capabilities* → pick your Team. Change the bundle ID from `com.example.mindseerr` if you like (or edit `project.yml` and regenerate).
 2. Choose an Apple TV simulator or your paired Apple TV and press **Run**.
-3. Enter your server address (e.g. `http://192.168.1.10:5055` or `https://seerr.example.com`), then sign in with the Plex code.
+3. Enter your server's address (like `192.168.1.10:5055` or `seerr.example.com`) and sign in.
 
 To run on a real Apple TV: on the Apple TV open *Settings → Remotes and Devices → Remote App and Devices*, then in Xcode open *Window → Devices and Simulators* and pair it.
 
-## Watchlists (Trakt, Letterboxd, TMDB, TheTVDB)
+### Connecting and signing in
 
-The **Watchlists** tab imports a watchlist, matches every title to your Seerr server and shows whether it's available, requested or missing. Open a title to request it, or use **Request Missing** to pick which titles, and which seasons of each series, to send.
+- **Type the address as you like.** Without `http://` or `https://`, Mindseerr tries HTTPS first and falls back to HTTP, and says what actually went wrong if neither answers (not a Seerr server, a redirect to somewhere else, no network). Redirects are only followed within the same server.
+- **Plex** uses the TV-friendly code flow: the app shows a 4-character code and you enter it at plex.tv/link on any device. If your Plex sign-in would go to a host other than Plex, Mindseerr asks you to confirm it first.
+- **Jellyfin and Emby** use your media server username and password. The app asks Seerr which server it uses and shows the right screen.
+- **Seerr account** (email and password, for accounts created in Seerr) and **API key** (signs in as the server's main admin account) are under "Or sign in with".
+- **Self-signed HTTPS** is supported after you approve the certificate (see [Notes](#notes-and-troubleshooting)).
+
+The session survives relaunches (cookie and credentials live in the Keychain); if the Seerr session expires, the app signs in again quietly.
+
+## Tour
+
+### Side menu
+
+The menu runs down the left edge: **Discover, Search, Watchlists, Activity and Settings**, each with its own logo. By default it opens into a blurred, see-through panel with the section names while you're on it, and shrinks to just the logos when you move into a page. Press **Select** or **right** on an item to go into that section's first item; selecting the section you're already in sends it back to its top level. **Settings → Look and Feel → Side Menu** can keep it always collapsed instead. Leaving a section and coming back always shows its top level, and Search clears its box.
+
+### Discover
+
+![Discover with the Browse row at the top, followed by Suggested for You](docs/screenshots/discover-browse.png)
+
+- **Browse** sits at the top: choose **Movie Genres, Series Genres, Studios or Networks**, then pick one to see its titles. The heading on each results page changes the order (Most Popular, Newest and so on), and studios and networks appear as white logos.
+- **Suggested for You**, **Recently Added**, **Trending**, **Popular Movies**, **Upcoming Movies**, **Popular Series** and **Upcoming Series**. Rows page in more as you scroll, and each title expands into a full-screen grid.
+- Every section can be switched off under **Settings → Discover → Discover Sections**.
+
+![Discover rows where several posters have thin progress bars along their bottom edges](docs/screenshots/discover-poster-progress.png)
+
+Posters of titles that are downloading carry a thin progress bar along their bottom edge in your theme's highlight color, on Discover, in expanded sections and in Search.
+
+#### Suggested for You
+
+![The Suggested for You row with its title highlighted and an Expand hint](docs/screenshots/discover-suggested.png)
+
+Mindseerr builds the row from Seerr's own data and balances four things:
+
+| Factor | Weight | What it is |
+|---|---|---|
+| **Taste** | 50% | Seerr's recommendations for your own recent requests (counted three times as heavily) and for the titles available on your server. A title several of them point at scores higher. |
+| **Rotten Tomatoes** | 25% | The Tomatometer, averaged with the audience score when there is one (TMDB's rating stands in when there is none). Well-rated titles are promoted and poorly rated ones demoted. |
+| **Trending** | 12.5% | Where the title sits on Seerr's Trending list. Trending titles that nothing recommended still join the candidates. |
+| **New** | 12.5% | How recently it came out, or is about to: newest scores highest, fading over about three years. |
+
+Anything already available, being downloaded or requested is dropped, and clearly poorly rated titles are left out as long as enough good ones remain. A pool of 80 good candidates is kept and **40 are shown, reshuffled every 48 hours**; the ten best titles of one shuffle don't come back for 8 days. The row stays hidden until there's something to show. On a non-admin account, "all available titles" may be limited to your own, because Seerr only shows regular users their own requests.
+
+![The Suggested for You row expanded into a full-screen poster grid](docs/screenshots/discover-suggested-expanded.png)
+
+### Search
+
+![Search results with an All / Movies / Series filter and a Best Match sort button](docs/screenshots/search-filter.png)
+
+Search movies and series with the tvOS keyboard. Narrow the results with the **All / Movies / Series** filter, and the sort button cycles **Best Match, Top Rated and Newest**. Results carry availability badges and download progress like Discover.
+
+### Titles and requests
+
+![Movie detail page with Request Movie, Request Movie in 4K and Trailer buttons and a line showing how many requests are left this week](docs/screenshots/detail-movie-request.png)
+
+Every title opens to a page with its poster, tagline, year, runtime or season count, genres, rating and overview. Under it are the actions:
+
+- **Request Movie** / **Request Series** sends it to your standard Radarr or Sonarr. When your Seerr server has a 4K server and your account may use it, **Request in 4K** appears beside it. The two copies are tracked separately, so you can have a title in HD and still request it in 4K, and each shows its own status: **Requested**, **Available**, **4K Requested** or **4K Available**. If the server's 4K list can't be read, the 4K button still shows when your account has the permission.
+- For a **series** you pick which seasons to request. Seasons already available or requested are locked.
+- Users with *Advanced Requests* can override the server, quality profile and root folder.
+- **Request allowance**: if Seerr limits requests, a line under the buttons says how many are left this week (like "2 of 5 movie requests left this week"), and the buttons turn off when the allowance is used up.
+- **Trailer** opens the official trailer in the YouTube app, so install YouTube from the App Store on your Apple TV if you haven't.
+
+![Series detail page with Request Series, Request Series in 4K and Trailer buttons](docs/screenshots/detail-trailer-4k.png)
+
+![Movie detail page showing a 66% Fresh Tomatometer and a 66% Upright audience score under the title](docs/screenshots/detail-ratings.png)
+
+**Rotten Tomatoes** scores sit under the year, runtime and genres: the critics' **Tomatometer** with its label (Certified Fresh, Fresh or Rotten) and, for movies, the **Audience** score (Upright or Spilled). They come from Seerr, so they're simply left out when your server can't look them up.
+
+### Watching
+
+![An available movie's page with the Play in Infuse button first among the actions](docs/screenshots/detail-play-infuse.png)
+
+On a movie that's available on your server, a **Play** button sits first among the actions. On a series it opens an episode list: every season on the server, with each episode's number, title, runtime and summary. **Settings → Playback → External Player** chooses what it plays in:
+
+- **Apple Player** streams the title from the media server Seerr is set up with (Plex, Jellyfin or Emby), in Apple's own player, without leaving Mindseerr. It uses the Plex or Jellyfin/Emby sign-in you used for Seerr, resumes where you left off and saves your progress back to the server. Signing in to Seerr with a Seerr account or an API key can't use it. Subtitle and audio-track choice depend on what the server puts in its stream. *This is new and hasn't been tried against a real server yet.*
+- **Infuse** opens the movie or episode by its TMDB id and starts it, using the link Infuse documents. Infuse has to be installed and have the title in its library. Plex's own Apple TV app ignores links to a single title, and Swiftfin publishes none, so they aren't offered.
+- **Off** hides the Play button.
+
+### Download progress
+
+![Series detail page with a frosted panel under the title reading Season 2, Episode 5 and a progress bar](docs/screenshots/detail-progress.png)
+
+A title that's downloading shows its progress right under the title on a frosted panel that stays readable over any backdrop: status, percent, time left and which server has it. A series with several episodes downloading gets a line for each, labeled with its season and episode.
+
+**This works for everyone, not only admins.** Seerr reports the download state of each title, and Mindseerr uses it, so a regular user sees progress on posters and detail pages without anyone setting up a download service on their Apple TV. An admin who connects Sonarr, Radarr or a download client gets more detail and the controls below.
+
+![A rounded, translucent Download finished banner for a title in the top right corner of the Discover screen](docs/screenshots/download-finished-banner.png)
+
+When a download for one of your requests finishes, a **Download finished** banner slides into the top right corner, shaped like a system notification and tinted with your theme's highlight color: poster, name and, for a series, the season and episode. It appears over whichever screen you're on, stays for a few seconds and never takes focus. tvOS doesn't allow banners from a closed app, so when you reopen Mindseerr it shows a banner for each download that finished meanwhile (a few of them, then one for the rest). Turn it off under **Settings → Notifications → Download Finished**.
+
+### Cast, crew and suggestions
+
+![Detail page scrolled to the Cast row, with round avatars and each actor's name and character](docs/screenshots/detail-cast.png)
+
+Scroll down for the **Cast**, with each actor's name and character, then the key **Crew**: director, writers, producers and composer. Choosing a person opens their page with a photo, a short bio and their other movies and series.
+
+![A cast member's page with the heading Other Work · Best Rated and a grid of their other titles](docs/screenshots/person-credits.png)
+
+The heading is the order button: select it to switch between **Best Rated** (by Rotten Tomatoes Tomatometer, with TMDB's rating standing in where there's none) and **Newest**. Each title is a normal poster card, so you can open it and request it from there.
+
+![Recommended row of posters with Requested, Available and Pending badges and a download progress bar](docs/screenshots/detail-recommended.png)
+
+**Recommended** and **Similar** rows suggest more to watch, with the same badges and progress bars.
+
+### Activity
+
+![Activity tab (admin view) with request counts, connected services, and the Active Downloads list](docs/screenshots/admin-download-services.png)
+
+Everyone gets an **Activity** tab. For admins and users with *Manage Requests* it's the full panel: request counts, filters (Pending, Processing, Failed, Available, All), **Approve, Decline, Approve All, Retry** for failed requests and **Delete**. Everyone else sees their own unfinished requests and where each one stands.
+
+![Request list where each request has a colored tag showing its download state](docs/screenshots/admin-request-progress.png)
+
+Any request whose title is in a download queue gets a tag with its real state: **Downloading** (green), **Paused** (amber), **Queued** (gray), **Importing** (blue), **Needs attention** (orange) or **Failed** (red).
+
+**Active Downloads** lists the downloads that belong to a Seerr request: who asked for it, which server is fetching it, a progress bar, status and time left, refreshing every 10 seconds. Each row has two round buttons: **Pause / Play** (when a download client holds that download) and **Cancel**. Cancelling asks first, and for downloads in Sonarr or Radarr it can also **blocklist the release** so it isn't grabbed again. It deletes the partial download from your client; the request stays in Seerr so you can retry it.
+
+### Top Shelf
+
+![The Apple TV Home Screen with Mindseerr in the top row and a row of posters above the apps](docs/screenshots/top-shelf.png)
+
+Put Mindseerr in the top row of your Home Screen and the **Top Shelf** fills with a section of Discover, Trending by default. Select a poster to open that title in the app, even if Mindseerr was on another page. The titles are the ones Mindseerr last loaded for that section, so open the app now and then to keep it fresh.
+
+![The Top Shelf choice listing Off and every Discover section, with a tick on the current choice](docs/screenshots/top-shelf-menu.png)
+
+Choose the section under **Settings → Look and Feel → Top Shelf**, or **Off** to show the Mindseerr banner instead. It applies right away.
+
+## Download services
+
+Connect your servers from the Activity tab with **Add a Download Service**. Each is tested before it's saved and shows a live status dot (green when reachable, red with the reason when not). Add as many as you run, like a separate 4K Radarr.
+
+| Service | Address | Sign-in |
+|---|---|---|
+| Sonarr, Radarr | Like `http://192.168.1.10:8989` / `:7878` (include a URL base if you use one) | API key, under Settings → General → Security |
+| qBittorrent | Web UI address, like `http://192.168.1.10:8080` | Web UI username and password |
+| Deluge | Web UI address, like `http://192.168.1.10:8112` | Web UI password (default `deluge`); its Web UI has to be connected to a daemon under Connection Manager |
+| Transmission | Like `http://192.168.1.10:9091` | Username and password only if you turned RPC authentication on |
+| SABnzbd | Like `http://192.168.1.10:8080` | API key, under Config → General → Security |
+
+Add the same download client that Sonarr and Radarr use and Mindseerr matches its downloads to their requests, adding pause, resume and cancel.
+
+**A download client works on its own, too.** Without Sonarr or Radarr, just add qBittorrent, Deluge, Transmission or SABnzbd and Active Downloads reads progress straight from it.
+
+![Active Downloads fed only by a download client, with progress bars, a paused download and a series showing Season 2, Episode 5](docs/screenshots/admin-qbittorrent-only.png)
+
+Mindseerr lists every unfinished download and works out which Seerr title it is from its name, so *The.Drowned.Lighthouse.2026.1080p.WEB-DL* becomes the movie *The Drowned Lighthouse* and *Deep.Station.S02E05* becomes Season 2, Episode 5 of *Deep Station*. Matched titles get their poster, the name of whoever requested them, and show up as progress on Discover and detail pages. A download whose name doesn't match a title is still listed by its name. Finished and seeding downloads are left out.
+
+## Watchlists
+
+![Watchlists tab showing a Trakt watchlist as a poster grid, with Partial, Available and Requested badges](docs/screenshots/watchlists.png)
+
+Pick **Trakt**, **Letterboxd**, **TMDB** or **TheTVDB** along the top and Mindseerr imports your watchlist and matches every title to your Seerr server. Each poster gets a badge: **Available** (green), **Requested** (indigo) or **Partial** (teal, when some seasons are missing); titles not on your server carry none. **Not on Server Only** filters the grid to the missing titles, **Refresh** imports again, and titles that can't be matched stay visible, marked **No Match**.
+
+**Request Missing** opens a **Choose What to Request** screen first, so you decide what actually gets sent:
+
+![The Choose What to Request screen with movies ticked and seasons of a series partly unticked](docs/screenshots/watchlist-choose-seasons.png)
+
+Every missing movie and series starts ticked. Untick any movie, and for each series pick just the seasons you're after, with **All** and **None** shortcuts. Only seasons that can still be requested are offered. A series with no seasons picked is skipped, and the button counts what you're about to send, like **Request 7 Titles**.
 
 | Service | How it connects | What you need |
 |---|---|---|
@@ -210,62 +216,80 @@ The **Watchlists** tab imports a watchlist, matches every title to your Seerr se
 | TMDB | Real sign-in: scan a QR code and approve on themoviedb.org | Your own TMDB API Read Access Token, entered in the app |
 | TheTVDB | Your TheTVDB PIN; imports your favorites (TheTVDB's watchlist) | Your own TheTVDB API key and subscriber PIN, entered in the app |
 
-Letterboxd's API is invite-only, so it doesn't allow an app sign-in. Mindseerr reads the public watchlist page and never asks for your password. If Letterboxd changes its pages or blocks the request, import the watchlist into Trakt on trakt.tv and use the Trakt tab instead.
+![Connect TheTVDB screen with an API key field, a PIN field and a short explanation of where to find both](docs/screenshots/watchlists-connect.png)
+
+Each connect screen explains where to find what it asks for, and keys you enter stay in the Keychain on your Apple TV. Letterboxd's API is invite-only, so Mindseerr reads the public watchlist page and never asks for your password; if Letterboxd changes its pages or blocks the request, import the list into Trakt and use the Trakt tab.
 
 ### Setting up Trakt
 
 1. At [developer.trakt.tv](https://developer.trakt.tv/apps/new), create a new app named Mindseerr. For the **Redirect URI**, use `urn:ietf:wg:oauth:2.0:oob`. Trakt warns about it because it's meant for web sign-ins, but Mindseerr signs in with a code and never redirects. If Trakt won't save it, use any `https://` address you own instead. (Trakt may ask you to verify your account with GitHub first.)
-2. In `project.yml`, paste the **Client ID** into `TRAKT_CLIENT_ID`. Leave `TRAKT_CLIENT_SECRET` empty: Trakt stopped issuing secrets to new apps in October 2026, and the TV code sign-in doesn't need one. If you registered an `https://` redirect, put the same address in `TRAKT_REDIRECT_URI`; it's sent when the app renews your sign-in and must match.
+2. In `project.yml`, paste the **Client ID** into `TRAKT_CLIENT_ID`. Leave `TRAKT_CLIENT_SECRET` empty: Trakt stopped issuing secrets to new apps in October 2026, and the TV code sign-in doesn't need one. If you registered an `https://` redirect, put the same address in `TRAKT_REDIRECT_URI`.
 3. Run `xcodegen generate` and build again.
 
 The Client ID is built into the app. That's expected for TV apps and isn't a secret on its own.
 
 ### Setting up TMDB and TheTVDB
 
-Each person enters their own key on the service's tab in the app; it's kept in the Keychain on that Apple TV.
+Each person enters their own key on the service's tab in the app.
 
 - **TMDB:** at [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api), request a free API key and paste the long **API Read Access Token**, then sign in with the QR code.
 - **TheTVDB:** register a project at [thetvdb.com/api-information](https://thetvdb.com/api-information) for an API key, and take your PIN from [thetvdb.com/dashboard/account/apikey](https://thetvdb.com/dashboard/account/apikey) (PINs come with a subscription).
 
 To ship a build with a key already inside, set `TMDB_READ_ACCESS_TOKEN` or `TVDB_API_KEY` in `project.yml` and run `xcodegen generate`. A key entered in the app takes priority.
 
-## Make an IPA
+## Settings
 
-On your Mac, in Terminal:
+![Settings with Look and Feel, Discover, Playback and Notifications sections](docs/screenshots/settings.png)
+
+- **Look and Feel:** *Appearance* (eight themes: Sludge, Bile, Gloam (the default), Despair, Rage, Abyss, Smoke and Mist; Abyss is true black so OLED pixels stay off, and Mist is a light off-white theme), *Side Menu* (Expands or Always Collapsed) and *Top Shelf*.
+- **Discover:** switch each section of Discover on or off.
+- **Playback:** the External Player (Apple Player, Infuse or Off).
+- **Notifications:** the Download Finished banner.
+- **Account and Server:** who you're signed in as and with, the Seerr address and version, **Trusted Certificates** (when you've approved any), Sign Out and Change Server.
+- **About**, opened from the logo at the bottom, shows the version, a link to this project and credits for Trakt, TMDB, TheTVDB and Plex.
+
+### Languages
+
+Mindseerr follows your Apple TV's language: **English, Spanish, French, Russian and Simplified Chinese**. Translations are in `Mindseerr/Localizable.xcstrings` (and `InfoPlist.xcstrings` for the app name); fixes and new languages are welcome as pull requests. Titles, overviews and people come from Seerr in whatever language your server returns.
+
+## Build, install and IPA
+
+`./make-ipa.sh` generates the project if needed, archives a Release build and writes `Mindseerr.ipa` next to the script.
 
 ```sh
 cd Mindseerr
 ./make-ipa.sh
 ```
 
-It generates the project if needed, archives a Release build and writes `Mindseerr.ipa` next to the script.
-
-- **Signed (default)** uses the Team you picked in Xcode. It installs on Apple TVs registered to your team. Pair yours first (Xcode → Window → Devices and Simulators), then install the IPA from that same window: select the Apple TV, click **+** under *Installed Apps* and pick the file.
+- **Signed (default)** uses the Team you picked in Xcode. It installs on Apple TVs registered to your team. Pair yours first (Xcode → Window → Devices and Simulators), then install the IPA from that window: select the Apple TV, click **+** under *Installed Apps* and pick the file.
 - **`TEAM=ABCDE12345 ./make-ipa.sh`** passes your team ID directly, if Xcode lost the Team setting after `xcodegen generate`.
 - **`./make-ipa.sh --unsigned`** makes `Mindseerr-unsigned.ipa` for signing later with another tool.
 
 With a free Apple ID the signed app expires after 7 days; run the script again to renew it.
 
-## Project layout
+### Project layout
 
 ```
 Mindseerr/
-├── make-ipa.sh                Builds Mindseerr.ipa (see above)
+├── make-ipa.sh                  Builds Mindseerr.ipa (see above)
 ├── project.yml                  XcodeGen spec (tvOS 17, ATS allows http for LAN servers)
+├── Tools/demo-server/           Fake Seerr, Sonarr, Radarr and qBittorrent used for the screenshots
+├── TopShelf/                    The Top Shelf extension
 └── Mindseerr/
-    ├── App/                     App entry, RootView, tabs, AppState (session & phase)
-    ├── Models/                  Codable types for media, requests, users
-    ├── Networking/              SeerrClient (actor), PlexAuth (PIN flow), Keychain
+    ├── App/                     App entry, RootView, side menu host, AppState (session & phase)
+    ├── Models/                  Codable types for media, requests, users, Browse, the external player
+    ├── Networking/              SeerrClient (actor), PlexAuth, Keychain, suggestions, certificate trust
+    │   ├── Playback/            Plex, Jellyfin and Emby streams for Apple's player
     │   └── Watchlists/          Trakt, TMDB and TheTVDB clients, Letterboxd importer, WatchlistStore
     └── Views/
         ├── Onboarding/          Server address, sign-in (Plex, Jellyfin/Emby, Seerr account, API key)
-        ├── Admin/               Activity tab: the admin panel, and each user's own requests
-        ├── Discover/            Paginated poster rows
-        ├── Search/              Debounced search grid
-        ├── Detail/              Detail page + season picker
-        ├── Watchlists/          Watchlists tab, connect screens, Trakt sign-in
-        ├── Settings/            Account, server, sign out
-        └── Components/          Posters and status badges
+        ├── Admin/               Activity tab: the admin panel, each user's own requests, download services
+        ├── Discover/            Paginated poster rows and Browse
+        ├── Search/              Debounced search grid with filter and sort
+        ├── Detail/              Detail page, season picker, episode list, person page, Apple Player
+        ├── Watchlists/          Watchlists tab and connect screens
+        ├── Settings/            Settings, About
+        └── Components/          Posters, status badges, side menu
 ```
 
 ## How it talks to Seerr
@@ -277,52 +301,51 @@ All calls go to `<server>/api/v1`:
 | Validate server | `GET /status` |
 | Server type | `GET /settings/public` (`mediaServerType`: 1 Plex, 2 Jellyfin, 3 Emby) |
 | Sign in | `POST /auth/plex` `{ authToken }`, `POST /auth/jellyfin` `{ username, password }` or `POST /auth/local` `{ email, password }` → `connect.sid` cookie; or an `X-Api-Key` header on every request |
-| Current user | `GET /auth/me` |
+| Current user and allowance | `GET /auth/me`, `GET /user/{id}/quota` |
 | Discover rows | `GET /discover/trending`, `/discover/movies`, `/discover/movies/upcoming`, `/discover/tv`, `/discover/tv/upcoming` |
+| Browse | `GET /discover/genreslider/{movie,tv}`, `GET /discover/{movies,tv}?genre=…\|studio=…\|network=…&sortBy=…`, `GET /studio/{id}`, `GET /network/{id}` |
 | Search | `GET /search?query=…&page=…` |
-| Details | `GET /movie/{tmdbId}`, `GET /tv/{tmdbId}` |
+| Details | `GET /movie/{tmdbId}`, `GET /tv/{tmdbId}` (includes `mediaInfo.downloadStatus` for download progress) |
 | Request | `POST /request` `{ mediaType, mediaId, seasons?, is4k }` |
 | Match an IMDb ID | `GET /search?query=imdb:tt…` |
 | Admin: list / counts | `GET /request?filter=pending\|processing\|failed\|available\|all`, `GET /request/count` |
 | Admin: actions | `POST /request/{id}/approve`, `POST /request/{id}/decline`, `POST /request/{id}/retry`, `DELETE /request/{id}` |
 
-## Notes & troubleshooting
+Sonarr and Radarr are read through their v3 API (`/api/v3/queue`, with `blocklist=true` on cancel), the download clients through their own web APIs, and Plex, Jellyfin and Emby only for the Apple Player.
+
+## Notes and troubleshooting
 
 - **API key sign-in** acts as Seerr's main admin account (user 1), so requests you make are made as that account. Use it only on your own Apple TV. The key is in Seerr → Settings → General.
 - **Seerr account sign-in** needs *Settings → Users → Enable Local Sign-In* turned on in Seerr. Seerr accounts sign in by email, not username.
-
 - **"Access denied" after signing in**: the account has to be allowed on the Seerr server. In Seerr, import the user (*Users → Import Plex/Jellyfin Users*) or enable new Plex/Jellyfin sign-ins under *Settings → Users*.
-- **Jellyfin password storage**: to sign back in silently when the Seerr session expires, the Jellyfin username and password are kept in the Apple TV Keychain. Signing out deletes them.
-- **CSRF protection**: if *Settings → Network → CSRF Protection* is turned on in Seerr, POST requests from the app will be rejected. Leave it off (the default) or extend `SeerrClient` to send the XSRF token.
-- **Self-signed HTTPS** certificates aren't trusted by tvOS. Use plain `http://` on your LAN or a real certificate (e.g. via a reverse proxy).
+- **Jellyfin password storage**: to sign back in silently when the Seerr session expires (and for the Apple Player), the Jellyfin username and password are kept in the Apple TV Keychain. Signing out deletes them.
+- **Self-signed HTTPS**: tvOS doesn't trust a self-signed certificate on its own. When Mindseerr meets one on Seerr or a download service, it shows the certificate's SHA-256 fingerprint and asks whether to trust it. Your approval covers that one certificate on that one host and port; a different certificate on the same server asks again. Take trust back under **Settings → Server → Trusted Certificates**.
+- **CSRF protection**: if *Settings → Network → CSRF Protection* is turned on in Seerr, POST requests from the app will be rejected. Leave it off (the default).
+- **A banner, request or progress bar didn't show up**: progress for non-admin accounts comes from what Seerr reports, which refreshes on Seerr's own schedule.
 - **App icon**: `Assets.xcassets` holds a layered tvOS icon (Front / Middle / Back layers for the parallax tilt) and Top Shelf images. To use your own artwork, open the asset catalog in Xcode and drag PNGs onto each slot: icon layers at 400×240 (@1x) and 800×480 (@2x), the App Store icon at 1280×768, Top Shelf at 1920×720 / 3840×1440, and Top Shelf Wide at 2320×720 / 4640×1440. The Back layer must have no transparency.
 
-## Ideas for next steps
+## Roadmap
 
 Done:
 
-- [x] 4K requests when the server has a 4K Radarr/Sonarr
-- [x] Request-option overrides (server, quality profile, root folder) for users with *Advanced Requests*
-- [x] Cast & crew and "Similar"/"Recommended" rows on detail pages, with a page for each person's other work sorted by Rotten Tomatoes
-- [x] Rotten Tomatoes scores on detail pages
-- [x] Top Shelf showing any Discover section, switched on, off or between sections from one menu in Settings
-- [x] A Recently Added row, and Settings to switch each Discover section on or off
-- [x] A personalised, expandable "Suggested for You" row balancing taste, Rotten Tomatoes, trending and new releases
+- [x] Plex, Jellyfin, Emby, Seerr-account and API-key sign-in, with a connect flow that explains what went wrong
+- [x] Discover, Browse by genre, studio or network, and a filter and sort for search results
+- [x] A personalised "Suggested for You" row that reshuffles every 48 hours
+- [x] 4K requests, request options for advanced users, and a request allowance line
+- [x] Download progress for everyone, and Sonarr, Radarr, qBittorrent, Deluge, Transmission and SABnzbd for admins, with pause, resume, cancel and blocklist
 - [x] Watchlists from Trakt, Letterboxd, TMDB and TheTVDB, with a picker for titles and seasons
-- [x] qBittorrent, Deluge, Transmission and SABnzbd: progress without Sonarr or Radarr, and pause, resume and cancel for downloads
-- [x] A banner when a download finishes, on any screen, including ones that finished while the app was closed (shown when it's reopened)
-- [x] An Activity tab for everyone: the admin panel for admins, a user's own requests for everyone else
-- [x] A Play button on available movies that opens them in Infuse
-- [x] Themes, including a light one
-- [x] Tabs that return to their top level when you leave them
+- [x] Cast, crew, Rotten Tomatoes scores and recommendations
+- [x] A Download finished banner, including for downloads that finished while the app was closed
+- [x] Play in Apple's player from Plex, Jellyfin or Emby, or in Infuse
+- [x] Top Shelf, themes (including a light one) and a side menu that can stay collapsed
+- [x] Trusting a self-signed HTTPS certificate after the user approves it
+- [x] Spanish, French, Russian and Simplified Chinese
 
 Still to do:
 
 - Add other players if they gain links to a single title
 - Support the NZBGet usenet client for progress and the download controls
-- Show download progress to non-admin users without every Apple TV needing the download services set up
 - An optional API key sign-in for qBittorrent 5.2 and newer, next to the username and password
-- Browse Discover by genre, studio or network, and filter or sort search results
 - Send Seerr's XSRF token so the app works with CSRF protection turned on
-- Localization
+- Try the Apple Player against more real servers, and add subtitle and audio-track pickers
 - A signed build through TestFlight or the App Store, so installing doesn't need sideloading
