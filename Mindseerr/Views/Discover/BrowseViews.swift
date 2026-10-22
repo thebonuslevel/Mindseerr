@@ -83,7 +83,7 @@ private struct BrowseTile: View {
             .accessibilityLabel(target.name)
         } else {
             NavigationLink(value: target) {
-                CompanyTile(name: target.name, logoPath: logo, boxed: KnownCompanies.boxedLogos.contains(target.id))
+                CompanyTile(name: target.name, logoPath: logo, treatment: KnownCompanies.treatedLogos[target.id])
             }
             .accessibilityLabel(target.name)
         }
@@ -214,13 +214,13 @@ private struct CompanyTile: View {
     @Environment(\.isFocused) private var focused
     let name: String
     let logoPath: String?
-    /// The logo is a coloured box with lettering in it: cut the box away and show the lettering in white.
-    var boxed = false
+    /// For a logo that doesn't whiten well as it is: how to draw it in white instead.
+    var treatment: LogoTreatment?
 
     var body: some View {
         Group {
-            if boxed, let url = TMDBImage.url(logoPath, size: .logo) {
-                BoxedLogo(url: url, name: name)
+            if let treatment, let url = TMDBImage.url(logoPath, size: .logo) {
+                TreatedLogo(url: url, name: name, treatment: treatment)
                     .brightness(focused ? -1 : 0)
             } else if let url = TMDBImage.url(logoPath, size: .logo) {
                 AsyncImage(url: url) { phase in
@@ -354,11 +354,18 @@ struct BrowseResultsView: View {
     }
 }
 
-/// A logo with a coloured box behind its lettering, drawn as white lettering on nothing. The pixels are read once the
-/// image has downloaded: reddish ones (the box) disappear, everything else turns white.
-private struct BoxedLogo: View {
+enum LogoTreatment: Sendable {
+    /// Cut away a coloured box behind the lettering (Marvel's), leaving the lettering white.
+    case cutBox
+    /// Keep the artwork's light and dark as white and see-through (Warner Bros.' shield, MGM's lion).
+    case shaded
+}
+
+/// A logo drawn in white by reading its pixels once it has downloaded.
+private struct TreatedLogo: View {
     let url: URL
     let name: String
+    let treatment: LogoTreatment
     @State private var image: UIImage?
     @State private var failed = false
 
@@ -374,7 +381,7 @@ private struct BoxedLogo: View {
             guard image == nil else { return }
             if let cached = LogoMask.cache.object(forKey: url as NSURL) { image = cached; return }
             guard let (data, _) = try? await URLSession.shared.data(from: url),
-                  let made = LogoMask.make(from: data) else { failed = true; return }
+                  let made = LogoMask.make(from: data, treatment: treatment) else { failed = true; return }
             LogoMask.cache.setObject(made, forKey: url as NSURL)
             image = made
         }
@@ -384,8 +391,9 @@ private struct BoxedLogo: View {
 enum LogoMask {
     nonisolated(unsafe) static let cache = NSCache<NSURL, UIImage>()
 
-    /// White lettering from a logo that has a coloured box: the more a pixel leans red, the more transparent it becomes.
-    static func make(from data: Data) -> UIImage? {
+    /// White artwork at a see-through level worked out from each pixel's colour: for `.cutBox` the more a pixel leans
+    /// red the more transparent it becomes, for `.shaded` the darker it is the more transparent it becomes.
+    static func make(from data: Data, treatment: LogoTreatment) -> UIImage? {
         guard let source = UIImage(data: data)?.cgImage else { return nil }
         let width = source.width, height = source.height
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -399,8 +407,15 @@ enum LogoMask {
             let r = alpha > 0 ? Double(pixels[i]) / 255 / alpha : 0
             let g = alpha > 0 ? Double(pixels[i + 1]) / 255 / alpha : 0
             let b = alpha > 0 ? Double(pixels[i + 2]) / 255 / alpha : 0
-            let redness = min(max((r - (g + b) / 2) * 2, 0), 1)
-            let out = UInt8(max(0, min(255, alpha * (1 - redness) * 255)))
+            let keep: Double
+            switch treatment {
+            case .cutBox:
+                keep = 1 - min(max((r - (g + b) / 2) * 2, 0), 1)
+            case .shaded:
+                let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+                keep = min(max((luminance - 0.12) * 1.6, 0), 1)
+            }
+            let out = UInt8(max(0, min(255, alpha * keep * 255)))
             pixels[i] = out; pixels[i + 1] = out; pixels[i + 2] = out; pixels[i + 3] = out   // white at that alpha, premultiplied
         }
         guard let result = context.makeImage() else { return nil }
