@@ -82,6 +82,9 @@ struct SearchView: View {
             ScrollView {
                 content
                     .frame(maxWidth: .infinity)
+                    // The whole width counts as one target below the keyboard, so pressing down from its left keys goes to
+                    // the results instead of across to the menu.
+                    .focusSection()
                     .id(Self.topID)
             }
             .themedBackground()
