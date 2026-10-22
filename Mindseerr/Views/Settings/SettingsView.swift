@@ -112,6 +112,7 @@ struct SettingsView: View {
             }
             .themedBackground()
             .clearsSideMenu()
+            .contentMargins(.top, 30, for: .scrollContent)   // keeps the first heading off the top edge
             // The choice is made on a pushed page; pick it up when coming back.
             .onAppear {
                 shelfChoice = TopShelfCache.isEnabled ? TopShelfCache.section : nil

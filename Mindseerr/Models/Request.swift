@@ -35,6 +35,8 @@ struct MediaRequest: Decodable, Identifiable, Sendable {
     var secondaryMediaStatus: MediaStatus? {
         guard let status = media?.status else { return nil }
         if status == .pending && self.status == .pendingApproval { return nil }
+        // "Approved" already says it's on its way; "Requested" beside it would say the same.
+        if status == .processing && self.status == .approved { return nil }
         return status
     }
 

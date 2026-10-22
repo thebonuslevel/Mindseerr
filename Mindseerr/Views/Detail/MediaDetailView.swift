@@ -5,6 +5,8 @@ struct MediaDetailView: View {
     @Environment(AppState.self) private var app
     @Environment(\.openURL) private var openURL
     @Environment(\.appTheme) private var theme
+    @Environment(\.resetFocus) private var resetFocus
+    @Namespace private var focusSpace
     let route: MediaRoute
 
     @State private var detail: MediaDetail?
@@ -45,6 +47,7 @@ struct MediaDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .scrollClipDisabled()
+                .focusScope(focusSpace)
             } else if let loadError {
                 VStack(spacing: 30) {
                     ContentUnavailableView("Couldn't Load", systemImage: "exclamationmark.triangle",
@@ -170,6 +173,8 @@ struct MediaDetailView: View {
                 }
                 actions(detail)
                     .padding(.top, 20)
+                    // The page opens on its buttons, not on the cast row further down.
+                    .prefersDefaultFocus(true, in: focusSpace)
                 if let note = quota?.summary(noun: route.type == .tv ? "series" : "movie") {
                     Label(note, systemImage: quota?.isExhausted == true ? "exclamationmark.circle" : "ticket")
                         .font(.callout)
@@ -363,8 +368,11 @@ struct MediaDetailView: View {
 
     private func load() async {
         do {
+            let first = detail == nil
             detail = try await app.api.detail(for: route, useCache: false)
             loadError = nil
+            // The page was empty when it appeared, so focus may have landed elsewhere: put it on the buttons.
+            if first { resetFocus(in: focusSpace) }
         } catch {
             if detail == nil { loadError = AppState.friendly(error) }
         }
