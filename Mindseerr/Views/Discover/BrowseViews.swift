@@ -1,75 +1,165 @@
 import SwiftUI
 
-/// The Browse section: four ways in (movie genres, series genres, studios, networks), each opening a page of choices.
+/// The Browse section: a row for each of movie genres, series genres, studios and networks, like the rows of Discover.
+/// A row's title opens all of it as a grid.
 struct BrowseView: View {
     @State private var path = NavigationPath()
 
-    private let columns = [GridItem(.flexible(), spacing: 40), GridItem(.flexible(), spacing: 40)]
-
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 30) {
-                    Text("Browse")
-                        .font(.title3).fontWeight(.semibold)
-                    LazyVGrid(columns: columns, alignment: .leading, spacing: 40) {
-                        ForEach(BrowseKind.allCases) { kind in
-                            NavigationLink(value: kind) {
-                                Label(kind.title, systemImage: kind.symbol)
-                                    .font(.title3)
-                                    .frame(maxWidth: .infinity, minHeight: 90)
-                            }
-                        }
+            ScrollView(.vertical) {
+                LazyVStack(alignment: .leading, spacing: 40) {
+                    ForEach(BrowseKind.allCases) { kind in
+                        BrowseSectionRow(kind: kind)
                     }
-                    .focusSection()
-                    .frame(maxWidth: 1200)
                 }
                 .padding(.vertical, 30)
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .scrollClipDisabled()
             .themedBackground()
             .mediaDestinations()
         }
-        // Leaving the section pops back to the four choices, so coming back shows the top level.
+        // Leaving the section pops back to its rows, so coming back shows the top level.
         .onDisappear { path = NavigationPath() }
     }
 }
 
-/// The genres, studios or networks to choose from.
+/// The genres, studios or networks of one kind, loaded once and shared by its row and its full-screen grid.
+@MainActor
+@Observable
+final class BrowseListModel {
+    let kind: BrowseKind
+    private(set) var targets: [BrowseTarget] = []
+    /// TMDB logo paths for studios and networks, by id, as they arrive.
+    private(set) var logos: [Int: String] = [:]
+    private(set) var loading = true
+    private(set) var error: String?
+    @ObservationIgnored private var started = false
+
+    init(kind: BrowseKind) { self.kind = kind }
+
+    func load(using api: SeerrClient) async {
+        guard !started else { return }
+        started = true
+        switch kind {
+        case .studios:
+            targets = KnownCompanies.studios.map { BrowseTarget(type: .movie, filter: .studio, id: $0.id, name: $0.name) }
+        case .networks:
+            targets = KnownCompanies.networks.map { BrowseTarget(type: .tv, filter: .network, id: $0.id, name: $0.name) }
+        case .movieGenres, .tvGenres:
+            do {
+                let type = kind.mediaType
+                targets = try await api.genres(for: type)
+                    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                    .map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
+            } catch {
+                self.error = AppState.friendly(error)
+                started = false
+            }
+        }
+        loading = false
+        // Studios and networks show their logos, which Seerr hands over one company at a time.
+        if kind == .studios || kind == .networks {
+            let found = await boundedMap(targets, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
+            for (id, path) in found { if let path { logos[id] = path } }
+        }
+    }
+}
+
+/// One tile of a row or grid: a genre's name, or a studio or network's logo.
+private struct BrowseTile: View {
+    let target: BrowseTarget
+    let logo: String?
+
+    var body: some View {
+        NavigationLink(value: target) {
+            if target.filter == .genre {
+                Text(target.name)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+            } else {
+                CompanyTile(name: target.name, logoPath: logo, bundledLogo: KnownCompanies.bundledLogos[target.id])
+            }
+        }
+        .accessibilityLabel(target.name)
+    }
+}
+
+/// A Browse row: the title (select it to open the whole list as a grid) over a row of tiles.
+struct BrowseSectionRow: View {
+    @Environment(AppState.self) private var app
+    @State private var model: BrowseListModel
+    @State private var expanded = false
+    @FocusState private var titleFocused: Bool
+
+    init(kind: BrowseKind) {
+        _model = State(initialValue: BrowseListModel(kind: kind))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button { expanded = true } label: {
+                HStack(spacing: 16) {
+                    Text(model.kind.title)
+                        .font(.title3).fontWeight(.semibold)
+                    if titleFocused {
+                        Label("Expand", systemImage: "arrow.up.left.and.arrow.down.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .buttonStyle(ThemedButtonStyle(idleFill: false))
+            .focused($titleFocused)
+            .animation(.easeOut(duration: 0.15), value: titleFocused)
+
+            if let error = model.error {
+                Text(error)
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 20)
+            } else {
+                ScrollView(.horizontal) {
+                    LazyHStack(alignment: .center, spacing: 30) {
+                        if model.loading {
+                            ProgressView().padding(.horizontal, 60)
+                        }
+                        ForEach(model.targets, id: \.self) { target in
+                            BrowseTile(target: target, logo: model.logos[target.id])
+                                .frame(width: model.kind == .movieGenres || model.kind == .tvGenres ? 300 : 340)
+                        }
+                    }
+                    .padding(.vertical, 30) // room for the focus lift
+                }
+                .scrollClipDisabled()
+            }
+        }
+        .focusSection()
+        .task { await model.load(using: app.api) }
+        .navigationDestination(isPresented: $expanded) {
+            BrowseListView(model: model)
+        }
+    }
+}
+
+/// All the genres, studios or networks of one kind, as a grid.
 struct BrowseListView: View {
     @Environment(AppState.self) private var app
-    let kind: BrowseKind
-    @State private var targets: [BrowseTarget] = []
-    /// TMDB logo paths for studios and networks, by id, as they arrive.
-    @State private var logos: [Int: String] = [:]
-    @State private var loading = true
-    @State private var error: String?
+    let model: BrowseListModel
 
     private let columns = [GridItem(.adaptive(minimum: 320, maximum: 420), spacing: 30, alignment: .top)]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
-                Text(kind.title).font(.title3).fontWeight(.semibold)
-                if loading {
+                Text(model.kind.title).font(.title3).fontWeight(.semibold)
+                if model.loading {
                     ProgressView().frame(maxWidth: .infinity).padding(.top, 60)
-                } else if let error {
-                    ContentUnavailableView("Couldn't Load \(kind.title)", systemImage: "exclamationmark.triangle",
+                } else if let error = model.error {
+                    ContentUnavailableView("Couldn't Load \(model.kind.title)", systemImage: "exclamationmark.triangle",
                                            description: Text(error))
                 } else {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 30) {
-                        ForEach(targets, id: \.self) { target in
-                            NavigationLink(value: target) {
-                                if target.filter == .genre {
-                                    Text(target.name)
-                                        .lineLimit(1)
-                                        .frame(maxWidth: .infinity)
-                                } else {
-                                    CompanyTile(name: target.name, logoPath: logos[target.id], bundledLogo: KnownCompanies.bundledLogos[target.id])
-                                }
-                            }
-                            .accessibilityLabel(target.name)
+                        ForEach(model.targets, id: \.self) { target in
+                            BrowseTile(target: target, logo: model.logos[target.id])
                         }
                     }
                     .focusSection()
@@ -80,32 +170,7 @@ struct BrowseListView: View {
         }
         .scrollClipDisabled()
         .themedBackground()
-        .task { await load() }
-    }
-
-    private func load() async {
-        switch kind {
-        case .studios:
-            targets = KnownCompanies.studios.map { BrowseTarget(type: .movie, filter: .studio, id: $0.id, name: $0.name) }
-        case .networks:
-            targets = KnownCompanies.networks.map { BrowseTarget(type: .tv, filter: .network, id: $0.id, name: $0.name) }
-        case .movieGenres, .tvGenres:
-            do {
-                let type = kind.mediaType
-                targets = try await app.api.genres(for: type)
-                    .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-                    .map { BrowseTarget(type: type, filter: .genre, id: $0.id, name: $0.name) }
-            } catch {
-                self.error = AppState.friendly(error)
-            }
-        }
-        loading = false
-        // Studios and networks show their logos, which Seerr hands over one company at a time.
-        if kind == .studios || kind == .networks {
-            let api = app.api
-            let found = await boundedMap(targets, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
-            for (id, path) in found { if let path { logos[id] = path } }
-        }
+        .task { await model.load(using: app.api) }
     }
 }
 
