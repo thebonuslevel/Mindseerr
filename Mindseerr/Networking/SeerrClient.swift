@@ -146,9 +146,11 @@ actor SeerrClient {
 
     /// The logo of a studio or network (a TMDB image path), or nil when Seerr has none or doesn't offer the lookup.
     func companyLogo(for target: BrowseTarget) async -> String? {
+        if let known = LogoCache.path(for: target) { return known }
         struct Company: Decodable { let logoPath: String? }
         let path = target.filter == .network ? "network/\(target.id)" : "studio/\(target.id)"
         let company: Company? = try? await send(path)
+        if let logo = company?.logoPath { LogoCache.save(logo, for: target) }
         return company?.logoPath
     }
 

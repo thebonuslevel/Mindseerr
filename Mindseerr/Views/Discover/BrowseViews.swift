@@ -69,8 +69,10 @@ final class BrowseListModel {
             }
         }
         loading = false
-        // Studios and networks show their logos, which Seerr hands over one company at a time.
+        // Studios and networks show their logos. The ones Seerr has already named are used at once; the rest are asked
+        // for one company at a time.
         if kind == .studios || kind == .networks {
+            for target in targets { if let known = LogoCache.path(for: target) { logos[target.id] = known } }
             let found = await boundedMap(targets, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
             for (id, path) in found { if let path { logos[id] = path } }
         }
@@ -229,16 +231,10 @@ private struct CompanyTile: View {
                 TreatedLogo(url: url, name: name, treatment: treatment)
                     .brightness(darkLogo ? -1 : 0)
             } else if let url = TMDBImage.url(logoPath, size: .logo) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image {
-                        // Whatever colours the logo has, every visible pixel becomes white (or black when focused).
-                        image.resizable().scaledToFit()
-                            .saturation(0)
-                            .brightness(darkLogo ? -1 : 1)
-                    } else {
-                        Text(name).lineLimit(1).opacity(phase.error == nil ? 0 : 1)
-                    }
-                }
+                CachedLogo(url: url, name: name)
+                    // Whatever colours the logo has, every visible pixel becomes white (or black when focused).
+                    .saturation(0)
+                    .brightness(darkLogo ? -1 : 1)
             } else {
                 Text(name).lineLimit(1)
             }
@@ -367,6 +363,29 @@ enum LogoTreatment: Sendable {
     case shaded
 }
 
+/// A logo image from the cache folder (downloaded once, then kept), or the company's name until it's there.
+private struct CachedLogo: View {
+    let url: URL
+    let name: String
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+            } else {
+                Text(name).lineLimit(1).opacity(failed ? 1 : 0)
+            }
+        }
+        .task(id: url) {
+            guard image == nil else { return }
+            guard let data = await LogoCache.imageData(for: url), let loaded = UIImage(data: data) else { failed = true; return }
+            image = loaded
+        }
+    }
+}
+
 /// A logo drawn in white by reading its pixels once it has downloaded.
 private struct TreatedLogo: View {
     let url: URL
@@ -386,7 +405,7 @@ private struct TreatedLogo: View {
         .task(id: url) {
             guard image == nil else { return }
             if let cached = LogoMask.cache.object(forKey: url as NSURL) { image = cached; return }
-            guard let (data, _) = try? await URLSession.shared.data(from: url),
+            guard let data = await LogoCache.imageData(for: url),
                   let made = LogoMask.make(from: data, treatment: treatment) else { failed = true; return }
             LogoMask.cache.setObject(made, forKey: url as NSURL)
             image = made
