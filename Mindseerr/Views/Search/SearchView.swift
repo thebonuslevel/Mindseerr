@@ -62,6 +62,7 @@ struct SearchView: View {
         }
     }
 
+    static let menuClearance: CGFloat = 72
     private static let topID = "search-top"
 
     private let columns = [GridItem(.adaptive(minimum: 240, maximum: 260), spacing: 40, alignment: .top)]
@@ -79,6 +80,9 @@ struct SearchView: View {
             .task(id: query) { await runSearch() }
             .mediaDestinations()
         }
+        // The search field and keyboard are laid out by the system and ignore content margins, so they're pushed clear
+        // of the menu's panel here. The results' own margin is reduced by the same amount (see MainTabView).
+        .padding(.leading, SearchView.menuClearance)
         // Leaving the tab closes any open title, clears the search and scrolls to the top, so coming back shows
         // the empty Search page. (On the stack itself: a pushed title also hides the results, which mustn't reset anything.)
         .onDisappear {

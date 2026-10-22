@@ -85,7 +85,7 @@ struct MainTabView: View {
             .id(pageResetID)
             // Settings is a List, which only applies this margin some of the time (its rows jump left and its section
             // headers appear and vanish as it scrolls), so it clears the menu with its own padding instead.
-            .contentMargins(.leading, section == .settings ? 0 : SideMenu.collapsedWidth + 48, for: .scrollContent)
+            .contentMargins(.leading, section == .settings ? 0 : SideMenu.collapsedWidth + 48 - (section == .search ? SearchView.menuClearance : 0), for: .scrollContent)
             // Start on the page, not in the menu, so the menu stays collapsed until you move into it.
             .prefersDefaultFocus(true, in: focusSpace)
             .environment(\.pageFocusSpace, focusSpace)

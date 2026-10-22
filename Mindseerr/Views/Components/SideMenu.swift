@@ -50,7 +50,9 @@ struct SectionLogo: View {
     }
 }
 
-/// The side menu: every section with its logo and name while it has focus, and only the logos otherwise.
+/// The side menu. Collapsed, it's just each section's logo on a rounded badge, with no background. While it has focus it
+/// opens into a floating rounded panel of frosted glass, with the logo and wordmark on top, each section's name, and the
+/// focused row as a pill in the theme's highlight color.
 struct SideMenu: View {
     @Environment(\.appTheme) private var theme
     @Binding var selection: AppSection
@@ -60,30 +62,35 @@ struct SideMenu: View {
     var onReselect: () -> Void = {}
     /// Set while focus is anywhere in the menu, so the content can lean on it.
     @FocusState private var focused: AppSection?
+    @Namespace private var menuSpace
 
+    /// How far the collapsed menu reaches from the screen's left edge. Pages clear this much.
     static let collapsedWidth: CGFloat = 108
-    private let expandedWidth: CGFloat = 400
+    private let panelInset: CGFloat = 24
+    private let expandedPanelWidth: CGFloat = 430
 
-    /// Settings > Look and Feel > Menu. Off keeps the menu as logos only, even while it has focus.
+    /// Settings > Look and Feel > Side Menu. Off keeps the menu as logos only, even while it has focus.
     static let expandsKey = "menuExpandsOnFocus"
     @AppStorage(SideMenu.expandsKey) private var expandsOnFocus = true
 
     private var expanded: Bool { focused != nil && expandsOnFocus }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: expanded ? 10 : 18) {
             HStack(spacing: 16) {
                 Image("CthulhuMark")
                     .resizable().scaledToFit()
-                    .frame(width: 64, height: 64)
+                    .frame(width: expanded ? 56 : 64, height: expanded ? 56 : 64)
                 if expanded {
                     Image("MindseerrWordmark")
                         .resizable().scaledToFit()
-                        .frame(height: 48)
+                        .frame(height: 44)
+                        .transition(.opacity)
                 }
             }
-            .padding(.leading, 20)   // the same distance from the edge as the rows' logos (8 outside + 12 inside)
-            .padding(.bottom, 24)
+            .padding(.leading, expanded ? 22 : 20)
+            .padding(.top, expanded ? 22 : 0)
+            .padding(.bottom, expanded ? 34 : 24)
             .accessibilityHidden(true)
 
             ForEach(AppSection.allCases) { section in
@@ -94,21 +101,22 @@ struct SideMenu: View {
                 }
                 .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded))
                 .focused($focused, equals: section)
+                // Coming back from the page, the cursor lands on the section that's showing.
+                .prefersDefaultFocus(section == selection, in: menuSpace)
                 .accessibilityLabel(section.title)
             }
             Spacer(minLength: 0)
         }
-        .padding(.top, 70)
-        .frame(width: expanded ? expandedWidth : Self.collapsedWidth, alignment: .leading)
+        .padding(.horizontal, expanded ? 12 : 0)
+        .padding(.bottom, expanded ? 22 : 0)
+        .frame(width: expanded ? expandedPanelWidth : Self.collapsedWidth, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background {
-            // Fully clear while collapsed. Opened, it's a blurred panel with only a light tint of the theme color.
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .overlay(theme.background.opacity(0.3))
-                .opacity(expanded ? 1 : 0)
-                .ignoresSafeArea()
-        }
+        .background { if expanded { panel } }
+        .padding(.leading, expanded ? panelInset : 0)
+        .padding(.top, expanded ? 36 : 70)
+        .padding(.bottom, expanded ? 36 : 0)
+        .frame(width: expanded ? panelInset + expandedPanelWidth : Self.collapsedWidth, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .top)
         .animation(.easeOut(duration: 0.22), value: expanded)
         // A section opens only when it's selected. Moving out of the menu into the page sends the cursor to its first item.
         .onChange(of: focused) { old, new in
@@ -119,10 +127,20 @@ struct SideMenu: View {
             if direction == .right { onLeave() }
         }
         .focusSection()
+        .focusScope(menuSpace)
+    }
+
+    private var panel: some View {
+        RoundedRectangle(cornerRadius: 52, style: .continuous)
+            .fill(.ultraThinMaterial)
+            .overlay(theme.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 52, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 52, style: .continuous).strokeBorder(.white.opacity(0.14), lineWidth: 1.5))
+            .shadow(color: .black.opacity(0.35), radius: 24, y: 8)
     }
 }
 
-/// A menu row: no platter while collapsed (the logo is the control), a rounded highlight when expanded.
+/// A menu row. Collapsed, there's no platter (the logo is the control). Expanded, a pill fills with the theme's
+/// highlight color when focused, and a faint one marks the current section.
 private struct MenuRowStyle: ButtonStyle {
     @Environment(\.isFocused) private var focused
     @Environment(\.appTheme) private var theme
@@ -131,33 +149,46 @@ private struct MenuRowStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
             .foregroundStyle(focused && expanded ? theme.background : .primary)
             .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(focused ? (expanded ? theme.highlight : theme.highlight.opacity(0.25))
-                                  : (selected && expanded ? Color.primary.opacity(0.12) : .clear))
+                Capsule(style: .continuous)
+                    .fill(expanded ? (focused ? theme.highlight : (selected ? Color.primary.opacity(0.14) : .clear)) : .clear)
             )
-            .scaleEffect(focused ? 1.04 : 1)
-            .padding(.horizontal, 8)
+            .background(
+                // Collapsed, the focused logo gets a soft highlight behind it.
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(!expanded && focused ? theme.highlight.opacity(0.25) : .clear)
+            )
+            .scaleEffect(focused && !expanded ? 1.04 : 1)
+            .padding(.horizontal, expanded ? 0 : 8)
             .animation(.easeOut(duration: 0.15), value: focused)
     }
 }
 
 private struct MenuRowLabel: View {
+    @Environment(\.appTheme) private var theme
     @Environment(\.isFocused) private var focused
     let section: AppSection
     let selected: Bool
     let expanded: Bool
 
     var body: some View {
-        HStack(spacing: 18) {
-            SectionLogo(section: section, selected: selected && !expanded, onHighlight: focused && expanded)
-            if expanded {
+        if expanded {
+            HStack(spacing: 18) {
+                Image(systemName: section.symbol)
+                    .font(.system(size: 30, weight: .medium))
+                    .foregroundStyle(focused ? theme.background : Color.primary)
+                    .frame(width: 44, height: 44)
                 Text(section.title).font(.headline).lineLimit(1)
                 Spacer(minLength: 0)
             }
+            .padding(.horizontal, 22)
+            .padding(.vertical, 12)
+            .accessibilityHidden(true)
+        } else {
+            SectionLogo(section: section, selected: selected)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
         }
     }
 }
