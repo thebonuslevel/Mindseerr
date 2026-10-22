@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct SearchView: View {
+    /// Where the cursor can be sent below the keyboard: the filter when there are results, a resting spot when there aren't.
+    private enum Target { case filter, resting }
+    @FocusState private var target: Target?
     @Environment(AppState.self) private var app
     @State private var query = ""
     @State private var results: [MediaResult] = []
@@ -89,6 +92,15 @@ struct SearchView: View {
             }
             .themedBackground()
             .searchable(text: $query, prompt: "Movies and series")
+            // Pressing down from the keyboard is sent here instead of to the menu (see FocusRedirect).
+            .task {
+                for await _ in NotificationCenter.default.notifications(named: .redirectToSearchResults) {
+                    FocusLog.write("SEARCH received redirect; results=\(results.count)")
+                    target = nil
+                    await Task.yield()
+                    target = results.isEmpty ? .resting : .filter
+                }
+            }
             .task(id: query) { await runSearch() }
             .mediaDestinations()
         }
@@ -119,17 +131,17 @@ struct SearchView: View {
             ContentUnavailableView("Search Seerr", systemImage: "magnifyingglass",
                                    description: Text("Find a movie or series to request."))
                 .padding(.top, 80)
-                .keepsFocusBelowKeyboard()
+                .keepsFocusBelowKeyboard().focused($target, equals: .resting)
         } else if let error {
             ContentUnavailableView("Search Failed", systemImage: "exclamationmark.triangle",
                                    description: Text(error))
                 .padding(.top, 80)
-                .keepsFocusBelowKeyboard()
+                .keepsFocusBelowKeyboard().focused($target, equals: .resting)
         } else if results.isEmpty {
             if loading {
-                ProgressView().padding(.top, 120).keepsFocusBelowKeyboard()
+                ProgressView().padding(.top, 120).keepsFocusBelowKeyboard().focused($target, equals: .resting)
             } else {
-                ContentUnavailableView.search(text: query).padding(.top, 80).keepsFocusBelowKeyboard()
+                ContentUnavailableView.search(text: query).padding(.top, 80).keepsFocusBelowKeyboard().focused($target, equals: .resting)
             }
         } else {
             VStack(alignment: .leading, spacing: 30) {
@@ -139,6 +151,7 @@ struct SearchView: View {
                     }
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 700)
+                    .focused($target, equals: .filter)
                     Button { sort = sort.next } label: {
                         Label(sort.title, systemImage: "arrow.up.arrow.down")
                     }

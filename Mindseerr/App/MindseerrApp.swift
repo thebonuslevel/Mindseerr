@@ -5,6 +5,22 @@ struct MindseerrApp: App {
     @State private var app = AppState()
 
     init() {
+        FocusRedirect.install()
+        #if DEBUG
+        // Logs every move of the focus (what it left, what it landed on, which way it was heading), to find out why a
+        // remote press goes where it does.
+        NotificationCenter.default.addObserver(forName: UIFocusSystem.didUpdateNotification, object: nil, queue: .main) { note in
+            guard let context = note.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey] as? UIFocusUpdateContext else { return }
+            func describe(_ item: UIFocusItem?) -> String {
+                guard let item else { return "nil" }
+                let frame = item.frame
+                let view = item as? UIView
+                let label = view?.accessibilityLabel ?? (view.map { String(describing: type(of: $0)) } ?? String(describing: type(of: item)))
+                return "\(label) [\(Int(frame.minX)),\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height))]"
+            }
+            FocusLog.write("FOCUS \(describe(context.previouslyFocusedItem)) -> \(describe(context.nextFocusedItem)) heading=\(context.focusHeading.rawValue)")
+        }
+        #endif
         // Posters are re-shown constantly while scrolling rows; give AsyncImage a bigger cache.
         URLCache.shared = URLCache(memoryCapacity: 64 * 1024 * 1024, diskCapacity: 256 * 1024 * 1024)
     }
@@ -38,6 +54,10 @@ struct RootView: View {
         // Top Shelf links (mindseerr://media/movie/123). Handled here, not on the main screen, so a link that
         // arrives while the app is still launching or signing in isn't lost.
         .onOpenURL { url in
+            #if DEBUG
+            // mindseerr://debug-redirect acts out the keyboard-down-to-menu fix, for trying it without a real Apple TV.
+            if url.host == "debug-redirect" { NotificationCenter.default.post(name: .redirectToSearchResults, object: nil); return }
+            #endif
             guard let link = TopShelfCache.parse(url), let type = MediaType(rawValue: link.type) else { return }
             app.incomingLink = MediaRoute(type: type, tmdbId: link.tmdbId)
         }
@@ -160,4 +180,61 @@ extension View {
                 .themedBackground()
         }
     }
+}
+
+extension Notification.Name {
+    /// Asks the Search page to put the cursor on its results (or on its resting spot when there are none).
+    static let redirectToSearchResults = Notification.Name("redirectToSearchResults")
+}
+
+/// On a real Apple TV the search keyboard is one wide focus target, and the closest thing below it is the first icon of
+/// the side menu, not the results. So pressing down from the keyboard lands in the menu. This watches for that exact
+/// move and sends the cursor to the results instead.
+enum FocusRedirect {
+    /// Set when the cursor was just sent away from the menu, so the menu doesn't also send it back to the page's start.
+    @MainActor static var suppressMenuLeave = false
+
+    @MainActor static func install() {
+        NotificationCenter.default.addObserver(forName: UIFocusSystem.didUpdateNotification, object: nil, queue: .main) { note in
+            guard let context = note.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey] as? UIFocusUpdateContext,
+                  context.focusHeading == .down,
+                  let previous = context.previouslyFocusedItem,
+                  String(describing: type(of: previous)).contains("Keyboard"),
+                  let next = context.nextFocusedItem,
+                  // The menu's rows are small and start at the screen's left edge; nothing on a page is both.
+                  next.frame.minX < 100, next.frame.width < 500, next.frame.height < 120 else { return }
+            MainActor.assumeIsolated {
+                suppressMenuLeave = true
+                // Keep the menu looking closed for the instant it holds the cursor, so it doesn't flash open.
+                MenuHold.shared.held = true
+                Task { try? await Task.sleep(for: .milliseconds(600)); MenuHold.shared.held = false }
+            }
+            NotificationCenter.default.post(name: .redirectToSearchResults, object: nil)
+            FocusLog.write("REDIRECT keyboard-down-to-menu -> search results")
+        }
+    }
+}
+
+/// A debug-only log of where the focus goes, kept in a file that can be copied off an Apple TV.
+enum FocusLog {
+    static func write(_ text: String) {
+        #if DEBUG
+        let line = "\(Date().formatted(.iso8601)) \(text)\n"
+        NSLog("%@", line)
+        if let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.appendingPathComponent("focus.log"),
+           let data = line.data(using: .utf8) {
+            if let handle = try? FileHandle(forWritingTo: url) { handle.seekToEndOfFile(); handle.write(data); try? handle.close() }
+            else { try? data.write(to: url) }
+        }
+        #endif
+    }
+}
+
+/// True for the instant the cursor is passing through the menu on its way to Search's results (see FocusRedirect), so the
+/// menu stays collapsed and unhighlighted instead of flashing open.
+@MainActor
+@Observable
+final class MenuHold {
+    static let shared = MenuHold()
+    var held = false
 }

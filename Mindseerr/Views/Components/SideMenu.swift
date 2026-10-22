@@ -75,7 +75,8 @@ struct SideMenu: View {
     static let expandsKey = "menuExpandsOnFocus"
     @AppStorage(SideMenu.expandsKey) private var expandsOnFocus = true
 
-    private var expanded: Bool { focused != nil && expandsOnFocus }
+    private var hold = MenuHold.shared
+    private var expanded: Bool { focused != nil && expandsOnFocus && !hold.held }
 
     var body: some View {
         VStack(alignment: .leading, spacing: expanded ? 10 : 18) {
@@ -113,7 +114,11 @@ struct SideMenu: View {
         .animation(.easeOut(duration: 0.22), value: expanded)
         // A section opens only when it's selected. Moving out of the menu into the page sends the cursor to its first item.
         .onChange(of: focused) { old, new in
-            if new == nil, old != nil { onLeave() }
+            if new == nil, old != nil {
+                // Sent away on purpose (see FocusRedirect): the page already has the cursor where it should be.
+                MenuHold.shared.held = false
+                if FocusRedirect.suppressMenuLeave { FocusRedirect.suppressMenuLeave = false } else { onLeave() }
+            }
         }
         // Right does what select does: sends the cursor to the page's first item.
         .onMoveCommand { direction in
@@ -129,7 +134,7 @@ struct SideMenu: View {
         } label: {
             MenuRowLabel(section: section, selected: section == selection, expanded: expanded)
         }
-        .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded))
+        .buttonStyle(MenuRowStyle(selected: section == selection, expanded: expanded, held: hold.held))
         .focused($focused, equals: section)
         // Coming back from the page, the cursor lands on the section that's showing.
         .prefersDefaultFocus(section == selection, in: menuSpace)
@@ -152,9 +157,12 @@ private struct MenuRowStyle: ButtonStyle {
     @Environment(\.appTheme) private var theme
     let selected: Bool
     let expanded: Bool
+    /// The cursor is only passing through (see MenuHold): no focus look.
+    var held = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        let focused = focused && !held
+        return configuration.label
             .foregroundStyle(focused && expanded ? theme.background : .primary)
             .background(
                 Capsule(style: .continuous)
