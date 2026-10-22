@@ -3989,6 +3989,34 @@
         }
       }
     },
+    "Father's Day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día del Padre"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fête des pères"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "День отца"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "父亲节"
+          }
+        }
+      }
+    },
     "Find a movie or series to request." : {
       "localizations" : {
         "es" : {
@@ -4381,6 +4409,34 @@
         }
       }
     },
+    "Juneteenth" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juneteenth"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juneteenth"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juneteenth"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "六月节"
+          }
+        }
+      }
+    },
     "Keep Downloading" : {
       "localizations" : {
         "es" : {
@@ -4405,6 +4461,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "继续下载"
+          }
+        }
+      }
+    },
+    "Labor Day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día del Trabajo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fête du Travail américaine"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "День труда"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "劳动节"
           }
         }
       }
@@ -4489,6 +4573,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "外观"
+          }
+        }
+      }
+    },
+    "Memorial Day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día de los Caídos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memorial Day"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "День памяти"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "阵亡将士纪念日"
           }
         }
       }
@@ -4607,6 +4719,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "最受欢迎"
+          }
+        }
+      }
+    },
+    "Mother's Day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día de la Madre"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fête des mères"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "День матери"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "母亲节"
           }
         }
       }
@@ -6147,6 +6287,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "热门剧集"
+          }
+        }
+      }
+    },
+    "Pride" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orgullo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fierté"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Прайд"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "骄傲月"
           }
         }
       }
@@ -8147,6 +8315,34 @@
           "stringUnit" : {
             "state" : "machine_translated",
             "value" : "为你推荐"
+          }
+        }
+      }
+    },
+    "Summer" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verano"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Été"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Лето"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "夏日"
           }
         }
       }

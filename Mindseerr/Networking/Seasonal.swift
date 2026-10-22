@@ -8,6 +8,10 @@ struct Holiday: Identifiable, Sendable {
     let keyword: String
     /// How many days before the day the row appears.
     let leadDays: Int
+    /// How many days after the day it stays.
+    var trailDays = 2
+    /// A whole month or season rather than a day: only featured when no particular holiday is near.
+    var broad = false
 
     var name: String {
         switch id {
@@ -18,6 +22,13 @@ struct Holiday: Identifiable, Sendable {
         case "july4": return String(localized: "Fourth of July")
         case "halloween": return String(localized: "Halloween")
         case "thanksgiving": return String(localized: "Thanksgiving")
+        case "memorial": return String(localized: "Memorial Day")
+        case "mothers": return String(localized: "Mother's Day")
+        case "fathers": return String(localized: "Father's Day")
+        case "juneteenth": return String(localized: "Juneteenth")
+        case "pride": return String(localized: "Pride")
+        case "summer": return String(localized: "Summer")
+        case "labor": return String(localized: "Labor Day")
         default: return String(localized: "Christmas")
         }
     }
@@ -30,7 +41,15 @@ struct Holiday: Identifiable, Sendable {
         Holiday(id: "valentines", emoji: "💘", keyword: "valentine's day", leadDays: 14),
         Holiday(id: "stPatricks", emoji: "🍀", keyword: "st. patrick's day", leadDays: 14),
         Holiday(id: "easter", emoji: "🐣", keyword: "easter", leadDays: 14),
+        Holiday(id: "mothers", emoji: "💐", keyword: "mother's day", leadDays: 10),
+        Holiday(id: "memorial", emoji: "🇺🇸", keyword: "memorial day", leadDays: 10),
+        Holiday(id: "juneteenth", emoji: "✊", keyword: "juneteenth", leadDays: 10),
+        Holiday(id: "pride", emoji: "🏳️‍🌈", keyword: "lgbt", leadDays: 29, trailDays: 0, broad: true),
+        Holiday(id: "fathers", emoji: "👔", keyword: "father's day", leadDays: 10),
         Holiday(id: "july4", emoji: "🎇", keyword: "fourth of july", leadDays: 14),
+        // A long tail: summer picks fill the weeks no other holiday covers, until Labor Day takes over.
+        Holiday(id: "summer", emoji: "☀️", keyword: "summer", leadDays: 7, trailDays: 70, broad: true),
+        Holiday(id: "labor", emoji: "🛠️", keyword: "labor day", leadDays: 14),
         Holiday(id: "halloween", emoji: "🎃", keyword: "halloween", leadDays: 30),
         Holiday(id: "thanksgiving", emoji: "🦃", keyword: "thanksgiving", leadDays: 14),
         Holiday(id: "christmas", emoji: "🎄", keyword: "christmas", leadDays: 30),
@@ -44,6 +63,13 @@ struct Holiday: Identifiable, Sendable {
         case "valentines": return day(2, 14)
         case "stPatricks": return day(3, 17)
         case "easter": return Self.easter(year, calendar: calendar)
+        case "mothers": return calendar.date(from: DateComponents(year: year, month: 5, weekday: 1, weekdayOrdinal: 2))
+        case "memorial": return calendar.date(from: DateComponents(year: year, month: 5, weekday: 2, weekdayOrdinal: -1))
+        case "juneteenth": return day(6, 19)
+        case "pride": return day(6, 30)
+        case "fathers": return calendar.date(from: DateComponents(year: year, month: 6, weekday: 1, weekdayOrdinal: 3))
+        case "summer": return day(6, 21)
+        case "labor": return calendar.date(from: DateComponents(year: year, month: 9, weekday: 2, weekdayOrdinal: 1))
         case "july4": return day(7, 4)
         case "halloween": return day(10, 31)
         case "thanksgiving":
@@ -66,21 +92,24 @@ struct Holiday: Identifiable, Sendable {
         return calendar.date(from: DateComponents(year: year, month: month, day: dayOfMonth))
     }
 
-    /// The holiday to feature on a date: one whose run-up has started (and which isn't more than two days past). When
-    /// two overlap, the one that comes first.
+    /// The holiday to feature on a date: one whose run-up has started (and which hasn't been over for longer than its tail).
+    /// When two overlap, the one whose day is nearest.
     static func current(on date: Date, calendar: Calendar = .current) -> Holiday? {
         let today = calendar.startOfDay(for: date)
         let year = calendar.component(.year, from: today)
-        var best: (holiday: Holiday, daysAway: Int)?
-        for holiday in all {
-            for y in [year - 1, year, year + 1] {
-                guard let target = holiday.date(inYear: y, calendar: calendar),
-                      let away = calendar.dateComponents([.day], from: today, to: target).day,
-                      away <= holiday.leadDays, away >= -2 else { continue }
-                if best == nil || abs(away) < abs(best!.daysAway) { best = (holiday, away) }
+        func nearest(broad: Bool) -> Holiday? {
+            var best: (holiday: Holiday, daysAway: Int)?
+            for holiday in all where holiday.broad == broad {
+                for y in [year - 1, year, year + 1] {
+                    guard let target = holiday.date(inYear: y, calendar: calendar),
+                          let away = calendar.dateComponents([.day], from: today, to: target).day,
+                          away <= holiday.leadDays, away >= -holiday.trailDays else { continue }
+                    if best == nil || abs(away) < abs(best!.daysAway) { best = (holiday, away) }
+                }
             }
+            return best?.holiday
         }
-        return best?.holiday
+        return nearest(broad: false) ?? nearest(broad: true)
     }
 }
 
