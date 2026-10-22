@@ -379,9 +379,9 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/settings/public": return self.send_json({"mediaServerType": 1, "applicationTitle": "Seerr"})
         # DEMO_USER=<id> signs the demo in as a regular user (see USERS in catalog.json) instead of the admin.
         if p.startswith("/user/") and p.endswith("/quota"):
-            # Movies have requests left; series are used up, so both states can be shown.
+            # Both have requests left, so the buttons are enabled and the allowance shows under them.
             return self.send_json({"movie": {"days": 7, "limit": 5, "used": 3, "remaining": 2, "restricted": False},
-                                   "tv": {"days": 7, "limit": 2, "used": 2, "remaining": 0, "restricted": True}})
+                                   "tv": {"days": 7, "limit": 4, "used": 1, "remaining": 3, "restricted": False}})
         if p == "/auth/me": return self.send_json(user(int(os.environ.get("DEMO_USER", 1))))
         if p.startswith("/studio/") or p.startswith("/network/"):
             return self.send_json({"id": int(p.split("/")[2]), "name": "Demo", "logoPath": f"/logo{p.split('/')[2]}.png"})
