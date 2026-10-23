@@ -25,6 +25,23 @@ enum LogoCache {
         UserDefaults.standard.set(all, forKey: pathsKey)
     }
 
+    static func forget(_ target: BrowseTarget) {
+        lock.lock(); defer { lock.unlock() }
+        var all = UserDefaults.standard.dictionary(forKey: pathsKey) as? [String: String] ?? [:]
+        all[key(for: target)] = nil
+        UserDefaults.standard.set(all, forKey: pathsKey)
+    }
+
+    /// Whether a saved logo path is one TMDB doesn't have (the server answered 404), as when a path was remembered from
+    /// something other than TMDB. A logo that's already downloaded, or a server that can't be reached, doesn't count.
+    static func isGone(_ path: String) async -> Bool {
+        guard let url = TMDBImage.url(path, size: .logo), !FileManager.default.fileExists(atPath: file(for: url).path) else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        guard let (_, response) = try? await URLSession.shared.data(for: request) else { return false }
+        return (response as? HTTPURLResponse)?.statusCode == 404
+    }
+
     // MARK: - Images
 
     private static var folder: URL {

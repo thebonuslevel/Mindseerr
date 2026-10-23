@@ -51,6 +51,8 @@ final class BrowseListModel {
     func load(using api: SeerrClient) async {
         guard !started else { return }
         started = true
+        // Cut short (the view went away mid-load), the next appearance starts over rather than leaving the list half done.
+        defer { if Task.isCancelled { started = false } }
         switch kind {
         case .studios:
             targets = KnownCompanies.studios.map { BrowseTarget(type: .movie, filter: .studio, id: $0.id, name: $0.name) }
@@ -60,7 +62,8 @@ final class BrowseListModel {
             let type = kind.mediaType
             var entries: [GenreCache.Entry]
             let saved = GenreCache.load(type)
-            if let saved, saved.fresh {
+            // A saved list with no backdrops at all (one remembered from something other than Seerr) is read again.
+            if let saved, saved.fresh, saved.genres.contains(where: { $0.backdrop != nil }) {
                 entries = saved.genres
             } else {
                 do {
@@ -88,6 +91,16 @@ final class BrowseListModel {
             for target in targets {
                 if let known = LogoCache.path(for: target) ?? KnownCompanies.fallbackLogos[target.cacheKey] { logos[target.id] = known }
             }
+            // A remembered logo that TMDB doesn't have is forgotten, so the stand-in shows and Seerr is asked again.
+            let remembered = targets.filter { LogoCache.path(for: $0) != nil }
+            let gone = await boundedMap(remembered, limit: 6) { target -> BrowseTarget? in
+                guard let path = LogoCache.path(for: target), await LogoCache.isGone(path) else { return nil }
+                return target
+            }
+            for case let target? in gone {
+                LogoCache.forget(target)
+                logos[target.id] = KnownCompanies.fallbackLogos[target.cacheKey]
+            }
             var pending = targets.filter { LogoCache.path(for: $0) == nil }
             for attempt in 0..<3 {
                 if pending.isEmpty { break }
@@ -101,7 +114,13 @@ final class BrowseListModel {
                 var answered = Set<Int>()
                 for (id, path, ok) in found {
                     if ok { answered.insert(id) }
-                    if let path { logos[id] = path }
+                    guard let path else { continue }
+                    // An answer TMDB doesn't have is no better than the stand-in: forget it and keep what's showing.
+                    if await LogoCache.isGone(path) {
+                        if let target = pending.first(where: { $0.id == id }) { LogoCache.forget(target) }
+                    } else {
+                        logos[id] = path
+                    }
                 }
                 pending.removeAll { answered.contains($0.id) }
             }
@@ -398,9 +417,10 @@ private struct CachedPhoto: View {
     @State private var image: UIImage?
 
     var body: some View {
-        Group {
-            if let image { Image(uiImage: image).resizable().scaledToFill() }
-        }
+        // Something always has to be drawn here: a task attached to an empty view never starts.
+        Color.clear
+            .overlay { if let image { Image(uiImage: image).resizable().scaledToFill() } }
+            .clipped()
         .task(id: url) {
             guard image == nil, let data = await LogoCache.imageData(for: url, maxAge: maxAge) else { return }
             image = UIImage(data: data)
