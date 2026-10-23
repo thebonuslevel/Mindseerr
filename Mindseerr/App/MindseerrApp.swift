@@ -186,6 +186,8 @@ extension View {
 extension Notification.Name {
     /// Asks the Search page to put the cursor on its results (or on its resting spot when there are none).
     static let redirectToSearchResults = Notification.Name("redirectToSearchResults")
+    /// Sent when the cursor is pressed left off the search keyboard, which has nothing to its left to move to.
+    static let focusSideMenu = Notification.Name("focusSideMenu")
 }
 
 /// On a real Apple TV the search keyboard is one wide focus target, and the closest thing below it is the first icon of
@@ -212,6 +214,19 @@ enum FocusRedirect {
             }
             NotificationCenter.default.post(name: .redirectToSearchResults, object: nil)
             FocusLog.write("REDIRECT keyboard-down-to-menu -> search results")
+        }
+        // Pressing left from the keyboard's left keys finds no focusable item (the system keyboard doesn't see the menu),
+        // so the move fails. Send the cursor to the menu instead.
+        NotificationCenter.default.addObserver(forName: UIFocusSystem.movementDidFailNotification, object: nil, queue: .main) { note in
+            let context = note.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey] as? UIFocusUpdateContext
+            let previous = context?.previouslyFocusedItem
+            FocusLog.write("MOVE FAILED heading=\(String(describing: context?.focusHeading.rawValue)) from=\(previous.map { String(describing: type(of: $0)) } ?? "nil") frame=\(previous?.frame.debugDescription ?? "nil")")
+            // Any left move that goes nowhere (the keyboard's left keys, or an item at the page's left edge) goes to the
+            // menu, unless it started in the menu.
+            guard context?.focusHeading == .left else { return }
+            if let frame = previous?.frame, frame.minX < 100, frame.width < 500, frame.height < 120 { return }
+            NotificationCenter.default.post(name: .focusSideMenu, object: nil)
+            FocusLog.write("REDIRECT left -> menu")
         }
     }
 }

@@ -126,6 +126,13 @@ struct SideMenu: View {
         }
         .focusSection()
         .focusScope(menuSpace)
+        // The search keyboard can't reach the menu by itself; it asks for the cursor here (see FocusRedirect).
+        .task {
+            for await _ in NotificationCenter.default.notifications(named: .focusSideMenu) {
+                FocusLog.write("MENU received focus request; selection=\(selection)")
+                focused = selection
+            }
+        }
     }
 
     private func row(_ section: AppSection) -> some View {
