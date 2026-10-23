@@ -38,7 +38,7 @@ enum MediaServerPlayback {
     }
 
     static func session(for info: MediaInfo?, episode: EpisodeID?, title: String) async throws -> PlaybackSession {
-        guard let info else {
+        guard let info = info?.forPlayback else {
             throw PlaybackError(message: String(localized: "Seerr doesn't list this title on your media server yet."))
         }
         switch Credentials.load() {

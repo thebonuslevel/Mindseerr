@@ -432,3 +432,33 @@ enum ArrClient {
         let episode: Episode?
     }
 }
+
+// MARK: - Resolution
+
+extension ArrClient {
+    private struct QualityFile: Decodable {
+        struct Wrapper: Decodable {
+            struct Quality: Decodable { let resolution: Int? }
+            let quality: Quality?
+        }
+        let quality: Wrapper?
+        var is4K: Bool { (quality?.quality?.resolution ?? 0) >= 2160 }
+    }
+
+    /// The TMDB IDs of the movies Radarr holds a 4K file for.
+    static func movieIDsIn4K(from service: ArrService) async throws -> Set<Int> {
+        struct Movie: Decodable { let tmdbId: Int?; let movieFile: QualityFile? }
+        let movies: [Movie] = try await get("movie", from: service)
+        return Set(movies.compactMap { $0.movieFile?.is4K == true ? $0.tmdbId : nil })
+    }
+
+    /// Whether most of a series' episode files in Sonarr are 4K. Nil when Sonarr doesn't know the series or has no files.
+    static func seriesIs4K(tmdbId: Int, tvdbId: Int?, from service: ArrService) async throws -> Bool? {
+        struct Series: Decodable { let id: Int; let tmdbId: Int?; let tvdbId: Int? }
+        let all: [Series] = try await get("series", from: service)
+        guard let series = all.first(where: { ($0.tmdbId ?? 0) == tmdbId || (tvdbId != nil && $0.tvdbId == tvdbId) }) else { return nil }
+        let files: [QualityFile] = try await get("episodefile", from: service, query: [.init(name: "seriesId", value: "\(series.id)")])
+        guard !files.isEmpty else { return nil }
+        return files.filter(\.is4K).count * 2 > files.count
+    }
+}

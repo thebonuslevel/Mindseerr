@@ -114,7 +114,7 @@ struct EpisodeListView: View {
     /// Reads every season that's on the server (all of them if Seerr doesn't say which), in order.
     private func load() async {
         let onServer = Set((detail.mediaInfo?.seasons ?? [])
-            .filter { $0.status == .available || $0.status == .partiallyAvailable }.map(\.seasonNumber))
+            .filter(\.onServer).map(\.seasonNumber))
         let numbers = detail.regularSeasons.map(\.seasonNumber).filter { onServer.isEmpty || onServer.contains($0) }.sorted()
         let api = app.api
         let id = tmdbId

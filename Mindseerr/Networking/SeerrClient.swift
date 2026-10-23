@@ -145,13 +145,14 @@ actor SeerrClient {
     }
 
     /// The logo of a studio or network (a TMDB image path), or nil when Seerr has none or doesn't offer the lookup.
-    func companyLogo(for target: BrowseTarget) async -> String? {
+    /// Throws when Seerr can't be reached; returns nil when it answered but has no logo for the company.
+    func companyLogo(for target: BrowseTarget) async throws -> String? {
         if let known = LogoCache.path(for: target) { return known }
         struct Company: Decodable { let logoPath: String? }
         let path = target.filter == .network ? "network/\(target.id)" : "studio/\(target.id)"
-        let company: Company? = try? await send(path)
-        if let logo = company?.logoPath { LogoCache.save(logo, for: target) }
-        return company?.logoPath
+        let company: Company = try await send(path)
+        if let logo = company.logoPath { LogoCache.save(logo, for: target) }
+        return company.logoPath
     }
 
     /// One page of the titles in a genre, studio or network, in the chosen order. Newest leaves out what isn't out
@@ -182,10 +183,10 @@ actor SeerrClient {
         return match?.id
     }
 
-    /// The most popular titles TMDB tags with a keyword.
+    /// The best-rated titles TMDB tags with a keyword, leaving out those hardly anyone has rated.
     func keywordTitles(_ keyword: Int, type: MediaType) async throws -> [MediaResult] {
         let page: PagedResponse<MediaResult> = try await send(type == .tv ? "discover/tv" : "discover/movies",
-                                                              query: ["keywords": "\(keyword)", "sortBy": "popularity.desc"])
+                                                              query: ["keywords": "\(keyword)", "sortBy": "vote_average.desc", "voteCountGte": "200"])
         return page.results
     }
 

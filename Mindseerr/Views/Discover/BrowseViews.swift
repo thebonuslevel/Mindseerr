@@ -88,13 +88,22 @@ final class BrowseListModel {
             for target in targets {
                 if let known = LogoCache.path(for: target) ?? KnownCompanies.fallbackLogos[target.cacheKey] { logos[target.id] = known }
             }
-            let unasked = targets.filter { LogoCache.path(for: $0) == nil }
+            var pending = targets.filter { LogoCache.path(for: $0) == nil }
             for attempt in 0..<3 {
-                let pending = unasked.filter { LogoCache.path(for: $0) == nil }
                 if pending.isEmpty { break }
-                if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt) * 2)) }
-                let found = await boundedMap(pending, limit: 6) { target in (target.id, await api.companyLogo(for: target)) }
-                for (id, path) in found { if let path { logos[id] = path } }
+                if attempt > 0 {
+                    do { try await Task.sleep(for: .seconds(Double(attempt) * 2)) } catch { return }
+                }
+                // `answered` is false only when Seerr couldn't be reached; a company it has no logo for isn't asked again.
+                let found = await boundedMap(pending, limit: 6) { target -> (Int, String?, Bool) in
+                    do { return (target.id, try await api.companyLogo(for: target), true) } catch { return (target.id, nil, false) }
+                }
+                var answered = Set<Int>()
+                for (id, path, ok) in found {
+                    if ok { answered.insert(id) }
+                    if let path { logos[id] = path }
+                }
+                pending.removeAll { answered.contains($0.id) }
             }
         }
     }
@@ -417,8 +426,11 @@ private struct CachedLogo: View {
         .task(id: url) {
             guard image == nil else { return }
             // Tried up to three times, so one dropped download doesn't leave the company's name showing.
+            failed = false
             for attempt in 0..<3 {
-                if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt) * 2)) }
+                if attempt > 0 {
+                    do { try await Task.sleep(for: .seconds(Double(attempt) * 2)) } catch { return }
+                }
                 if let data = await LogoCache.imageData(for: url), let loaded = UIImage(data: data) { image = loaded; return }
             }
             failed = true
@@ -445,8 +457,11 @@ private struct TreatedLogo: View {
         .task(id: url) {
             guard image == nil else { return }
             if let cached = LogoMask.cache.object(forKey: url as NSURL) { image = cached; return }
+            failed = false
             for attempt in 0..<3 {
-                if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt) * 2)) }
+                if attempt > 0 {
+                    do { try await Task.sleep(for: .seconds(Double(attempt) * 2)) } catch { return }
+                }
                 if let data = await LogoCache.imageData(for: url), let made = LogoMask.make(from: data, treatment: treatment) {
                     LogoMask.cache.setObject(made, forKey: url as NSURL)
                     image = made

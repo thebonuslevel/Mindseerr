@@ -134,7 +134,7 @@ enum SuggestionEngine {
 
     /// Not already on the server or in the request pipeline.
     private static func isOpen(_ item: MediaResult) -> Bool {
-        switch item.mediaInfo?.status {
+        switch item.mediaInfo?.displayStatus {
         case .available, .partiallyAvailable, .processing, .pending: return false
         case .unknown, .deleted, nil: return true
         }

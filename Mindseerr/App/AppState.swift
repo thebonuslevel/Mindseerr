@@ -14,6 +14,8 @@ final class AppState {
     /// The "Suggested for You" titles, shared by Discover and the Top Shelf.
     let suggestions = SuggestionsModel()
     let seasonal = SeasonalModel()
+    /// Which titles Radarr and Sonarr hold in 4K, shown as a tag on posters and detail pages.
+    let resolutions = ResolutionLibrary()
     /// A title from a Top Shelf link, as it arrives. The root view sets this (it exists even while the app is
     /// still launching), and the main screen takes it, resets Discover, then hands it on as `deepLinkRoute`.
     var incomingLink: MediaRoute?

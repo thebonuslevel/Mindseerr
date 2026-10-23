@@ -161,6 +161,7 @@ struct MainTabView: View {
         }
         // Keeps Sonarr/Radarr progress current on every tab; restarts when services change.
         .task(id: app.downloads.services) { await app.downloads.run(api: app.api) }
+        .task(id: app.downloads.services) { await app.resolutions.refreshMovies(services: app.downloads.services) }
     }
 }
 

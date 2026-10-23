@@ -52,8 +52,8 @@ struct SectionLogo: View {
     }
 }
 
-/// The side menu. Collapsed, it's just each section's logo on a rounded badge, with no background. While it has focus it
-/// opens into a floating rounded panel of frosted glass, with the logo and wordmark on top, each section's name, and the
+/// The side menu: a floating rounded panel of frosted glass. Collapsed, it's a narrow panel of each section's logo on a
+/// rounded badge. While it has focus it opens wide, with the logo and wordmark on top, each section's name, and the
 /// focused row as a pill in the theme's highlight color.
 struct SideMenu: View {
     @Environment(\.appTheme) private var theme
@@ -92,7 +92,7 @@ struct SideMenu: View {
                 }
             }
             .padding(.leading, expanded ? 22 : 20)
-            .padding(.top, expanded ? 22 : 0)
+            .padding(.top, expanded ? 22 : 34)
             .padding(.bottom, expanded ? 34 : 24)
             .accessibilityHidden(true)
 
@@ -102,13 +102,13 @@ struct SideMenu: View {
             row(.settings)
         }
         .padding(.horizontal, expanded ? 12 : 0)
-        .padding(.bottom, expanded ? 22 : 40)
+        .padding(.bottom, 22)
         .frame(width: expanded ? expandedPanelWidth : Self.collapsedWidth, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background { if expanded { panel } }
+        .background { panel.padding(.leading, expanded ? 0 : 6).padding(.trailing, expanded ? 0 : 10) }
         .padding(.leading, expanded ? panelInset : 0)
-        .padding(.top, expanded ? 36 : 70)
-        .padding(.bottom, expanded ? 36 : 0)
+        .padding(.top, 36)
+        .padding(.bottom, 36)
         .frame(width: expanded ? panelInset + expandedPanelWidth : Self.collapsedWidth, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
         .animation(.easeOut(duration: 0.22), value: expanded)

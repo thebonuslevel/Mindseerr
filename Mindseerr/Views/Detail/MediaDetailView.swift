@@ -66,6 +66,10 @@ struct MediaDetailView: View {
         .fullScreenCover(isPresented: $showEpisodes) {
             if let detail { EpisodeListView(detail: detail, tmdbId: route.tmdbId) }
         }
+        .task(id: detail?.mediaInfo?.tmdbId) {
+            guard route.type == .tv, detail?.mediaInfo?.hasAnyCopy == true else { return }
+            await app.resolutions.loadSeries(tmdbId: route.tmdbId, tvdbId: detail?.mediaInfo?.tvdbId, services: app.downloads.services)
+        }
         .task { tomatoes = await app.api.rottenTomatoes(for: route) }
         .task { await loadQuota() }
         .task {
@@ -159,9 +163,12 @@ struct MediaDetailView: View {
                     if let status = detail.mediaInfo?.status {
                         StatusBadge(status: status)
                     }
+                    // One 4K tag: from Seerr's 4K copy when it has one, else from the files in Radarr or Sonarr.
                     if offers4K, let status4k = detail.mediaInfo?.status4k, status4k != .unknown {
                         Pill(text: "4K", color: .purple)
                         StatusBadge(status: status4k)
+                    } else if app.resolutions.is4K(type: route.type, tmdbId: route.tmdbId) {
+                        Pill(text: "4K", color: .purple)
                     }
                 }
                 downloadProgress(detail)
@@ -240,7 +247,7 @@ struct MediaDetailView: View {
     private func actions(_ detail: MediaDetail) -> some View {
         HStack(spacing: 24) {
             // Available movies can be played in the chosen external player.
-            if route.type == .movie, player.isOn, detail.mediaInfo?.status == .available {
+            if route.type == .movie, player.isOn, detail.mediaInfo?.hasAnyCopy == true {
                 Button { play(detail) } label: {
                     Label(player.playLabel, systemImage: "play.circle.fill")
                         .lineLimit(1)
@@ -249,14 +256,17 @@ struct MediaDetailView: View {
             }
             // Series with something on the server open an episode list, each episode playing in the external player.
             if route.type == .tv, player.isOn,
-               detail.mediaInfo?.status == .available || detail.mediaInfo?.status == .partiallyAvailable {
+               detail.mediaInfo?.hasAnyCopy == true {
                 Button { showEpisodes = true } label: {
                     Label(player.playLabel, systemImage: "play.circle.fill")
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
                 }
             }
-            requestButton(detail, is4k: false)
+            // A movie that's on the server only as a 4K copy doesn't also offer a standard request.
+            if !(route.type == .movie && detail.mediaInfo?.hasAnyCopy == true) || detail.mediaInfo?.hasStandardCopy == true {
+                requestButton(detail, is4k: false)
+            }
             if offers4K {
                 requestButton(detail, is4k: true)
             }

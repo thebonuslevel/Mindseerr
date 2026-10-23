@@ -48,6 +48,29 @@ struct MediaInfo: Decodable, Sendable {
     let jellyfinMediaId: String?
     let mediaUrl: String?
     let plexUrl: String?
+    /// The same for the 4K copy, which Seerr tracks as a separate item on the server.
+    let ratingKey4k: String?
+    let jellyfinMediaId4k: String?
+    let mediaUrl4k: String?
+    let plexUrl4k: String?
+
+    private static func onServer(_ status: MediaStatus?) -> Bool { status == .available || status == .partiallyAvailable }
+
+    /// Whether the standard copy, or failing that the 4K copy, is on the server.
+    var hasStandardCopy: Bool { Self.onServer(status) }
+    var hasAnyCopy: Bool { hasStandardCopy || Self.onServer(status4k) }
+
+    /// The status to show for the title as a whole: the standard copy's, unless only the 4K copy is on the server.
+    var displayStatus: MediaStatus? { !hasStandardCopy && Self.onServer(status4k) ? status4k : status }
+
+    /// This info pointing at the 4K copy when the standard one isn't on the server, so playback finds it.
+    var forPlayback: MediaInfo {
+        guard !hasStandardCopy, Self.onServer(status4k) else { return self }
+        return MediaInfo(id: id, tmdbId: tmdbId, tvdbId: tvdbId, status: status4k, status4k: status4k, seasons: seasons, requests: requests,
+                         ratingKey: ratingKey4k ?? ratingKey, jellyfinMediaId: jellyfinMediaId4k ?? jellyfinMediaId,
+                         mediaUrl: mediaUrl4k ?? mediaUrl, plexUrl: plexUrl4k ?? plexUrl,
+                         ratingKey4k: ratingKey4k, jellyfinMediaId4k: jellyfinMediaId4k, mediaUrl4k: mediaUrl4k, plexUrl4k: plexUrl4k)
+    }
 }
 
 struct SeasonAvailability: Decodable, Sendable {
@@ -55,6 +78,10 @@ struct SeasonAvailability: Decodable, Sendable {
     let status: MediaStatus
     /// Seerr tracks the 4K copy separately.
     let status4k: MediaStatus?
+
+    var onServer: Bool {
+        [status, status4k].contains { $0 == .available || $0 == .partiallyAvailable }
+    }
 }
 
 struct PagedResponse<T: Decodable & Sendable>: Decodable, Sendable {

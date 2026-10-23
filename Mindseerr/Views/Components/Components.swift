@@ -50,7 +50,7 @@ struct PosterCard: View {
                     PosterImage(url: item.posterURL, title: item.displayTitle)
                         .frame(width: width, height: width * 1.5)
                         .overlay(alignment: .topTrailing) {
-                            if let status = item.mediaInfo?.status {
+                            if let status = item.mediaInfo?.displayStatus {
                                 StatusBadge(status: status).padding(10)
                             }
                         }
